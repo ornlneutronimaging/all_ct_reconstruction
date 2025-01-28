@@ -205,9 +205,13 @@ class Step1PrepareWhiteBeamModeImages:
     def load_data(self):
         self.o_load.load_white_beam_data()
         
+    # visualization
+    def what_to_visualize(self):
+        self.o_vizu = Visualization(parent=self)
+        self.o_vizu.what_to_visualize()
+
     def visualize_raw_data(self):
-        o_visualization = Visualization(parent=self)
-        o_visualization.visualize_all_images_at_once()
+        self.o_vizu.visualize_according_to_selection()
 
     # pre processing cropt
     def pre_processing_crop_settings(self):
