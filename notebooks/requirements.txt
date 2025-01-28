@@ -1,0 +1,30 @@
+# install hsnt using instructions found here https://github.com/cabouman/hsnt
+## micromamba create environment using python 3.10
+## add iMars3d with local pip install
+# > git clone https://github.com/ornlneutronimaging/iMars3D
+# > cd iMars3D
+# > pip install -e .
+
+## install
+# - micromamba install pydantic
+# - micromamba install tqdm
+# - micromamba install jupyter
+# - pip install NeuNorm
+# - micromamba install h5py
+# - pip install neutronbraggedge
+# - micromamba install param
+# - micromamba install dxchange
+# - micromamba install tomopy
+# matplotlib, pandas
+# conda install -c simpleitk simpleitk
+# conda install scikit-image
+# conda install ipython numexpr astropy tifffile mkl_fft
+# conda install -c astra-toolbox astra-toolbox
+# pip install opencv-python read-roi
+# pip install -U numpy
+
+# > git clone https://github.com/dmici/NeuTomPy-toolbox/tree/master
+# > cd NeuTomPy-toolbox
+# > cd eval "$(micromamba shell hook --shell bash)"
+# > micromamba activate hsnt_py310
+# > pip install .

@@ -1,0 +1,45 @@
+import argparse
+import logging
+import os
+
+from __code.utilities.logging import setup_logging
+from __code.workflow_cli.fbp_white_beam import  FbpCliHandler
+from __code.workflow_cli.svmbir_white_beam import SvmbirCliHandler
+from __code.utilities.json import load_json_string
+from __code.utilities.configuration_file import ReconstructionAlgorithm
+
+# this requires to activate first the hsnt conda environment
+# ----------------------------------------------------------
+# source /opt/anaconda/etc/profile.d/conda.sh
+# conda activate hsnt
+# ----------------------------------------------------------
+
+file_name, ext = os.path.splitext(os.path.basename(__file__))
+setup_logging(file_name)
+
+
+if __name__ == "__main__":
+
+    parser = argparse.ArgumentParser(description="Run the specify reconstruction algorithm specified in the config file in white beam mode")
+    parser.add_argument('config_json_file', type=str, nargs=1, help="JSON config file created by step1 notebook (step1_prepare_white_beam_mode_images.ipynb)")
+    args = parser.parse_args()
+
+    config_json_file = args.config_json_file[0]
+    config = load_json_string(config_json_file)
+    list_reconstruction_algorithm = list(config['reconstruction_algorithm'])
+
+    if ReconstructionAlgorithm.svmbir in list_reconstruction_algorithm:
+        logging.info(f"about to call SvmbirCliHandler.run_reconstruction_from_pre_data_mode:")
+        logging.info(f"\t{config_json_file = }")
+        SvmbirCliHandler.run_reconstruction_from_pre_data_mode(config_json_file=config_json_file)
+        list_reconstruction_algorithm.remove(ReconstructionAlgorithm.svmbir)
+        logging.info(f"Svmbir reconstruction done!")
+    
+    if len(list_reconstruction_algorithm) > 0:
+        logging.info(f"about to call FbpCliHandler.run_reconstruction_from_pre_data_mode:")
+        logging.info(f"\t{config_json_file = }")
+        FbpCliHandler.run_reconstruction_from_pre_data_mode(config_json_file=config_json_file)
+        logging.info(f"Fbp reconstruction done!")
+
+    logging.info(f"All reconstructions are done!")
+    
