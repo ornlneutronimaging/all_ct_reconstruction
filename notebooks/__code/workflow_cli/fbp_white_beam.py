@@ -29,6 +29,11 @@ class FbpCliHandler:
         logging.info(f"\t -> {algorithm = }")
         logging.info(f"\t -> recon(array=_sino, center=center_offset, theta=list_of_angles_rad, algorithm=algorithm)")
 
+        if algorithm == 'fbp':
+            filter_name = "hann"
+        else:
+            filter_name = "none"
+
         reconstruction_array = recon(arrays=_sino,
                                      center=center_of_rotation,
                                      theta=list_of_angles_rad,
@@ -67,7 +72,7 @@ class FbpCliHandler:
         logging.info(f"before swapping I have (angle, x, y): {np.shape(corrected_array_log) = }")
         nbr_angles, nbr_slices, nbr_pixels_wide = np.shape(corrected_array_log)
         logging.info(f"{nbr_angles = }, {nbr_slices = }, {nbr_pixels_wide = }")
-        corrected_array_log = np.swapaxes(corrected_array_log, 1, 2)
+        # corrected_array_log = np.swapaxes(corrected_array_log, 1, 2)
         logging.info(f"after swapping I should have (angles, y, x): {np.shape(corrected_array_log) = }")
 
         logging.info(f"{list_of_angles_rad = }")
@@ -103,8 +108,9 @@ class FbpCliHandler:
                     print(f"launching reconstruction using {_algo} #{index} ... ", end="")
                     logging.info(f"launching reconstruction using {_algo} #{index} ...")
             
-                    _sino = corrected_array_log[:, top_slice_index:bottom_slice_index, :]
-            
+#                    _sino = corrected_array_log[:, top_slice_index:bottom_slice_index, :]
+                    _sino = corrected_array_log[top_slice_index:bottom_slice_index, :, :]
+ 
                     reconstruction_array = FbpCliHandler._run_reconstruction(_sino=_sino,
                                                                             center_of_rotation=center_of_rotation,
                                                                             list_of_angles_rad=list_of_angles_rad,

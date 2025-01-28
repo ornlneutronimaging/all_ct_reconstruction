@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import logging
 from ipywidgets import interactive
 from IPython.display import display
+from IPython.core.display import HTML
 import ipywidgets as widgets
 from scipy.ndimage import median_filter
 from imars3d.backend.corrections.gamma_filter import gamma_filter
@@ -44,11 +45,11 @@ class ImagesCleaner(Parent):
             
     def settings(self):
         self.histo_ui = widgets.Checkbox(value=False,
-                                         description="Histogram")
-        self.tomo_ui = widgets.Checkbox(value=False,
-                                        description="Threshold")
+                                         description="In-house (histogram)")
+        self.tomo_ui = widgets.Checkbox(value=True,
+                                        description="Tomopy (remove_outlier)")
         self.median_filter_ui = widgets.Checkbox(value=False,
-                                                 description="Median filter")
+                                                 description="Scipy (median_filter")
         v_box = widgets.VBox([self.histo_ui, self.tomo_ui, self.median_filter_ui])
         display(v_box)
 
@@ -60,6 +61,9 @@ class ImagesCleaner(Parent):
             list_algo.append(CleaningAlgorithm.histogram)
         if self.tomo_ui.value:
             list_algo.append(CleaningAlgorithm.threshold)
+        if self.median_filter_ui.value:
+            list_algo.append(CleaningAlgorithm.median_filter)
+        
         self.parent.configuration.list_clean_algorithm = list_algo
 
         if self.histo_ui.value:
@@ -82,6 +86,7 @@ class ImagesCleaner(Parent):
 
             nrows = 2 if dc_data is None else 3
             
+            display(HTML("<h2> Histogram settings </h2>"))
             def plot_histogram(nbr_bins=100, nbr_exclude=1):
             
                 fig, axs = plt.subplots(nrows=nrows, ncols=1)
@@ -128,12 +133,27 @@ class ImagesCleaner(Parent):
                                                         )
             display(self.parent.display_histogram)
 
+        if self.tomo_ui.value: 
+
+            display(HTML("<hr>"))
+            display(widgets.HTML("<h2> Tomopy settings </h2>"))
+            self.tomopy_diff = widgets.FloatSlider(min=1,
+                                       max=100,
+                                       value=20,
+                                       description='Diff value')
+            display(self.tomopy_diff)
+        
     def cleaning(self):
 
         # sample_data = self.parent.master_3d_data_array[DataType.sample]
         # ob_data = self.parent.master_3d_data_array[DataType.ob]
         # self.parent.master_3d_data_array = {DataType.sample: sample_data,
         #                                             DataType.ob: ob_data}
+
+        if len(self.parent.configuration.list_clean_algorithm) > 0:
+            sample_data = np.array(self.parent.master_3d_data_array[DataType.sample])
+            self.parent.histogram_sample_before_cleaning = sample_data.sum(axis=0)[self.edge_nbr_pixels: -self.edge_nbr_pixels,
+                                                self.edge_nbr_pixels: -self.edge_nbr_pixels]
 
         self.cleaning_by_histogram()
         self.cleaning_by_imars3d()
@@ -163,16 +183,16 @@ class ImagesCleaner(Parent):
         sample_data = np.array(self.parent.master_3d_data_array[DataType.sample])
 
         sample_data = np.array(self.parent.master_3d_data_array[DataType.sample])
-        cleaned_sample = gamma_filter(arrays=sample_data)
+        cleaned_sample = gamma_filter(arrays=sample_data, diff_tomopy=self.tomopy_diff.value)
         self.parent.master_3d_data_array[DataType.sample] = cleaned_sample
                 
         ob_data = np.array(self.parent.master_3d_data_array[DataType.ob])
-        cleaned_ob = gamma_filter(arrays=ob_data)
+        cleaned_ob = gamma_filter(arrays=ob_data, diff_tomopy=self.tomopy_diff.value)
         self.parent.master_3d_data_array[DataType.ob] = cleaned_ob
 
         if self.parent.list_of_images[DataType.dc]:
             dc_data = np.array(self.parent.master_3d_data_array[DataType.dc])
-            cleaned_dc = gamma_filter(arrays=dc_data)
+            cleaned_dc = gamma_filter(arrays=dc_data, diff_tomopy=self.tomopy_diff.value)
             self.parent.master_3d_data_array[DataType.dc] = cleaned_dc
 
         logging.info(f"cleaning using tomopy ... done!")
@@ -240,13 +260,16 @@ class ImagesCleaner(Parent):
         nbr_bins = self.nbr_bins
 
         fig, axs = plt.subplots(nrows=2, ncols=1)
-        _, sample_bin_edges = np.histogram(sample_histogram.flatten(), bins=nbr_bins, density=False)
-        axs[0].hist(sample_histogram.flatten(), bins=nbr_bins)
+
+        flatten_sample_histogram = sample_histogram.flatten()
+        _, sample_bin_edges = np.histogram(flatten_sample_histogram, bins=nbr_bins, density=False)
+        axs[0].hist(flatten_sample_histogram, bins=nbr_bins)
         axs[0].set_title('cleaned sample histogram')
         axs[0].set_yscale('log')
         
-        _, ob_bin_edges = np.histogram(ob_histogram.flatten(), bins=nbr_bins, density=False)
-        axs[1].hist(ob_histogram.flatten(), bins=nbr_bins)
+        flatten_ob_histogram = ob_histogram.flatten()
+        _, ob_bin_edges = np.histogram(flatten_ob_histogram, bins=nbr_bins, density=False)
+        axs[1].hist(flatten_ob_histogram, bins=nbr_bins)
         axs[1].set_title('cleaned ob histogram')
         axs[1].set_yscale('log')
         plt.tight_layout()

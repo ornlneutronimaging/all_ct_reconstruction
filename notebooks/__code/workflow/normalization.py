@@ -8,6 +8,7 @@ from IPython.display import display
 from IPython.core.display import HTML
 import ipywidgets as widgets
 from scipy.ndimage import median_filter
+import tomopy
 
 from __code.parent import Parent
 from __code import DEBUG, roi
@@ -187,14 +188,14 @@ class Normalization(Parent):
 
         self.parent.configuration.list_normalization_settings = list_norm_settings
 
-        ob_data_combined = self.parent.master_3d_data_array[DataType.ob]
-        dc_data_combined = None if (self.parent.list_of_images[DataType.dc] is None) else self.parent.master_3d_data_array[DataType.dc]
+        ob_data_combined = np.squeeze(master_3d_data[DataType.ob])
+        dc_data_combined = None if (self.parent.list_of_images[DataType.dc] is None) else np.squeeze(master_3d_data[DataType.dc])
 
-        if dc_data_combined is not None:
-            self.parent.master_3d_data_array[DataType.dc] = np.array(median_filter(self.parent.master_3d_data_array[DataType.dc], size=5), dtype=np.float32)
-            dc_data_combined = self.parent.master_3d_data_array[DataType.dc]
-        
-        for _index, sample_data in enumerate(self.parent.master_3d_data_array[DataType.sample]):
+        # if dc_data_combined is not None:
+        #     self.parent.master_3d_data_array[DataType.dc] = np.array(median_filter(self.parent.master_3d_data_array[DataType.dc], size=5), dtype=np.float32)
+        #     dc_data_combined = self.parent.master_3d_data_array[DataType.dc]
+     
+        for _index, sample_data in enumerate(master_3d_data[DataType.sample]):
 
             # sample_proton_charge = self.parent.list_of_runs[DataType.sample][_run][Run.proton_charge_c]
             # angle = self.parent.list_of_runs[DataType.sample][_run][Run.angle]
@@ -212,30 +213,14 @@ class Normalization(Parent):
                 coeff *= ob_roi_counts / sample_roi_counts
 
             logging_3d_array_infos(message="sample_data", array=sample_data)
+            logging.info("coeff for normalization = {}".format(coeff))
 
             if not (dc_data_combined is None):
-
-                # print(f"{np.max(dc_data_combined) = }")
-                # print(f"{np.min(dc_data_combined) = }")
-
-                # print(f"{np.max(ob_data_combined) = }")
-                # print(f"{np.min(ob_data_combined) = }")
-                # print(f"{np.max(sample_data) = }")  
-                # print(f"{np.min(sample_data) = }")
-
-                # print(f"{sample_data.dtype = }")
-                # print(f"{dc_data_combined.dtype = }")
-                # print(f"{ob_data_combined.dtype = }")
-
                 num = np.subtract(sample_data, dc_data_combined)
                 den = np.subtract(ob_data_combined, dc_data_combined)
-                normalized_sample = np.divide(num, den, dtype=np.float32) * coeff
-
-                # print(f"{normalized_sample.dtype = }")
-                # print(f"{np.max(normalized_sample) = }")
-                # print(f"{np.min(normalized_sample) = }")
+                normalized_sample = np.true_divide(num, den, dtype=np.float32) * coeff
             else:
-                normalized_sample = np.divide(sample_data, ob_data_combined, dtype=np.float32) * coeff
+                normalized_sample = np.true_divide(sample_data, ob_data_combined, dtype=np.float32) * coeff
 
             if use_sample_roi:
                 sample_roi_counts = np.median(normalized_sample[top: bottom+1, left: right+1])
@@ -243,15 +228,21 @@ class Normalization(Parent):
                 normalized_sample = normalized_sample * coeff
 
             # remove NaN and Inf
+            logging.info(f"removing NaN and Inf values (nan->0, -inf->0, inf->1)")
             normalized_sample = np.nan_to_num(normalized_sample, nan=0, posinf=1, neginf=0)
 
             # all counts above 1 are set to 1
-            normalized_sample[normalized_sample > 1] = 1
+            # normalized_sample[normalized_sample > 1] = 1
+
+            # remove negative values
+            logging.info(f"removing negative values (set to 0)")
+            # normalized_sample[normalized_sample < 0] = 0
+            normalized_sample = tomopy.misc.corr.remove_neg(normalized_sample, val=0)
 
             logging_3d_array_infos(message="after normalization", array=normalized_sample)
             normalized_data.append(normalized_sample) 
 
-        self.parent.normalized_images = np.asarray(normalized_data, dtype=np.float32)
+        self.parent.normalized_images = np.squeeze(np.asarray(normalized_data, dtype=np.float32))
 
     # def visualization_normalization_settings(self):
     #     self.display_ui = widgets.ToggleButtons(options=['1 image at a time',

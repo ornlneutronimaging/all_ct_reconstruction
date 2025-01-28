@@ -8,25 +8,32 @@ import numpy as np
 from __code.parent import Parent
 from __code import DataType
 from __code.workflow.final_projections_review import FinalProjectionsReview
-
+from __code.config import clean_paras
 
 class Visualization(Parent):
 
-    def what_to_visualize(self):
-        display(HTML("<hr><h2>What to visualize?</h2>"))
+    mode = 'raw'  # 'cleaned'
+
+    def how_to_visualize(self, data_type=DataType.raw):
+        display(HTML(f"<hr><h2>How to visualize the {data_type} data?</h2>"))
         self.what_to_visualize_ui = widgets.ToggleButtons(options=['All images', 'Statistics'],
                                                           value='Statistics')
         display(self.what_to_visualize_ui)
 
-    def visualize_according_to_selection(self):
+    def visualize_according_to_selection(self, mode='cleaned'):
+        self.mode = mode
         if self.what_to_visualize_ui.value == 'All images':
             self.visualize_all_images_at_once()
         else:
             self.visualize_statistics()
 
     def visualize_statistics(self):
-        master_3d_data_array = self.parent.master_3d_data_array
 
+        if self.mode in ['raw', 'cleaned']:
+            master_3d_data_array = self.parent.master_3d_data_array
+        else:
+            raise NotImplementedError(f"mode {self.mode} not implemented")
+            
         sample_data = master_3d_data_array[DataType.sample]
         ob_data = master_3d_data_array[DataType.ob]
         dc_data = master_3d_data_array[DataType.dc]
@@ -53,7 +60,7 @@ class Visualization(Parent):
         # ratio firt / last
         ratio_last_first = sample_proj_last / sample_proj_first
 
-        fig, axs = plt.subplots(nrows=2, ncols=3, figsize=(20, 9))
+        fig, axs = plt.subplots(nrows=2, ncols=3, figsize=(15, 15))
 
         im0 = axs[0, 0].imshow(sample_proj_min, vmin=vmin, vmax=vmax)
         axs[0, 0].set_title("Sample (np.min)")
@@ -78,6 +85,30 @@ class Visualization(Parent):
         im5 = axs[1, 2].imshow(ratio_last_first, vmin=0.9, vmax=1.1)
         axs[1, 2].set_title("Ratio last/first")
         plt.colorbar(im5, ax=axs[1, 2], shrink=0.5)
+   
+        if (self.mode == 'cleaned') and (self.parent.histogram_sample_before_cleaning is not None):
+
+            # display histogram of sample before and after
+            fig, axs = plt.subplots(nrows=2, ncols=1)
+            
+            flatten_raw_histogram = self.parent.histogram_sample_before_cleaning.flatten()
+            # _, sample_bin_edges = np.histogram(flatten_raw_histogram, bins=100, density=False)
+            axs[0].hist(flatten_raw_histogram, bins=100)
+            axs[0].set_title('raw sample histogram')
+            axs[0].set_yscale('log')
+
+            edge_nbr_pixels = clean_paras['edge_nbr_pixels']
+
+            corrected_data = np.array(self.parent.master_3d_data_array[DataType.sample])
+            histogram_corrected_data = corrected_data.sum(axis=0)[edge_nbr_pixels: -edge_nbr_pixels,
+                                                        edge_nbr_pixels: -edge_nbr_pixels]
+            flatten_corrected_histogram = histogram_corrected_data.flatten()
+            axs[1].hist(flatten_corrected_histogram, bins=100)
+            axs[1].set_title('cleaned sample histogram')
+            axs[1].set_yscale('log')
+
+            plt.tight_layout()
+            plt.show()
 
     def settings(self):
         self.display_ui = widgets.ToggleButtons(options=['1 image at a time',
@@ -96,12 +127,15 @@ class Visualization(Parent):
 
                 vmin_before = np.min(data_before)
                 vmax_before = np.max(data_before)
-                vmin_after = np.min(data_after)
-                vmax_after = np.max(data_after)
+                # vmin_after = np.min(data_after)
+                # vmax_after = np.max(data_after)
+
+                vmin_after = 0
+                vmax_after = 1
 
                 def plot_norm(image_index=0, 
-                              vmin_before=vmin_before, vmax_before=vmax_before, 
-                              vmin_after=vmin_after, vmax_after=vmax_after):
+                              vmin_before=vmin_before, vmax_before=vmax_before):
+                            #   vmin_after=vmin_after, vmax_after=vmax_after):
 
                     fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
 
@@ -128,8 +162,9 @@ class Visualization(Parent):
                                                                         value=0),
                                         vmin_before=widgets.IntSlider(min=vmin_before, max=vmax_before, value=vmin_before),
                                         vmax_before=widgets.IntSlider(min=vmin_before, max=vmax_before, value=vmax_before),
-                                        vmin_after=widgets.FloatSlider(min=vmin_after, max=vmax_after, value=0),
-                                        vmax_after=widgets.FloatSlider(min=vmin_after, max=vmax_after, value=1))
+                )
+                                        # vmin_after=widgets.FloatSlider(min=vmin_after, max=vmax_after, value=0),
+                                        # vmax_after=widgets.FloatSlider(min=vmin_after, max=vmax_after, value=1))
 
             else:
 
@@ -208,4 +243,27 @@ class Visualization(Parent):
             plt.tight_layout()
             plt.show()
 
+    def visualize_normalized_images(self):
+     
+        normalized_images = self.parent.normalized_images
 
+        def plot_images(image_index=0):
+
+            fig, axs = plt.subplots(nrows=1, ncols=1, figsize=(7, 7))
+
+            _norm_data = normalized_images[image_index]
+            
+            im = axs.imshow(_norm_data, vmin=0, vmax=1)
+            axs.set_title("Normalized data")
+            plt.colorbar(im, ax=axs, shrink=0.5)
+
+            plt.tight_layout()
+            plt.show()
+
+        display_plot = interactive(plot_images,
+                                image_index=widgets.IntSlider(min=0,
+                                                              max=len(normalized_images)-1,
+                                                              value=0),
+        )
+
+        display(display_plot)

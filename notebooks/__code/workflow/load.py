@@ -116,6 +116,8 @@ class Load(Parent):
         self.list_checkboxes = []
         global_list_verti_box = []
 
+        display(widgets.HTML("<b>Check the 2 fields to use to determine the angle value (degree.minutes)!</b>"))
+
         for _index, _split in enumerate(list_splits):
 
             if self.parent.list_states_checkbox is None:
@@ -144,7 +146,7 @@ class Load(Parent):
         display(widgets.HTML("<hr>"))
         self.widget_angle = widgets.Label("")
         display(widgets.HBox([widgets.Label("Angle value:"), self.widget_angle]))
-        display(widgets.HTML("<b>Check the 2 fields to use to determine the angle value (degree.minutes)!</b>"))
+       
 
     def get_list_index_of_checkboxes(self):
         self.parent.list_states_checkbox = [x.value for x in self.list_checkboxes]
@@ -223,15 +225,19 @@ class Load(Parent):
                 logging.info(f" nothing to load for {_data_type}, no files have been selected!")
                 continue
 
+            list_of_images[_data_type].sort()
+            list_tiff = list_of_images[_data_type]
+            nbr_images_to_use = int(self.percentage_to_use.value / 100 * len(list_of_images[_data_type]))
+            if nbr_images_to_use == 0:
+                nbr_images_to_use = 1
+                
+            list_tiff_index_to_use = np.random.randint(0, len(list_of_images[_data_type]), nbr_images_to_use)
+            list_tiff_index_to_use.sort()
+            list_tiff = [list_tiff[_index] for _index in list_tiff_index_to_use]
+            self.parent.list_of_images[_data_type] = list_tiff
+            list_of_images[_data_type] = list_tiff
+
             if _data_type == DataType.sample:
-                list_of_images[_data_type].sort()
-                list_tiff = list_of_images[_data_type]
-                nbr_images_to_use = int(self.percentage_to_use.value / 100 * len(list_of_images[_data_type]))
-                list_tiff_index_to_use = np.random.randint(0, len(list_of_images[_data_type]), nbr_images_to_use)
-                list_tiff_index_to_use.sort()
-                list_tiff = [list_tiff[_index] for _index in list_tiff_index_to_use]
-                self.parent.list_of_images[_data_type] = list_tiff
-                list_of_images[_data_type] = list_tiff
                 self.save_list_of_angles(list_tiff)
 
             self.parent.master_3d_data_array[_data_type] = load_data_using_multithreading(list_of_images[_data_type])

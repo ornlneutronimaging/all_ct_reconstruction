@@ -10,6 +10,7 @@ class DataType:
     reconstructed = 'reconstructed'
     extra = 'extra'
     processed = "processed"
+    raw= 'raw'
 
 
 class OperatingMode:
@@ -103,7 +104,8 @@ class Run:
 
 class CleaningAlgorithm:
     histogram = 'histogram'
-    threshold = 'threshold'
+    threshold = 'tomopy'
+    median_filter = 'scipy'
 
 
 class NormalizationSettings:

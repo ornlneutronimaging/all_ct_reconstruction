@@ -16,6 +16,8 @@ from __code.workflow.reconstruction_selection import ReconstructionSelection
 from __code.workflow.images_cleaner import ImagesCleaner
 from __code.workflow.normalization import Normalization
 from __code.workflow.chips_correction import ChipsCorrection
+from __code.workflow.log_conversion import log_conversion
+from __code.workflow.data_handler import remove_negative_value
 from __code.workflow.center_of_rotation_and_tilt import CenterOfRotationAndTilt
 from __code.workflow.remove_strips import RemoveStrips
 from __code.workflow.svmbir_handler import SvmbirHandler
@@ -44,6 +46,8 @@ class Step1PrepareWhiteBeamModeImages:
         }
     
     operating_mode = DEFAULT_OPERATING_MODE
+
+    histogram_sample_before_cleaning = None
 
     center_of_rotation = None
     
@@ -206,12 +210,12 @@ class Step1PrepareWhiteBeamModeImages:
         self.o_load.load_white_beam_data()
         
     # visualization
-    def what_to_visualize(self):
+    def how_to_visualize(self):
         self.o_vizu = Visualization(parent=self)
-        self.o_vizu.what_to_visualize()
+        self.o_vizu.how_to_visualize()
 
     def visualize_raw_data(self):
-        self.o_vizu.visualize_according_to_selection()
+        self.o_vizu.visualize_according_to_selection(mode='raw')
 
     # pre processing cropt
     def pre_processing_crop_settings(self):
@@ -231,6 +235,13 @@ class Step1PrepareWhiteBeamModeImages:
 
     def clean_images(self):
         self.o_clean.cleaning()
+
+    def how_to_visualize_after_cleaning(self):
+        self.o_vizu = Visualization(parent=self)
+        self.o_vizu.how_to_visualize(data_type=DataType.cleaned_images)
+
+    def visualize_cleaned_data(self):
+        self.o_vizu.visualize_according_to_selection(mode='cleaned')
 
     # normalization
     def normalization_settings(self):
@@ -282,6 +293,19 @@ class Step1PrepareWhiteBeamModeImages:
     def visualize_after_rotation(self):
         o_review = FinalProjectionsReview(parent=self)
         o_review.single_image(image=self.normalized_images[0])
+
+    # log conversion
+    def log_conversion(self):
+        #self.normalized_images = remove_negative_value(log_conversion(self.normalized_images))
+        self.normalized_images = log_conversion(self.normalized_images)
+
+    def visualize_normalized_images(self):
+        o_vizu = Visualization(parent=self)
+        o_vizu.visualize_normalized_images()
+        
+        
+
+
 
     # strips removal
     def select_remove_strips_algorithms(self):
