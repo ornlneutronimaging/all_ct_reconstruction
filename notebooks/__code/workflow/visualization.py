@@ -267,3 +267,29 @@ class Visualization(Parent):
         )
 
         display(display_plot)
+
+    def visualize_2_stacks(self, left=None, right=None):
+
+        print(f"{np.shape(left)}")
+        print(f"{left.dtype =}")
+
+        def plot_images(index=0):
+            fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
+
+            im0 = axs[0].imshow(left[index])
+            axs[0].set_title("normalized")
+            plt.colorbar(im0, ax=axs[0], shrink=0.5)
+
+            im1 = axs[1].imshow(right[index])
+            axs[1].set_title("log(normalized)")
+            plt.colorbar(im1, ax=axs[1], shrink=0.5)
+
+            plt.tight_layout()
+            plt.show()
+
+        display_plot = interactive(plot_images,
+                                index=widgets.IntSlider(min=0,
+                                                        max=len(left)-1,
+                                                        value=0),
+        )
+        display(display_plot)

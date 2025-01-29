@@ -5,10 +5,11 @@ import multiprocessing as mp
 from NeuNorm.normalization import Normalization
 
 from __code.utilities.files import retrieve_list_of_tif
+from __code import LOAD_DTYPE
 
 
 def _worker(fl):
-    return (imread(fl).astype(np.float32)).swapaxes(0,1)
+    return (imread(fl).astype(LOAD_DTYPE)).swapaxes(0,1)
 
 
 def load_data_using_multithreading(list_tif, combine_tof=False):

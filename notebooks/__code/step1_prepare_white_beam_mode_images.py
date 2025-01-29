@@ -126,6 +126,7 @@ class Step1PrepareWhiteBeamModeImages:
     #                                 DataType.ob: None}
 
     normalized_images = None   # after normalization
+    normalized_images_log = None   # after log conversion
     corrected_images = None  # after chips correction
 
     instrument = "VENUS"
@@ -297,13 +298,13 @@ class Step1PrepareWhiteBeamModeImages:
     # log conversion
     def log_conversion(self):
         #self.normalized_images = remove_negative_value(log_conversion(self.normalized_images))
-        self.normalized_images = log_conversion(self.normalized_images)
+        self.normalized_images_log = log_conversion(self.normalized_images)
 
-    def visualize_normalized_images(self):
+    def visualize_images_after_log(self):
         o_vizu = Visualization(parent=self)
-        o_vizu.visualize_normalized_images()
+        o_vizu.visualize_2_stacks(left=self.normalized_images, right=self.normalized_images_log)
         
-        
+
 
 
 

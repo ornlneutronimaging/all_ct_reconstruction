@@ -216,8 +216,10 @@ class Normalization(Parent):
             logging.info("coeff for normalization = {}".format(coeff))
 
             if not (dc_data_combined is None):
-                num = np.subtract(sample_data, dc_data_combined)
-                den = np.subtract(ob_data_combined, dc_data_combined)
+                # num = np.subtract(sample_data, dc_data_combined)
+                num = sample_data - dc_data_combined
+                # den = np.subtract(ob_data_combined, dc_data_combined)
+                den = ob_data_combined - dc_data_combined
                 normalized_sample = np.true_divide(num, den, dtype=np.float32) * coeff
             else:
                 normalized_sample = np.true_divide(sample_data, ob_data_combined, dtype=np.float32) * coeff

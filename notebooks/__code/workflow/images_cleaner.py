@@ -9,6 +9,7 @@ from IPython.core.display import HTML
 import ipywidgets as widgets
 from scipy.ndimage import median_filter
 from imars3d.backend.corrections.gamma_filter import gamma_filter
+from tomopy.misc.corr import remove_outlier
  
 from __code import DataType, CleaningAlgorithm
 from __code.config import clean_paras, NUM_THREADS, TOMOPY_REMOVE_OUTLIER_THRESHOLD_RATIO
@@ -160,6 +161,7 @@ class ImagesCleaner(Parent):
         self.cleaning_by_median_filter()
 
     def cleaning_by_median_filter(self):
+        """scipy"""
 
         if not self.median_filter_ui.value:
             logging.info(f"cleaning using median filter: OFF")
@@ -167,10 +169,11 @@ class ImagesCleaner(Parent):
         
         logging.info(f"cleaning using median filter ...")
         _size = (1, 3, 3)
+
         self.parent.master_3d_data_array[DataType.sample] = np.array(median_filter(self.parent.master_3d_data_array[DataType.sample], size=_size))
         self.parent.master_3d_data_array[DataType.ob] = np.array(median_filter(self.parent.master_3d_data_array[DataType.ob], size=_size))
-        # if self.parent.list_of_images[DataType.dc]:
-        #     self.parent.master_3d_data_array[DataType.dc] = np.array(median_filter(self.parent.master_3d_data_array[DataType.dc], size=_size))
+        if self.parent.list_of_images[DataType.dc]:
+            self.parent.master_3d_data_array[DataType.dc] = np.array(median_filter(self.parent.master_3d_data_array[DataType.dc], size=_size))
         logging.info(f"cleaning using median filter ... done!")
 
     def cleaning_by_imars3d(self):
@@ -183,16 +186,19 @@ class ImagesCleaner(Parent):
         sample_data = np.array(self.parent.master_3d_data_array[DataType.sample])
 
         sample_data = np.array(self.parent.master_3d_data_array[DataType.sample])
-        cleaned_sample = gamma_filter(arrays=sample_data, diff_tomopy=self.tomopy_diff.value)
+        cleaned_sample = remove_outlier(sample_data, self.tomopy_diff.value, ncore=NUM_THREADS).astype(np.ushort)
+        #cleaned_sample = gamma_filter(arrays=sample_data, diff_tomopy=self.tomopy_diff.value)
         self.parent.master_3d_data_array[DataType.sample] = cleaned_sample
                 
         ob_data = np.array(self.parent.master_3d_data_array[DataType.ob])
-        cleaned_ob = gamma_filter(arrays=ob_data, diff_tomopy=self.tomopy_diff.value)
+        cleaned_ob = remove_outlier(ob_data, self.tomopy_diff.value, ncore=NUM_THREADS).astype(np.ushort)
+        # cleaned_ob = gamma_filter(arrays=ob_data, diff_tomopy=self.tomopy_diff.value)
         self.parent.master_3d_data_array[DataType.ob] = cleaned_ob
 
         if self.parent.list_of_images[DataType.dc]:
             dc_data = np.array(self.parent.master_3d_data_array[DataType.dc])
-            cleaned_dc = gamma_filter(arrays=dc_data, diff_tomopy=self.tomopy_diff.value)
+            cleaned_dc = remove_outlier(dc_data, self.tomopy_diff.value, ncore=NUM_THREADS).astype(np.ushort)
+            # cleaned_dc = gamma_filter(arrays=dc_data, diff_tomopy=self.tomopy_diff.value)
             self.parent.master_3d_data_array[DataType.dc] = cleaned_dc
 
         logging.info(f"cleaning using tomopy ... done!")

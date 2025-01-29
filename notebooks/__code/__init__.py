@@ -1,3 +1,5 @@
+import numpy as np
+
 class DataType:
     sample = 'sample'
     ob = 'ob'
@@ -26,6 +28,7 @@ DEFAULT_OPERATING_MODE = OperatingMode.white_beam
 DEFAULT_RECONSTRUCTION_ALGORITHM = ["gridrec"]
 NBR_TOF_RANGES = 3
 
+LOAD_DTYPE = np.uint16
 
 DEBUG = True
 debug_folder = {OperatingMode.tof: {DataType.sample: "/SNS/VENUS/IPTS-33699/shared/autoreduce/mcp/September20_2024_PurpleCar_GoldenRatio_CT_5_0_C_Cd_inBeam_Resonance",
@@ -83,10 +86,10 @@ crop_roi = {OperatingMode.tof: {'left': 0,
                             'right': 74,
                             'top': 0,
                             'bottom': 49},
-        OperatingMode.white_beam: {'left': 755,
-                                   'right': 1306,
-                                   'top': 881,
-                                   'bottom': 1315},
+        OperatingMode.white_beam: {'left': 10,
+                                   'right': 6000,
+                                   'top': 10,
+                                   'bottom': 8500},
                                    }
 
 ANGSTROMS = u"\u212b"
