@@ -120,7 +120,7 @@ class CropRegion(BaseModel):
 class ReconstructionAlgorithm:
     svmbir: str = "svmbir"
     astra: str = "astra"
-    astra_fbb: str = "astra_fbb"
+    astra_fbb: str = "astra_fbp"
     tomopy_fbp: str = "tomopy_fbp"
     art: str = "art"
     bart: str = "bart"

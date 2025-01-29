@@ -18,7 +18,9 @@ class ReconstructionSelection(Parent):
         # get all the attribute names of the ReconstructionAlgorithm class
         list_algo = retrieve_list_class_attributes_name(ReconstructionAlgorithm)
 
-        label = widgets.HTML("<font size=5 color=blue>Select reconstruction algorithm(s)</font>")
+        display(widgets.HTML("<font size=5 color=blue>Select reconstruction algorithm(s)</font>"))
+        display(widgets.HTML("<font size=3 color=black>Multiple selection allowed by CTRL+click</font>"))
+
         self.multi_reconstruction_selection_ui = widgets.SelectMultiple(options=list_algo,
                                                                         rows=len(list_algo),
                                                                         description="",
@@ -27,7 +29,7 @@ class ReconstructionSelection(Parent):
 
         self.multi_reconstruction_selection_ui.observe(self.on_change, names='value')
 
-        display(widgets.VBox([label, self.multi_reconstruction_selection_ui]))
+        display(widgets.VBox([self.multi_reconstruction_selection_ui]))
       
     def on_change(self, change):
         selected_values = change['new']

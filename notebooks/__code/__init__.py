@@ -25,7 +25,7 @@ STEP3_FPB_SCRIPTS = "/SNS/VENUS/shared/software/git/svmbir_notebooks/notebooks/s
 STEP3_SCRIPTS = "/SNS/VENUS/shared/software/git/svmbir_notebooks/notebooks/step3_reconstruction_CCD_images.py"
 
 DEFAULT_OPERATING_MODE = OperatingMode.white_beam
-DEFAULT_RECONSTRUCTION_ALGORITHM = ["gridrec"]
+DEFAULT_RECONSTRUCTION_ALGORITHM = ["tomopy_fbp"]
 NBR_TOF_RANGES = 3
 
 LOAD_DTYPE = np.uint16

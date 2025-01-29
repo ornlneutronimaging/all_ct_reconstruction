@@ -304,13 +304,9 @@ class Step1PrepareWhiteBeamModeImages:
         o_vizu = Visualization(parent=self)
         o_vizu.visualize_2_stacks(left=self.normalized_images, right=self.normalized_images_log)
         
-
-
-
-
     # strips removal
     def select_remove_strips_algorithms(self):
-        self.corrected_images = self.normalized_images
+        self.corrected_images = self.normalized_images_log
         self.o_remove = RemoveStrips(parent=self)
         self.o_remove.select_algorithms()
 
@@ -323,7 +319,7 @@ class Step1PrepareWhiteBeamModeImages:
     # calculate center of rotation & tilt
     def select_sample_roi(self):
         if self.corrected_images is None:
-            self.corrected_images = self.normalized_images
+            self.corrected_images = self.normalized_images_log
 
         self.o_center_and_tilt = CenterOfRotationAndTilt(parent=self)
         self.o_center_and_tilt.select_range()
@@ -345,7 +341,7 @@ class Step1PrepareWhiteBeamModeImages:
     # run svmbir
     def reconstruction_settings(self):
         if self.corrected_images is None:
-            self.corrected_images = self.normalized_images
+            self.corrected_images = self.normalized_images_log
         
         if ReconstructionAlgorithm.svmbir in self.configuration.reconstruction_algorithm:
             self.o_svmbir = SvmbirHandler(parent=self)
