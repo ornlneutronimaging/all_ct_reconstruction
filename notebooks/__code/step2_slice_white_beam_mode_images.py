@@ -132,6 +132,6 @@ class Step2SliceWhiteBeamModeImages:
         save_json(full_config_file_name, json_dictionary=config_json)
         logging.info(f"config file saved: {full_config_file_name}")
 
-        display(HTML(f"Move to the next step by running the command <font color='red'>python {STEP3_SCRIPTS}</font> " +
-                     f"<font color='red'>{full_config_file_name}</font>"))
+        display(HTML(f"Move to the next step by running the command <font color='blue' size=5>python {STEP3_SCRIPTS}</font> " +
+                     f"<font color='blue' size=5>{full_config_file_name}</font>"))
                 

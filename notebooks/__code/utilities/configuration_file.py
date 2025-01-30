@@ -119,27 +119,28 @@ class CropRegion(BaseModel):
 
 class ReconstructionAlgorithm:
     svmbir: str = "svmbir"
-    astra: str = "astra"
     astra_fbb: str = "astra_fbp"
     tomopy_fbp: str = "tomopy_fbp"
-    art: str = "art"
-    bart: str = "bart"
-    gridrec: str = "gridrec"
-    mlem: str = "mlem"
-    osem: str = "osem"  
-    ospml_hybrid: str = "ospml_hybrid"
-    ospml_quad: str = "ospml_quad"  
-    pml_hybrid: str = "pml_hybrid"
-    pml_quad: str = "pml_quad"
-    # sirt: str = "sirt"
-    # tv: str = "tv"
-    grad: str = "grad"
-    tikh: str = "tikh"
+    algotom_fbp: str = "algotom_fbp"
+    algotom_gridrec: str = "algotom_gridrec"
+    # art: str = "art"
+    # bart: str = "bart"
+    # gridrec: str = "gridrec"
+    # mlem: str = "mlem"
+    # osem: str = "osem"  
+    # ospml_hybrid: str = "ospml_hybrid"
+    # ospml_quad: str = "ospml_quad"  
+    # pml_hybrid: str = "pml_hybrid"
+    # pml_quad: str = "pml_quad"
+    # # sirt: str = "sirt"
+    # # tv: str = "tv"
+    # grad: str = "grad"
+    # tikh: str = "tikh"
 
 
 class Configuration(BaseModel):
 
-    reconstruction_algorithm: list[str] = Field(default=[ReconstructionAlgorithm.gridrec])
+    reconstruction_algorithm: list[str] = Field(default=[ReconstructionAlgorithm.algotom_gridrec])
 
     top_folder: TopFolder = Field(default=TopFolder())
     operating_mode: str = Field(default=OperatingMode.tof) 
@@ -159,7 +160,7 @@ class Configuration(BaseModel):
     
     list_of_slices_to_reconstruct: List[tuple[int, int]] = Field(default=[[0, -1]])
 
-    list_clean_algorithm: List[str] = Field(default=[CleaningAlgorithm.histogram, CleaningAlgorithm.threshold])
+    list_clean_algorithm: List[str] = Field(default=[CleaningAlgorithm.tomopy])
     histogram_cleaning_settings: HistogramCleaningSettings = Field(default=HistogramCleaningSettings())
     list_normalization_settings: List[str] = Field(default=[NormalizationSettings.pc, 
                                               NormalizationSettings.frame_number,

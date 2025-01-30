@@ -55,3 +55,9 @@ TOMOPY_REMOVE_OUTLIER_THRESHOLD_RATIO = 0.1
 
 # percentage of data to use for the reconstruction
 PERCENTAGE_OF_DATA_TO_USE_FOR_RECONSTRUCTION = 50
+
+# gamma diff to use in remove_outlier with tomopy
+GAMMA_DIFF = 20
+
+# remove outlier tomopy diff
+TOMOPY_DIFF = 0.2

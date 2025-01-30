@@ -19,7 +19,7 @@ class ReconstructionSelection(Parent):
         list_algo = retrieve_list_class_attributes_name(ReconstructionAlgorithm)
 
         display(widgets.HTML("<font size=5 color=blue>Select reconstruction algorithm(s)</font>"))
-        display(widgets.HTML("<font size=3 color=black>Multiple selection allowed by CTRL+click</font>"))
+        display(widgets.HTML("<font size=3 color=black>Multiple selection allowed by <b>CTRL+click</b></font>"))
 
         self.multi_reconstruction_selection_ui = widgets.SelectMultiple(options=list_algo,
                                                                         rows=len(list_algo),

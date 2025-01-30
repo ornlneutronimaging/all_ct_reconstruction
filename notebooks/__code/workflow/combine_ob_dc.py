@@ -22,7 +22,8 @@ class CombineObDc(Parent):
                 if len(self.parent.list_of_images[_data_type]) == 1: # only 1 image
                     continue
                 else:
-                    master_3d_data_array[_data_type] = np.median(np.array(master_3d_data_array[_data_type]), axis=0).astype(np.ushort)
+                    _combined_array = np.median(np.array(master_3d_data_array[_data_type]), axis=0).astype(np.ushort)
+                    master_3d_data_array[_data_type] = _combined_array[:]
                     logging.info(f"\t{_data_type} -> {np.shape(master_3d_data_array[_data_type])}")
             else:
                 logging.info(f"\t{_data_type} skipped!")

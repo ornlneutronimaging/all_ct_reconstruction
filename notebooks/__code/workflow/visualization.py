@@ -4,11 +4,12 @@ from IPython.core.display import HTML
 import matplotlib.pyplot as plt
 from ipywidgets import interactive
 import numpy as np
+from tomopy.misc.corr import remove_outlier
 
 from __code.parent import Parent
 from __code import DataType
 from __code.workflow.final_projections_review import FinalProjectionsReview
-from __code.config import clean_paras
+from __code.config import clean_paras, GAMMA_DIFF, NUM_THREADS
 
 class Visualization(Parent):
 
@@ -39,8 +40,16 @@ class Visualization(Parent):
         dc_data = master_3d_data_array[DataType.dc]
         list_of_angles = self.parent.final_list_of_angles
         
+        if dc_data is None:
+            no_dc_data = True
+        else:
+            no_dc_data = False
+
         vmax = ob_data.max()
         vmin = sample_data.min()
+
+        vmax = remove_outlier(ob_data[0], GAMMA_DIFF, ncore=NUM_THREADS).astype(np.ushort).max()
+        vmin = remove_outlier(sample_data[0], GAMMA_DIFF, ncore=NUM_THREADS).astype(np.ushort).min()
 
         # np.min of sample
         sample_proj_min = np.min(sample_data, axis=0)
@@ -48,8 +57,9 @@ class Visualization(Parent):
         # np.min of ob
         ob_proj_min = np.min(ob_data, axis=0)
 
-        # np.max of dark current
-        dc_proj_max = np.max(dc_data, axis=0)
+        if not no_dc_data:
+            # np.max of dark current
+            dc_proj_max = np.max(dc_data, axis=0)
 
         # projection of first image loaded
         sample_proj_first = sample_data[0]
@@ -70,9 +80,10 @@ class Visualization(Parent):
         axs[0, 1].set_title("OB (np.min)")
         plt.colorbar(im1, ax=axs[0, 1], shrink=0.5)
 
-        im2 = axs[0, 2].imshow(dc_proj_max, vmin=vmin, vmax=vmax)
-        axs[0, 2].set_title("DC (np.max)")
-        plt.colorbar(im2, ax=axs[0, 2], shrink=0.5)
+        if not no_dc_data:
+            im2 = axs[0, 2].imshow(dc_proj_max, vmin=vmin, vmax=vmin+1000)
+            axs[0, 2].set_title("DC (np.max)")
+            plt.colorbar(im2, ax=axs[0, 2], shrink=0.5)
 
         im3 = axs[1, 0].imshow(sample_proj_first, vmin=vmin, vmax=vmax)
         axs[1, 0].set_title(f"Sample at angle {list_of_angles[0]}")
@@ -268,21 +279,33 @@ class Visualization(Parent):
 
         display(display_plot)
 
-    def visualize_2_stacks(self, left=None, right=None):
-
-        print(f"{np.shape(left)}")
-        print(f"{left.dtype =}")
+    def visualize_2_stacks(self, 
+                           left=None, vmin_left=None, vmax_left=None, 
+                           right=None, vmin_right=None, vmax_right=None):
 
         def plot_images(index=0):
+
+            global vmin_left, vmax_left, vmin_right, vmax_right
+
             fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
+
+            if vmin_left is None:
+                vmin_left = np.min(left[index])
+            if vmax_left is None:
+                vmax_left = np.max(left[index])
 
             im0 = axs[0].imshow(left[index])
             axs[0].set_title("normalized")
-            plt.colorbar(im0, ax=axs[0], shrink=0.5)
+            plt.colorbar(im0, ax=axs[0], vmin=vmin_left, vmax=vmax_left, shrink=0.5)
+
+            if vmin_right is None:
+                vmin_right = np.min(right[index])
+            if vmax_right is None:
+                vmax_right = np.max(right[index])   
 
             im1 = axs[1].imshow(right[index])
             axs[1].set_title("log(normalized)")
-            plt.colorbar(im1, ax=axs[1], shrink=0.5)
+            plt.colorbar(im1, ax=axs[1], shrink=0.5, vmin=vmin_right, vmax=vmax_right)
 
             plt.tight_layout()
             plt.show()
@@ -293,3 +316,28 @@ class Visualization(Parent):
                                                         value=0),
         )
         display(display_plot)
+
+    def visualize_1_stack(self,
+                          data=None, vmin=None, vmax=None,
+                          title="normalized"):
+        
+        def plot_images(index=0):
+            fig, axs = plt.subplots(nrows=1, ncols=1, figsize=(7, 7))
+
+            if vmin is None:
+                vmin = np.min(data[index])
+            if vmax is None:
+                vmax = np.max(data[index])
+
+            im = axs.imshow(data[index])
+            axs.set_title(title)
+            plt.colorbar(im, ax=axs, vmin=vmin, vmax=vmax, shrink=0.5)
+
+            plt.tight_layout()
+            
+        _display_plot_images = interactive(plot_images,
+                                index=widgets.IntSlider(min=0,
+                                                        max=len(data)-1,
+                                                        value=0),
+        )
+        display(_display_plot_images)

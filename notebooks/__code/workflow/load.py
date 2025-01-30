@@ -240,7 +240,8 @@ class Load(Parent):
             if _data_type == DataType.sample:
                 self.save_list_of_angles(list_tiff)
 
-            self.parent.master_3d_data_array[_data_type] = load_data_using_multithreading(list_of_images[_data_type])
+            # self.parent.master_3d_data_array[_data_type] = load_data_using_multithreading(list_of_images[_data_type])
+            self.parent.master_3d_data_array[_data_type] = load_list_of_tif(list_of_images[_data_type])
             logging.info(f"{np.shape(self.parent.master_3d_data_array[_data_type]) = }")
             logging.info(f"\tloading {_data_type} ... done !")
 

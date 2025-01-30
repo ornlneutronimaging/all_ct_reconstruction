@@ -39,7 +39,11 @@ class ExportExtra(Parent):
     def run(self, base_log_file_name=None, prefix=""):
         log_file_name = f"/SNS/VENUS/shared/log/{base_log_file_name}.log"
         output_folder = self.parent.working_dir[DataType.extra]
-        shutil.copy(log_file_name, output_folder)
+        try:
+            shutil.copy(log_file_name, output_folder)
+        except PermissionError:
+            logging.error(f"PermissionError: cannot copy {log_file_name} to {output_folder}")
+            
         # display(HTML(f"\tlog file from {log_file_name} to {output_folder}!"))
 
         configuration = self.parent.configuration
@@ -64,5 +68,5 @@ class ExportExtra(Parent):
         config_json = configuration.model_dump_json()
         save_json(config_file_name, json_dictionary=config_json)
         display(HTML(f"<font color='blue'>Move to the next notebook</font> step2_slice_white_beam_mode_images.ipynb</font> and load the configuration file you just exported (<font color='red'>{config_file_name}</font>)"))
-        display(HTML(f"<font color='blue' size=7>{os.path.basename(config_file_name)}</font>"))
+        display(HTML(f"<font color='blue' size=5>{os.path.basename(config_file_name)}</font>"))
         

@@ -20,9 +20,9 @@ class OperatingMode:
     white_beam = 'white_beam'
 
 
-STEP3_SVMBIR_SCRIPTS = "/SNS/VENUS/shared/software/git/svmbir_notebooks/notebooks/step3_reconstruction_white_beam_mode_images_using_svmbir.py"
-STEP3_FPB_SCRIPTS = "/SNS/VENUS/shared/software/git/svmbir_notebooks/notebooks/step3_reconstruction_white_beam_mode_images_using_fbp.py"
-STEP3_SCRIPTS = "/SNS/VENUS/shared/software/git/svmbir_notebooks/notebooks/step3_reconstruction_CCD_images.py"
+STEP3_SVMBIR_SCRIPTS = "/SNS/VENUS/shared/software/git/all_ct_reconstruction/notebooks/step3_reconstruction_white_beam_mode_images_using_svmbir.py"
+STEP3_FPB_SCRIPTS = "/SNS/VENUS/shared/software/git/all_ct_reconstruction/notebooks/step3_reconstruction_white_beam_mode_images_using_fbp.py"
+STEP3_SCRIPTS = "/SNS/VENUS/shared/software/git/all_ct_reconstruction/notebooks/step3_reconstruction_CCD_images.py"
 
 DEFAULT_OPERATING_MODE = OperatingMode.white_beam
 DEFAULT_RECONSTRUCTION_ALGORITHM = ["tomopy_fbp"]
@@ -38,14 +38,14 @@ debug_folder = {OperatingMode.tof: {DataType.sample: "/SNS/VENUS/IPTS-33699/shar
                                     DataType.reconstructed: '/SNS/VENUS/IPTS-33699/shared/processed_data/jean_test',
                                     DataType.extra: '/SNS/VENUS/IPTS-33699/shared/processed_data/jean_test',
                                     },
-                OperatingMode.white_beam: {DataType.sample: "/SNS/VENUS/IPTS-33531/shared/processed_data/November8_2024_PlantE/",
-                                            DataType.ob: "/SNS/VENUS/IPTS-33531/shared/processed_data/ob_PlantE/",
-                                            DataType.dc: "/SNS/VENUS/IPTS-33531/shared/processed_data/dc/45s/",
-                                            DataType.cleaned_images: '/SNS/VENUS/IPTS-33531/shared/processed_data/jean_test',
-                                            DataType.normalized: '/SNS/VENUS/IPTS-33531/shared/processed_data/jean_test',
-                                            DataType.reconstructed: '/SNS/VENUS/IPTS-33531/shared/processed_data/jean_test',
-                                            DataType.extra: '/SNS/VENUS/IPTS-33531/shared/processed_data/jean_test',
-                                            },
+                # OperatingMode.white_beam: {DataType.sample: "/SNS/VENUS/IPTS-33531/shared/processed_data/November8_2024_PlantE/",
+                #                             DataType.ob: "/SNS/VENUS/IPTS-33531/shared/processed_data/ob_PlantE/",
+                #                             DataType.dc: "/SNS/VENUS/IPTS-33531/shared/processed_data/dc/45s/",
+                #                             DataType.cleaned_images: '/SNS/VENUS/IPTS-33531/shared/processed_data/jean_test',
+                #                             DataType.normalized: '/SNS/VENUS/IPTS-33531/shared/processed_data/jean_test',
+                #                             DataType.reconstructed: '/SNS/VENUS/IPTS-33531/shared/processed_data/jean_test',
+                #                             DataType.extra: '/SNS/VENUS/IPTS-33531/shared/processed_data/jean_test',
+                #                             },
                 # OperatingMode.white_beam: {DataType.sample: "/SNS/VENUS/IPTS-33531/shared/processed_data/November9_2024_Soil_microplastics_1/",
                 #                             DataType.ob: "/SNS/VENUS/IPTS-33531/shared/processed_data/ob_PlantE/",
                 #                             DataType.dc: "",
@@ -54,14 +54,14 @@ debug_folder = {OperatingMode.tof: {DataType.sample: "/SNS/VENUS/IPTS-33699/shar
                 #                             DataType.reconstructed: '/SNS/VENUS/IPTS-33531/shared/processed_data/jean_test',
                 #                             DataType.extra: '/SNS/VENUS/IPTS-33531/shared/processed_data/jean_test',
                 #                             },
-                # OperatingMode.white_beam: {DataType.sample: "/SNS/VENUS/IPTS-33531/shared/processed_data/truck_CT_data/",
-                #                             DataType.ob: "/SNS/VENUS/IPTS-33531/shared/processed_data/ob/",
-                #                             DataType.dc: "",
-                #                             DataType.cleaned_images: '/SNS/VENUS/IPTS-33531/shared/processed_data/jean_test',
-                #                             DataType.normalized: '/SNS/VENUS/IPTS-33531/shared/processed_data/jean_test',
-                #                             DataType.reconstructed: '/SNS/VENUS/IPTS-33531/shared/processed_data/jean_test',
-                #                             DataType.extra: '/SNS/VENUS/IPTS-33531/shared/processed_data/jean_test',
-                #                             },
+                OperatingMode.white_beam: {DataType.sample: "/SNS/VENUS/IPTS-33531/shared/processed_data/truck_CT_data/",
+                                            DataType.ob: "/SNS/VENUS/IPTS-33531/shared/processed_data/ob/",
+                                            DataType.dc: "/SNS/VENUS/IPTS-33531/shared/processed_data/dc/45s/",
+                                            DataType.cleaned_images: '/SNS/VENUS/IPTS-33531/shared/processed_data/jean_test',
+                                            DataType.normalized: '/SNS/VENUS/IPTS-33531/shared/processed_data/jean_test',
+                                            DataType.reconstructed: '/SNS/VENUS/IPTS-33531/shared/processed_data/jean_test',
+                                            DataType.extra: '/SNS/VENUS/IPTS-33531/shared/processed_data/jean_test',
+                                            },
                                             
                 # OperatingMode.white_beam: {DataType.sample: "/HFIR/CG1D/IPTS-25777/raw/ct_scans/iron_man",
                 #                             DataType.ob: "/HFIR/CG1D/IPTS-25777/raw/ob/Oct29_2019",
@@ -86,10 +86,10 @@ crop_roi = {OperatingMode.tof: {'left': 0,
                             'right': 74,
                             'top': 0,
                             'bottom': 49},
-        OperatingMode.white_beam: {'left': 10,
-                                   'right': 6000,
-                                   'top': 10,
-                                   'bottom': 8500},
+        OperatingMode.white_beam: {'left': 200,
+                                   'right': -1,
+                                   'top': 200,
+                                   'bottom': -50},
                                    }
 
 ANGSTROMS = u"\u212b"
@@ -106,9 +106,9 @@ class Run:
 
 
 class CleaningAlgorithm:
-    histogram = 'histogram'
-    threshold = 'tomopy'
-    median_filter = 'scipy'
+    in_house = 'histogram'
+    tomopy = 'tomopy'
+    scipy = 'scipy'
 
 
 class NormalizationSettings:

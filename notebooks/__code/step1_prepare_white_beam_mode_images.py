@@ -1,7 +1,7 @@
 import os
 import logging
 from collections import OrderedDict
-
+import numpy as np
 
 from __code import DataType, OperatingMode, DEFAULT_OPERATING_MODE, DEBUG
 from __code.utilities.logging import setup_logging
@@ -17,7 +17,7 @@ from __code.workflow.images_cleaner import ImagesCleaner
 from __code.workflow.normalization import Normalization
 from __code.workflow.chips_correction import ChipsCorrection
 from __code.workflow.log_conversion import log_conversion
-from __code.workflow.data_handler import remove_negative_value
+from __code.workflow.data_handler import remove_negative_values
 from __code.workflow.center_of_rotation_and_tilt import CenterOfRotationAndTilt
 from __code.workflow.remove_strips import RemoveStrips
 from __code.workflow.svmbir_handler import SvmbirHandler
@@ -255,7 +255,7 @@ class Step1PrepareWhiteBeamModeImages:
     def normalization(self):
         o_combine = CombineObDc(parent=self)
         o_combine.run()
-        self.o_norm.run()
+        self.o_norm.normalize()
 
     def visualization_normalization_settings(self):
         self.o_vizu = Visualization(parent=self)
@@ -296,14 +296,28 @@ class Step1PrepareWhiteBeamModeImages:
         o_review.single_image(image=self.normalized_images[0])
 
     # log conversion
-    def log_conversion(self):
-        #self.normalized_images = remove_negative_value(log_conversion(self.normalized_images))
-        self.normalized_images_log = log_conversion(self.normalized_images)
+    def log_conversion_and_cleaning(self):
+        _normalized_images_log = log_conversion(self.normalized_images)
+        self.normalized_images_log = remove_negative_values(_normalized_images_log[:])
 
     def visualize_images_after_log(self):
         o_vizu = Visualization(parent=self)
-        o_vizu.visualize_2_stacks(left=self.normalized_images, right=self.normalized_images_log)
+        o_vizu.visualize_2_stacks(left=self.normalized_images, 
+                                  vmin_left=0, 
+                                  vmax_left=1,
+                                  right=self.normalized_images_log,
+                                  vmin_right=None,
+                                  vmax_right=None,)
         
+    # sinograms
+    def create_sinograms(self):
+        self.sinogram_of_normalized_images = np.moveaxis(self.normalized_images_log, 1, 0)
+
+    def visualize_sinograms(self):
+        o_vizu = Visualization(parent=self)
+        o_vizu.visualize_1_stack(data=self.sinogram_of_normalized_images,
+                                 title="Sinograms")
+
     # strips removal
     def select_remove_strips_algorithms(self):
         self.corrected_images = self.normalized_images_log

@@ -30,6 +30,12 @@ class Crop(Parent):
         default_top = default_roi[OperatingMode.white_beam]['top']
         default_bottom = default_roi[OperatingMode.white_beam]['bottom'] 
 
+        if default_right < 0:
+            default_right = width - abs(default_right)
+
+        if default_bottom < 0:
+            default_bottom = height - abs(default_bottom)
+
         if before_normalization:
             _data = self.parent.master_3d_data_array[DataType.sample]
         else:

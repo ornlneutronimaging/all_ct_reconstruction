@@ -6,6 +6,7 @@
 # > pip install -e .
 
 ## install
+# - micromamba install algotom
 # - micromamba install pydantic
 # - micromamba install tqdm
 # - micromamba install jupyter

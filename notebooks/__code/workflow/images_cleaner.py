@@ -10,14 +10,16 @@ import ipywidgets as widgets
 from scipy.ndimage import median_filter
 from imars3d.backend.corrections.gamma_filter import gamma_filter
 from tomopy.misc.corr import remove_outlier
+from tomopy.misc.corr import remove_outlier_cuda
  
 from __code import DataType, CleaningAlgorithm
-from __code.config import clean_paras, NUM_THREADS, TOMOPY_REMOVE_OUTLIER_THRESHOLD_RATIO
+from __code.config import clean_paras, NUM_THREADS, TOMOPY_REMOVE_OUTLIER_THRESHOLD_RATIO, TOMOPY_DIFF
 from __code.parent import Parent
 from __code.workflow.load import Load
 from __code.workflow.export import Export
 from __code.utilities.files import make_or_reset_folder
 from __code.utilities.images import replace_pixels
+from __code.workflow.data_handler import remove_negative_values
 
 
 class ImagesCleaner(Parent): 
@@ -45,29 +47,29 @@ class ImagesCleaner(Parent):
     nbr_bins = clean_paras['nbr_bins']
             
     def settings(self):
-        self.histo_ui = widgets.Checkbox(value=False,
+        self.in_house_ui = widgets.Checkbox(value=False,
                                          description="In-house (histogram)")
-        self.tomo_ui = widgets.Checkbox(value=True,
+        self.tomopy_ui = widgets.Checkbox(value=True,
                                         description="Tomopy (remove_outlier)")
-        self.median_filter_ui = widgets.Checkbox(value=False,
-                                                 description="Scipy (median_filter")
-        v_box = widgets.VBox([self.histo_ui, self.tomo_ui, self.median_filter_ui])
+        self.scipy_ui = widgets.Checkbox(value=False,
+                                                 description="Scipy (median_filter)")
+        v_box = widgets.VBox([self.in_house_ui, self.tomopy_ui, self.scipy_ui])
         display(v_box)
 
     def cleaning_setup(self):
 
         # update configuration
         list_algo = []
-        if self.histo_ui.value:
-            list_algo.append(CleaningAlgorithm.histogram)
-        if self.tomo_ui.value:
-            list_algo.append(CleaningAlgorithm.threshold)
-        if self.median_filter_ui.value:
-            list_algo.append(CleaningAlgorithm.median_filter)
+        if self.in_house_ui.value:
+            list_algo.append(CleaningAlgorithm.in_house)
+        if self.tomopy_ui.value:
+            list_algo.append(CleaningAlgorithm.tomopy)
+        if self.scipy_ui.value:
+            list_algo.append(CleaningAlgorithm.scipy)
         
         self.parent.configuration.list_clean_algorithm = list_algo
 
-        if self.histo_ui.value:
+        if self.in_house_ui.value:
             sample_data = np.array(self.parent.master_3d_data_array[DataType.sample])
             ob_data = np.array(self.parent.master_3d_data_array[DataType.ob])
             # if self.parent.master_3d_data_array[DataType.dc] is not None:
@@ -134,7 +136,7 @@ class ImagesCleaner(Parent):
                                                         )
             display(self.parent.display_histogram)
 
-        if self.tomo_ui.value: 
+        if self.tomopy_ui.value: 
 
             display(HTML("<hr>"))
             display(widgets.HTML("<h2> Tomopy settings </h2>"))
@@ -157,13 +159,13 @@ class ImagesCleaner(Parent):
                                                 self.edge_nbr_pixels: -self.edge_nbr_pixels]
 
         self.cleaning_by_histogram()
-        self.cleaning_by_imars3d()
-        self.cleaning_by_median_filter()
+        self.cleaning_with_tomopy()
+        self.cleaning_with_scipy()
 
-    def cleaning_by_median_filter(self):
+    def cleaning_with_scipy(self):
         """scipy"""
 
-        if not self.median_filter_ui.value:
+        if not self.scipy_ui.value:
             logging.info(f"cleaning using median filter: OFF")
             return  
         
@@ -176,9 +178,9 @@ class ImagesCleaner(Parent):
             self.parent.master_3d_data_array[DataType.dc] = np.array(median_filter(self.parent.master_3d_data_array[DataType.dc], size=_size))
         logging.info(f"cleaning using median filter ... done!")
 
-    def cleaning_by_imars3d(self):
+    def cleaning_with_tomopy(self):
         
-        if not self.tomo_ui.value:
+        if not self.tomopy_ui.value:
             logging.info(f"cleaning using tomopy: OFF")
             return
     
@@ -188,24 +190,24 @@ class ImagesCleaner(Parent):
         sample_data = np.array(self.parent.master_3d_data_array[DataType.sample])
         cleaned_sample = remove_outlier(sample_data, self.tomopy_diff.value, ncore=NUM_THREADS).astype(np.ushort)
         #cleaned_sample = gamma_filter(arrays=sample_data, diff_tomopy=self.tomopy_diff.value)
-        self.parent.master_3d_data_array[DataType.sample] = cleaned_sample
+        self.parent.master_3d_data_array[DataType.sample] = cleaned_sample[:]
                 
         ob_data = np.array(self.parent.master_3d_data_array[DataType.ob])
         cleaned_ob = remove_outlier(ob_data, self.tomopy_diff.value, ncore=NUM_THREADS).astype(np.ushort)
         # cleaned_ob = gamma_filter(arrays=ob_data, diff_tomopy=self.tomopy_diff.value)
-        self.parent.master_3d_data_array[DataType.ob] = cleaned_ob
+        self.parent.master_3d_data_array[DataType.ob] = cleaned_ob[:]
 
         if self.parent.list_of_images[DataType.dc]:
             dc_data = np.array(self.parent.master_3d_data_array[DataType.dc])
             cleaned_dc = remove_outlier(dc_data, self.tomopy_diff.value, ncore=NUM_THREADS).astype(np.ushort)
             # cleaned_dc = gamma_filter(arrays=dc_data, diff_tomopy=self.tomopy_diff.value)
-            self.parent.master_3d_data_array[DataType.dc] = cleaned_dc
+            self.parent.master_3d_data_array[DataType.dc] = cleaned_dc[:]
 
         logging.info(f"cleaning using tomopy ... done!")
             
     def cleaning_by_histogram(self):
 
-        if not self.histo_ui.value:
+        if not self.in_house_ui.value:
             logging.info(f"cleaning by histogram: OFF")
             return
 
@@ -318,21 +320,8 @@ class ImagesCleaner(Parent):
                           output_folder=ob_full_output_folder)
         o_export.run()
         
-
-
-
-        # self.export_cleaned_images(dict_of_images=self.parent.master_3d_data_array_cleaned,
-        #                 output_folder=self.parent.working_dir[DataType.cleaned_images])
-
+    def remove_outliers(self, data_3d):
+        _data_3d = remove_outlier_cuda(data_3d, TOMOPY_DIFF)
+        _data_3d = remove_negative_values(_data_3d)
+        return _data_3d[:]
     
-
-
-    # def save_opt(self):
-    #     if self.SAVE_CLEAN:
-    #         _fname = os.path.join(self.clean_path, f'ZeroRemove_{self.fname}')
-    #         dxchange.writer.write_tiff(self.corr_im, fname=_fname, overwrite=True)
-
-    #     log_fld = os.path.join(self.clean_path, 'logs')
-    #     df = pd.DataFrame.from_dict(self.log, orient='columns')
-    #     df.to_csv(os.path.join(log_fld, f'clean_log_{self.fname}.csv'))
-    #     print(f"save log into {os.path.join(log_fld, f'clean_log_{self.fname}.csv')}")

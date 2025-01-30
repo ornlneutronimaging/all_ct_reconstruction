@@ -18,6 +18,7 @@ from __code.workflow.export import Export
 from __code.utilities.files import make_or_reset_folder
 from __code.utilities.logging import logging_3d_array_infos
 from __code.workflow.final_projections_review import FinalProjectionsReview
+from __code.config import NUM_THREADS
 
 
 class RectangleSelector:
@@ -140,29 +141,19 @@ class Normalization(Parent):
                                                                  value=defualt_bottom),
                                         )
         display(self.display_roi)
-
-    def run(self):
-        self.normalize()
       
     def normalize(self):
         master_3d_data = self.parent.master_3d_data_array
-        normalized_data = []
-
-        list_proton_charge = {DataType.sample: [],
-                              DataType.ob: [],
-                             }
+        
+        size_data = np.shape(master_3d_data[DataType.sample])
+        normalized_data = np.empty(size_data, dtype=np.float32)
 
         logging.info(f"Normalization:")
-        # logging_3d_array_infos(array=self.mean_ob_proton_charge, message="mean_ob_proton_charge")
 
-        # use_proton_charge = self.use_proton_charge_ui.value
-        # use_frame = self.use_frames_ui.value
         use_roi = self.use_roi_ui.value
         use_sample_roi = self.use_sample_roi_ui.value
 
         logging.info(f"\tnormalization settings:")
-        # logging.info(f"\t\t- use proton charge: {use_proton_charge}")
-        # logging.info(f"\t\t- use_frame: {use_frame}")
         logging.info(f"\t\t- use_roi: {use_roi}")
         logging.info(f"\t\t- use_sample_roi: {use_sample_roi}")
 
@@ -176,10 +167,6 @@ class Normalization(Parent):
 
         # update configuration
         list_norm_settings = []
-        # if use_proton_charge:
-        #     list_norm_settings.append(NormalizationSettings.pc)
-        # if use_frame:
-        #     list_norm_settings.append(NormalizationSettings.frame_number)
         if use_roi:
             list_norm_settings.append(NormalizationSettings.roi)
         
@@ -190,19 +177,9 @@ class Normalization(Parent):
 
         ob_data_combined = np.squeeze(master_3d_data[DataType.ob])
         dc_data_combined = None if (self.parent.list_of_images[DataType.dc] is None) else np.squeeze(master_3d_data[DataType.dc])
-
-        # if dc_data_combined is not None:
-        #     self.parent.master_3d_data_array[DataType.dc] = np.array(median_filter(self.parent.master_3d_data_array[DataType.dc], size=5), dtype=np.float32)
-        #     dc_data_combined = self.parent.master_3d_data_array[DataType.dc]
-     
+    
         for _index, sample_data in enumerate(master_3d_data[DataType.sample]):
-
-            # sample_proton_charge = self.parent.list_of_runs[DataType.sample][_run][Run.proton_charge_c]
-            # angle = self.parent.list_of_runs[DataType.sample][_run][Run.angle]
-            # final_list_of_angles.append(angle)
-            # list_proton_charge[DataType.sample].append(sample_proton_charge)
-            # logging.info(f"\t{_run} has a proton charge of {sample_proton_charge} and angle of {angle}")
-            
+          
             sample_data = np.array(master_3d_data[DataType.sample][_index], dtype=np.float32)
 
             coeff = 1
@@ -212,13 +189,10 @@ class Normalization(Parent):
                 ob_roi_counts = np.sum(ob_data_combined[top: bottom+1, left: right+1])
                 coeff *= ob_roi_counts / sample_roi_counts
 
-            logging_3d_array_infos(message="sample_data", array=sample_data)
             logging.info("coeff for normalization = {}".format(coeff))
 
             if not (dc_data_combined is None):
-                # num = np.subtract(sample_data, dc_data_combined)
                 num = sample_data - dc_data_combined
-                # den = np.subtract(ob_data_combined, dc_data_combined)
                 den = ob_data_combined - dc_data_combined
                 normalized_sample = np.true_divide(num, den, dtype=np.float32) * coeff
             else:
@@ -230,19 +204,22 @@ class Normalization(Parent):
                 normalized_sample = normalized_sample * coeff
 
             # remove NaN and Inf
-            logging.info(f"removing NaN and Inf values (nan->0, -inf->0, inf->1)")
-            normalized_sample = np.nan_to_num(normalized_sample, nan=0, posinf=1, neginf=0)
+            # logging.info(f"removing NaN and Inf values (nan->0, -inf->0, inf->1)")
+            # normalized_sample = tomopy.misc.corr.remove_nan(normalized_sample, val=0, ncore=NUM_THREADS)
+            # normalized_sample = np.nan_to_num(normalized_sample, nan=0, posinf=1, neginf=0)
 
-            # all counts above 1 are set to 1
-            # normalized_sample[normalized_sample > 1] = 1
+            # logging_3d_array_infos(message="after normalization", array=normalized_sample)
+            # normalized_data.append(normalized_sample) 
 
-            # remove negative values
-            logging.info(f"removing negative values (set to 0)")
-            # normalized_sample[normalized_sample < 0] = 0
-            normalized_sample = tomopy.misc.corr.remove_neg(normalized_sample, val=0)
+            normalized_data[_index] = normalized_sample[:]
 
-            logging_3d_array_infos(message="after normalization", array=normalized_sample)
-            normalized_data.append(normalized_sample) 
+        # all counts above 1 are set to 1
+        # normalized_sample[normalized_sample > 1] = 1
+
+        # remove negative values
+        logging.info(f"removing negative values (set to 0)")
+        normalized_data = tomopy.misc.corr.remove_nan(normalized_data, val=0, ncore=NUM_THREADS)
+        normalized_data = tomopy.misc.corr.remove_neg(normalized_data, val=0, ncore=NUM_THREADS)
 
         self.parent.normalized_images = np.squeeze(np.asarray(normalized_data, dtype=np.float32))
 

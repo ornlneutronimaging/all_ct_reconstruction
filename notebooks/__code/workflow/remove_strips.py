@@ -379,40 +379,46 @@ class RemoveStrips:
 
         def plot_result(image_index, slice_index):
 
-            # fig, axs = plt.subplots(nrows=2, ncols=2, figsize=(10, 10))
-            fig = plt.figure(figsize=(10, 10))
+            fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
+            # fig = plt.figure(figsize=(10, 20))
 
-            axs0 = plt.subplot(221)
-            axs1 = plt.subplot(222)
-            axs2 = plt.subplot(334)
-            axs3 = plt.subplot(335)
-            axs4 = plt.subplot(336)
+            # axs0 = plt.subplot(221)
+            # axs1 = plt.subplot(222)
+            # axs2 = plt.subplot(334)
+            # axs3 = plt.subplot(335)
+            # axs4 = plt.subplot(336)
 
             if self.parent.MODE == OperatingMode.tof:
                 fig.suptitle(f"Run: {final_list_of_runs[image_index]}, Angle: {final_list_of_angles[image_index]}")
 
-            # axs[0][0].imshow(corrected_images_before[image_index], vmin=0, vmax=1)
-            # axs[0][0].set_title("Before correction")
-            # axs[0][0].axhline(slice_index, color='red', linestyle='--')
+            axs[0][0].imshow(corrected_images_before[image_index], vmin=0, vmax=1)
+            axs[0][0].set_title("Before correction")
+            axs[0][0].axhline(slice_index, color='red', linestyle='--')
 
-            # axs[0][1].imshow(corrected_images_after[image_index], vmin=0, vmax=1)
-            # axs[0][1].set_title("After correction")
-            # axs[0][1].axhline(slice_index, color='red', linestyle='--')
+            axs[0][1].imshow(corrected_images_after[image_index], vmin=0, vmax=1)
+            axs[0][1].set_title("After correction")
+            axs[0][1].axhline(slice_index, color='red', linestyle='--')
 
-            # axs[1][0].imshow(sinogram_before[slice_index], vmin=0, vmax=1)
-            # axs[1][1].imshow(sinogram_after[slice_index], vmin=0, vmax=1)
+            fig2, axs2 = plt.subplots(nrows=1, ncols=3, figsize=(10, 5))
 
-            axs0.imshow(corrected_images_before[image_index], vmin=0, vmax=1)
-            axs0.set_title("Before correction")
-            axs0.axhline(slice_index, color='red', linestyle='--')
+            axs2[0][0].imshow(sinogram_before[slice_index], vmin=0, vmax=1)
+            axs2[0][0].set_title("Before correction")
+            axs2[0][1].imshow(sinogram_after[slice_index], vmin=0, vmax=1)
+            axs2[0][1].set_title("After correction")
+            axs2[0][3].imshow(sinogram_before[slice_index] - sinogram_after[slice_index])
+            axs2[0][3].set_title("Difference (before - after)")
 
-            axs1.imshow(corrected_images_after[image_index], vmin=0, vmax=1)
-            axs1.set_title("After correction")
-            axs1.axhline(slice_index, color='red', linestyle='--')
+            # axs0.imshow(corrected_images_before[image_index], vmin=0, vmax=1)
+            # axs0.set_title("Before correction")
+            # axs0.axhline(slice_index, color='red', linestyle='--')
 
-            axs2.imshow(sinogram_before[slice_index], vmin=0, vmax=1)
-            axs3.imshow(sinogram_after[slice_index], vmin=0, vmax=1)
-            axs4.imshow(sinogram_before[slice_index] - sinogram_after[slice_index])
+            # axs1.imshow(corrected_images_after[image_index], vmin=0, vmax=1)
+            # axs1.set_title("After correction")
+            # axs1.axhline(slice_index, color='red', linestyle='--')
+
+            # axs2.imshow(sinogram_before[slice_index], vmin=0, vmax=1)
+            # axs3.imshow(sinogram_after[slice_index], vmin=0, vmax=1)
+            # axs4.imshow(sinogram_before[slice_index] - sinogram_after[slice_index])
 
             plt.tight_layout()
             plt.show()
