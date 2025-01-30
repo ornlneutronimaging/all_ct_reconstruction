@@ -283,29 +283,33 @@ class Visualization(Parent):
                            left=None, vmin_left=None, vmax_left=None, 
                            right=None, vmin_right=None, vmax_right=None):
 
-        def plot_images(index=0):
+        self.vmin_left = vmin_left
+        self.vmax_left = vmax_left
+        self.vmin_right = vmin_right
+        self.vmax_right = vmax_right
 
-            global vmin_left, vmax_left, vmin_right, vmax_right
+        def plot_images(index=0):
 
             fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
 
-            if vmin_left is None:
-                vmin_left = np.min(left[index])
-            if vmax_left is None:
-                vmax_left = np.max(left[index])
+            if self.vmin_left is None:
+                self.vmin_left = np.min(left[index])
+            if self.vmax_left is None:
+                self.vmax_left = np.max(left[index])
 
-            im0 = axs[0].imshow(left[index])
+            im0 = axs[0].imshow(left[index], vmin=self.vmin_left, vmax=self.vmax_left, )
             axs[0].set_title("normalized")
-            plt.colorbar(im0, ax=axs[0], vmin=vmin_left, vmax=vmax_left, shrink=0.5)
+            plt.colorbar(im0, ax=axs[0], shrink=0.5)
 
-            if vmin_right is None:
-                vmin_right = np.min(right[index])
-            if vmax_right is None:
-                vmax_right = np.max(right[index])   
+            if self.vmin_right is None:
+                self.vmin_right = np.min(right[index])
+            if self.vmax_right is None:
+                self.vmax_right = np.max(right[index])   
 
+            # im1 = axs[1].imshow(right[index], vmin=self.vmin_right, vmax=self.vmax_right)
             im1 = axs[1].imshow(right[index])
             axs[1].set_title("log(normalized)")
-            plt.colorbar(im1, ax=axs[1], shrink=0.5, vmin=vmin_right, vmax=vmax_right)
+            plt.colorbar(im1, ax=axs[1], shrink=0.5)
 
             plt.tight_layout()
             plt.show()
@@ -321,17 +325,20 @@ class Visualization(Parent):
                           data=None, vmin=None, vmax=None,
                           title="normalized"):
         
+        self.vmin = vmin
+        self.vmax = vmax
+
         def plot_images(index=0):
             fig, axs = plt.subplots(nrows=1, ncols=1, figsize=(7, 7))
 
-            if vmin is None:
-                vmin = np.min(data[index])
-            if vmax is None:
-                vmax = np.max(data[index])
+            if self.vmin is None:
+                self.vmin = np.min(data[index])
+            if self.vmax is None:
+                self.vmax = np.max(data[index])
 
             im = axs.imshow(data[index])
             axs.set_title(title)
-            plt.colorbar(im, ax=axs, vmin=vmin, vmax=vmax, shrink=0.5)
+            plt.colorbar(im, ax=axs, vmin=self.vmin, vmax=self.vmax, shrink=0.5)
 
             plt.tight_layout()
             

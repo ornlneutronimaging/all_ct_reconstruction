@@ -297,8 +297,8 @@ class Step1PrepareWhiteBeamModeImages:
 
     # log conversion
     def log_conversion_and_cleaning(self):
-        _normalized_images_log = log_conversion(self.normalized_images)
-        self.normalized_images_log = remove_negative_values(_normalized_images_log[:])
+        self.normalized_images_log = log_conversion(self.normalized_images)
+        self.normalized_images_log = remove_negative_values(self.normalized_images_log[:])
 
     def visualize_images_after_log(self):
         o_vizu = Visualization(parent=self)
