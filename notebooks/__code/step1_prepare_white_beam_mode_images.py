@@ -27,6 +27,7 @@ from __code.workflow.export import ExportExtra
 from __code.workflow.visualization import Visualization
 from __code.workflow.rotate import Rotate
 from __code.workflow.crop import Crop
+from __code.workflow.test_reconstruction import TestReconstruction
 from __code.utilities.configuration_file import ReconstructionAlgorithm
 
 LOG_BASENAME_FILENAME, _ = os.path.splitext(os.path.basename(__file__))
@@ -153,6 +154,8 @@ class Step1PrepareWhiteBeamModeImages:
     o_clean = None
     # normalization
     o_norm = None
+    # tilt
+    o_tilt = None
     # svmbir 
     o_svmbir = None
     # tof mode
@@ -186,14 +189,17 @@ class Step1PrepareWhiteBeamModeImages:
 
     # Selection of data
     def select_top_sample_folder(self):
+        """updates: list_of_images[DataType.sample]"""
         o_load = Load(parent=self)
         o_load.select_folder(data_type=DataType.sample)
 
     def select_ob_images(self):
+        """updates: list_of_images[DataType.ob]"""
         o_load = Load(parent=self)
         o_load.select_images(data_type=DataType.ob)
 
     def select_dc_images(self):
+        """updates: list_of_images[DataType.dc]"""
         o_load = Load(parent=self)
         o_load.select_images(data_type=DataType.dc)
 
@@ -208,6 +214,11 @@ class Step1PrepareWhiteBeamModeImages:
 
     # load data
     def load_data(self):
+        """creates: master_3d_data_array
+           updates: list_of_images
+           creates: final_list_of_angles
+           creates: final_list_of_angles_rad
+        """
         self.o_load.load_white_beam_data()
         
     # visualization
@@ -216,6 +227,7 @@ class Step1PrepareWhiteBeamModeImages:
         self.o_vizu.how_to_visualize()
 
     def visualize_raw_data(self):
+        """uses: master_3d_data_array"""
         self.o_vizu.visualize_according_to_selection(mode='raw')
 
     # pre processing cropt
@@ -224,6 +236,7 @@ class Step1PrepareWhiteBeamModeImages:
         self.o_crop1.set_region(before_normalization=True)
 
     def pre_processing_crop(self):
+        """updates: master_3d_data_array"""
         self.o_crop1.run()
 
     # cleaning low/high pixels
@@ -235,6 +248,7 @@ class Step1PrepareWhiteBeamModeImages:
         self.o_clean.cleaning_setup()
 
     def clean_images(self):
+        """updates: master_3d_data_array"""
         self.o_clean.cleaning()
 
     def how_to_visualize_after_cleaning(self):
@@ -253,6 +267,7 @@ class Step1PrepareWhiteBeamModeImages:
         self.o_norm.select_roi()
 
     def normalization(self):
+        """creates: normalized_images"""
         o_combine = CombineObDc(parent=self)
         o_combine.run()
         self.o_norm.normalize()
@@ -281,6 +296,7 @@ class Step1PrepareWhiteBeamModeImages:
         self.o_crop.set_region()
 
     def crop(self):
+        """updates: normalized_images"""
         self.o_crop.run()
 
     # rotate sample
@@ -289,6 +305,7 @@ class Step1PrepareWhiteBeamModeImages:
         self.o_rotate.set_settings()
 
     def apply_rotation(self):
+        """updates: normalized_images"""
         self.o_rotate.apply_rotation()
 
     def visualize_after_rotation(self):
@@ -297,55 +314,77 @@ class Step1PrepareWhiteBeamModeImages:
 
     # log conversion
     def log_conversion_and_cleaning(self):
-        self.normalized_images_log = log_conversion(self.normalized_images)
-        self.normalized_images_log = remove_negative_values(self.normalized_images_log[:])
+        """creates: corrected_images
+        """
+        normalized_images_log = log_conversion(self.normalized_images)
+        normalized_images_log = remove_negative_values(normalized_images_log[:])
+        self.corrected_images_log = normalized_images_log[:]
 
     def visualize_images_after_log(self):
         o_vizu = Visualization(parent=self)
         o_vizu.visualize_2_stacks(left=self.normalized_images, 
                                   vmin_left=0, 
                                   vmax_left=1,
-                                  right=self.normalized_images_log,
+                                  right=self.corrected_images_log,
                                   vmin_right=None,
                                   vmax_right=None,)
         
     # sinograms
     def create_sinograms(self):
-        self.sinogram_of_normalized_images = np.moveaxis(self.normalized_images_log, 1, 0)
+        """creates: sinogram_corrected_images_log"""
+        self.sinogram_corrected_images_log = np.moveaxis(self.corrected_images_log, 1, 0)
 
     def visualize_sinograms(self):
         o_vizu = Visualization(parent=self)
-        o_vizu.visualize_1_stack(data=self.sinogram_of_normalized_images,
+        o_vizu.visualize_1_stack(data=self.sinogram_corrected_images_log,
                                  title="Sinograms")
 
     # strips removal
     def select_remove_strips_algorithms(self):
-        self.corrected_images = self.normalized_images_log
         self.o_remove = RemoveStrips(parent=self)
         self.o_remove.select_algorithms()
 
     def define_settings(self):
         self.o_remove.define_settings()
 
-    def remove_strips_and_display(self):
-        self.o_remove.run()
+    def remove_strips(self):
+        """updates: corrected_images_log"""
+        self.o_remove.perform_cleaning()
 
-    # calculate center of rotation & tilt
+    def display_removed_strips(self):
+        self.o_removed.display()
+
+    # calculate and apply tilt
     def select_sample_roi(self):
-        if self.corrected_images is None:
-            self.corrected_images = self.normalized_images_log
+        self.o_tilt = CenterOfRotationAndTilt(parent=self)
+        self.o_tilt.select_range()
 
-        self.o_center_and_tilt = CenterOfRotationAndTilt(parent=self)
-        self.o_center_and_tilt.select_range()
+    def perform_tilt_correction(self):
+        """updates: corrected_images_log"""
+        self.o_tilt.run_tilt_correction()
 
-    def center_of_rotation_and_tilt_settings(self):
-        self.o_center_and_tilt.settings()
+    # calcualte center of rotation
+    def center_of_rotation_settings(self):       
+        if self.o_tilt is None:
+            self.o_tilt = CenterOfRotationAndTilt(parent=self)
+            self.o_tilt.isolate_0_180_360_degrees_images()
+        
+        self.o_tilt.center_of_rotation_settings()
 
-    def perform_center_of_rotation_and_tilt(self):
-        self.o_center_and_tilt.run()
+    def run_center_of_rotation(self):
+        """uses: corrected_images_log"""
+        self.o_tilt.run_center_of_rotation()
 
-    # def calculate_and_apply_center_of_rotation_and_tilt(self):
-    #     self.o_center_and_tilt.run()
+    def perform_calculation_of_center_of_rotation(self):
+        self.o_tilt.calculate_center_of_rotation()
+
+    # test reconstruction using gridrec (fast algorithm)
+    def select_slices_to_use_to_test_reconstruction(self):
+        self.o_test = TestReconstruction(parent=self)
+        self.o_test.select_slices()
+
+    def run_reconstruction_of_slices_to_test(self):
+        self.o_test.run_reconstruction()
 
     # select reconstruction method
     def select_reconstruction_method(self):

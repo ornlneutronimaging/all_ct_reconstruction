@@ -1,16 +1,18 @@
 import numpy as np
 import logging
-from neutompy.preproc.preproc import correction_COR
+from neutompy.preproc.preproc import correction_COR, find_COR
 import matplotlib.pyplot as plt
 from ipywidgets import interactive
 from IPython.display import display
 from IPython.core.display import HTML
 import ipywidgets as widgets
 from skimage.transform import rotate
+from algotom.prep.calculation import find_center_vo, find_center_360
 
 # from imars3d.backend.diagnostics.rotation import find_rotation_center
 
 from __code.parent import Parent
+from __code.config import NUM_THREADS
 from __code import DataType, Run, OperatingMode
 from __code.utilities.logging import logging_3d_array_infos
 
@@ -28,31 +30,17 @@ class CenterOfRotationAndTilt(Parent):
     image_180_degree = None
     image_360_degree = None
 
+    index_0_degree = 0
+    index_180_degree = 0
+    index_360_degree = 0
+
     manual_center_selection = None
 
-    is_manual_mode = True
+    is_manual_mode = False
 
     height = None
 
     display_plot = None
-
-    def settings(self):
-
-        if self.is_manual_mode:
-            value = 'Manual'
-        else:
-            value= 'Automatic'
-
-        self.auto_mode_ui = widgets.RadioButtons(options=['Automatic', 'Manual'],
-                                                 descriptions="Mode:",
-                                                 value=value)
-        display(self.auto_mode_ui)
-
-    def is_manual_mode(self):
-        try:
-            return self.auto_mode_ui.value == "Manual"
-        except AttributeError:
-            return "Manual"
 
     def _isolate_0_and_180_degrees_images_white_beam_mode(self):
         logging.info(f"\tisolating 0 and 180 degres: ")
@@ -66,38 +54,41 @@ class CenterOfRotationAndTilt(Parent):
 
         index_0_degree = 0
         index_180_degree = np.where(minimum_value == abs_angles_minus_180)[0][0]
+        self.index_180_degree = index_180_degree
+
         logging.info(f"\t{index_0_degree = }")
         logging.info(f"\t{index_180_degree = }")
 
         # retrieve data for those indexes
-        self.image_0_degree = self.parent.corrected_images[index_0_degree]
-        self.image_180_degree = self.parent.corrected_images[index_180_degree]
+        self.image_0_degree = self.parent.corrected_images_log[index_0_degree]
+        self.image_180_degree = self.parent.corrected_images_log[index_180_degree]
 
-    def _saving_0_180_360(self, list_of_angles):
-        self._saving_0_and_180(list_of_angles=list_of_angles)
-
+    def _saving_360(self, list_of_angles):
         angles_minus_360 = [float(_value) - 360 for _value in list_of_angles]
         abs_angles_minus_360 = np.abs(angles_minus_360)
         minimum_value = np.min(abs_angles_minus_360)
 
         index_360_degree = np.where(minimum_value == abs_angles_minus_360)[0][0]
-        self.image_360_degree = self.parent.corrected_images[index_360_degree]
+        self.index_360_degree = index_360_degree
+        self.image_360_degree = self.parent.corrected_images_log[index_360_degree]
         logging.info(f"\t{index_360_degree = }")
 
+    def isolate_0_180_360_degrees_images(self):
+        list_of_angles = self.parent.final_list_of_angles
+        self._saving_0_and_180(list_of_angles)
+        self._saving_360(list_of_angles)
+
     def _isolate_0_and_180_degrees_images(self):
-        list_of_runs_to_use = self.parent.list_of_runs_to_use[DataType.sample]
-        logging.info(f"\t{list_of_runs_to_use = }")
-        list_of_angles = np.array([self.parent.list_of_runs[DataType.sample][_key][Run.angle] for _key in list_of_runs_to_use])
-        self.parent.final_list_of_angles = list_of_angles
+        list_of_angles = self.parent.final_list_of_angles = list_of_angles
         self._saving_0_and_180(list_of_angles)
 
     def select_range(self):
         if self.parent.MODE == OperatingMode.tof:
-            self._isolate_0_and_180_degrees_images()
+            self.isolate_0_180_360_degrees_images()
         else:
             self._isolate_0_and_180_degrees_images_white_beam_mode()
 
-        height = self.parent.image_size['height']
+        height, _ = np.shape(self.image_0_degree)
 
         def plot_range(y_top, y_bottom):
             _, axs = plt.subplots(nrows=1, ncols=2, figsize=(10,5))
@@ -126,11 +117,64 @@ class CenterOfRotationAndTilt(Parent):
 
         display(self.display_plot)
 
-    def run(self):
-        if self.auto_mode_ui.value == 'Automatic':
-            self.calculate_using_neutompy()
+    # ---- tilt correction ----
+    def run_tilt_correction(self):
+        self.calculate_and_applyt_tilt_using_neutompy()
+
+    def calculate_tilt(self):
+        proj_crop_min = np.min(self.parent.corrected_images_log, axis=0)
+        pixel_offset, tilt_angle = find_COR(self.image_0_degree, 
+                                            self.image_180_degree,
+                                            nroi=1,
+                                            ref_proj=proj_crop_min)
+
+        print(f"pixel_offset = {pixel_offset}")
+        print(f"{tilt_angle = }")
+
+    def calculate_and_applyt_tilt_using_neutompy(self):
+        
+        # retrieve index of 0 and 180degrees runs
+        logging.info(f"calculate and apply titl correction:")
+
+        logging_3d_array_infos(message="before", array=self.parent.corrected_images_log)
+
+        corrected_images = np.array(self.parent.corrected_images_log) if type(self.parent.corrected_images_log) == list else self.parent.corrected_images_log
+
+        y_top, y_bottom = self.display_plot.result
+
+        # update configuration
+        self.parent.configuration.range_of_slices_for_center_of_rotation = list([y_top, y_bottom])
+
+        mid_point = int(np.mean([y_top, y_bottom]))
+        rois = ((y_top, mid_point+1), (mid_point, y_bottom))
+
+        corrected_images = correction_COR(corrected_images,
+                       np.array(self.image_0_degree),
+                       np.array(self.image_180_degree),
+                       shfit=0,
+                       rois=rois)
+        logging.info(f"{np.shape(corrected_images) =}")
+        self.parent.corrected_images_log = corrected_images
+
+        logging_3d_array_infos(message="after", array=self.parent.corrected_images_log)
+
+    #  ---- center of rotation -----
+    def center_of_rotation_settings(self):
+        if self.is_manual_mode:
+            value = 'Manual'
         else:
-            self.using_manual_mode()
+            value= 'Automatic'
+
+        self.auto_mode_ui = widgets.RadioButtons(options=['Automatic', 'Manual'],
+                                                 descriptions="Mode:",
+                                                 value=value)
+        display(self.auto_mode_ui)
+    
+    # def is_manual_mode(self):
+    #     try:
+    #         return self.auto_mode_ui.value == "Manual"
+    #     except AttributeError:
+    #         return "Manual"
 
     def using_manual_mode(self):
         self.manual_center_of_rotation()
@@ -142,7 +186,7 @@ class CenterOfRotationAndTilt(Parent):
     def manual_center_of_rotation(self):
         display(HTML("Center of rotation"))
 
-        width = self.parent.image_size['width']
+        _, width = np.shape(self.image_0_degree)
         vmax = np.max([self.image_0_degree, self.image_180_degree, self.image_360_degree])
 
         def plot_images(angles, center, v_range):
@@ -177,7 +221,7 @@ class CenterOfRotationAndTilt(Parent):
                                    angles=widgets.SelectMultiple(options=[ImageAngles.degree_0, ImageAngles.degree_180, ImageAngles.degree_360],
                                                                       value=[ImageAngles.degree_0, ImageAngles.degree_180]),
                                    center=widgets.IntSlider(min=0, 
-                                                                      max=width-1, 
+                                                                      max=int(width-1), 
                                                                       layout=widgets.Layout(width="100%"),
                                                                       value=int(width/2)),
                                     v_range = widgets.FloatRangeSlider(min=0,
@@ -188,84 +232,88 @@ class CenterOfRotationAndTilt(Parent):
                                     )                                                                     
         display(self.manual_center_selection)
 
-    # def manual_tilt_correction(self):
-    #     display(HTML("Tilt correction"))
-
-    #     width = self.parent.image_size['width']
-    #     vmax = np.max([self.image_0_degree, self.image_180_degree, self.image_360_degree])
-
-    #     def plot_images(angles, tilt, verti_guide, guide_width, v_range):
-    #         _, axs = plt.subplots(nrows=1, ncols=1, figsize=(8, 8))
-
-    #         at_least_one_image_selected = False
-    #         list_images = []
-    #         if ImageAngles.degree_0 in angles:
-    #             list_images.append(self.image_0_degree)
-    #             at_least_one_image_selected = True
-    #         if ImageAngles.degree_180 in angles:
-    #             list_images.append(self.image_180_degree)
-    #             at_least_one_image_selected = True
-    #         if ImageAngles.degree_360 in angles:
-    #             list_images.append(self.image_360_degree)
-    #             at_least_one_image_selected = True
-
-    #         if not at_least_one_image_selected:
-    #             return
-
-    #         if len(list_images) > 1:
-    #             final_image = np.mean(np.array(list_images), axis=0)
-    #         else:
-    #             final_image = list_images[0]
-
-    #         rotated_image = 
-
-    #         axs.imshow(final_image, vmin=v_range[0], vmax=v_range[1])
-    #         axs.axvline(verti_guide, color='blue', linestyle='--')
-    #         axs.axvline(verti_guide-int(guide_width/2), color='yellow')
-    #         axs.axvline(verti_guide+int(guide_width/2), color='yellow')
-
-    #     display_plot = interactive(plot_images,
-    #                                angles=widgets.SelectMultiple(options=[ImageAngles.degree_0, ImageAngles.degree_180, ImageAngles.degree_360],
-    #                                                                   value=[ImageAngles.degree_0, ImageAngles.degree_180]),
-    #                                tilt=widgets.FloatSlider(min=-5, max=5, value=0, step=0.01),
-    #                                verti_guide=widgets.IntSlider(min=0, 
-    #                                                                   max=width-1, 
-    #                                                                   value=int(width/2)),
-    #                                 guide_width = widgets.IntSlider(min=0,
-    #                                                                max=width,
-    #                                                                value=30),
-    #                                 v_range = widgets.FloatRangeSlider(min=0,
-    #                                                                    max=vmax,
-    #                                                                    value=[0, vmax]),
-    #                                 )                                                                     
-    #     display(display_plot)
-
-
-    def calculate_using_neutompy(self):
-        
-        # retrieve index of 0 and 180degrees runs
-        logging.info(f"calculate center of rotation:")
-
-        logging_3d_array_infos(message="before", array=self.parent.corrected_images)
-
-        corrected_images = np.array(self.parent.corrected_images) if type(self.parent.corrected_images) == list else self.parent.corrected_images
-
-        y_top, y_bottom = self.display_plot.result
-
-        # update configuration
-        self.parent.configuration.range_of_slices_for_center_of_rotation = list([y_top, y_bottom])
-
-        mid_point = int(np.mean([y_top, y_bottom]))
-        rois = ((y_top, mid_point+1), (mid_point, y_bottom))
-
-        corrected_images = correction_COR(corrected_images,
-                       np.array(self.image_0_degree),
-                       np.array(self.image_180_degree),
-                       rois=rois)
-        logging.info(f"{np.shape(corrected_images) =}")
-        self.parent.corrected_images = corrected_images
-
-        logging_3d_array_infos(message="after", array=self.parent.corrected_images)
+    def run_center_of_rotation(self):
+        if self.auto_mode_ui.value == "Manual":
+            self.manual_center_of_rotation()
+        else:
+            self.select_180_or_360_degree_mode()
 
         # update configuration
         self.parent.configuration.calculate_center_of_rotation = True
+
+    def select_180_or_360_degree_mode(self):
+        image_0_degree = self.image_0_degree
+        image_180_degree = self.image_180_degree
+        image_360_degree = self.image_360_degree
+
+        height, _ = np.shape(image_0_degree)
+        self.slide_value = int(height/2)
+
+        display(widgets.HTML("Select the slice to use to calculate the center of rotation"))
+
+        def plot_images(slice_value=int(height/2)):
+
+            fig, axs = plt.subplots(nrows=1, ncols=3, figsize=(15,5))
+            axs[0].imshow(image_0_degree, cmap='viridis')
+            axs[0].set_title("0 degree")
+            axs[0].axhline(slice_value, color='blue', linestyle='--')
+
+            axs[1].imshow(image_180_degree, cmap='viridis')
+            axs[1].set_title(f"{self.parent.final_list_of_angles[self.index_180_degree]} degree")
+            axs[1].axhline(slice_value, color='blue', linestyle='--')
+
+            axs[2].imshow(image_360_degree, cmap='viridis')
+            axs[2].set_title(f"{self.parent.final_list_of_angles[self.index_360_degree]} degree")
+            axs[2].axhline(slice_value, color='blue', linestyle='--')
+
+            plt.tight_layout()
+
+            return slice_value
+
+        self.plot_slice_to_use = interactive(plot_images,
+                                             slice_value = widgets.IntSlider(min=0, max=height-1, value=int(height/2)))
+        display(self.plot_slice_to_use)
+
+        display(widgets.HTML("Horizontal line shows the slide used to calculate the center of rotation"))
+        display(widgets.HTML("<hr>"))
+
+        display(widgets.HTML("Do you want to use all the data from 0 to 180, or 0 to 360 degrees to calculate the center of rotation?"))
+        self.cor_selection = widgets.RadioButtons(options=["180 degree", "360 degree"],
+                                         descriptions="Select mode:")
+        display(self.cor_selection)
+
+    def calculate_center_of_rotation(self):
+        self.calc_cor_with_algotom()
+
+    def calc_cor_with_algotom(self):
+        print("in calculate_center_of_rotation_using_algotom")
+        print(f"{self.auto_mode_ui.value = }")
+
+        if self.auto_mode_ui.value == "Manual":
+            return
+        
+        logging.info(f"calculate center of rotation using algotom (auto mode)")
+        logging.info(f"\tmode selected: {self.cor_selection.value}")
+
+        logging.info(f"\tworking with sinogram in log mode!")
+        sinogram_of_normalized_images_log = np.moveaxis(self.parent.corrected_images_log, 1, 0) # [slice, angle, width]
+        logging.info(f"{np.shape(sinogram_of_normalized_images_log) = }")
+
+        slice_value = self.plot_slice_to_use.result
+
+        if self.cor_selection.value == "180 degree":
+            center_of_rotation = find_center_vo(sinogram_of_normalized_images_log[self.slide_value][0:slice_value],
+                                                ncore=NUM_THREADS)
+        else:
+            try:
+                center_of_rotation = find_center_360(sinogram_of_normalized_images_log[self.slide_value][:],
+                                                    win_width=800,
+                                                    ncore=NUM_THREADS)
+            except ValueError as e:
+                logging.error(f"Error: {e}")
+                logging.info(f"Error: {e}")
+                center_of_rotation = None
+       
+        logging.info(f"center of rotation = {center_of_rotation}")
+        self.parent.configuration.center_of_rotation = center_of_rotation
+    

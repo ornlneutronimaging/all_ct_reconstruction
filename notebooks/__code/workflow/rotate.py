@@ -46,8 +46,6 @@ class Rotate(Parent):
 
     def _worker(self, _data, angle_value):
         data = transform.rotate(_data, angle_value)
-        print(f"{np.shape(data) = }")
-        print(f"{data = }")
         return data
 
     def apply_rotation(self):

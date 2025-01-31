@@ -321,10 +321,10 @@ class RemoveStrips:
         list_algo_to_use = self.list_to_use_widget.options
         logging.info(f"Strip cleaning:")
 
-        self.parent.before_corrected_images = self.parent.corrected_images      
+        self.parent.before_corrected_images = self.parent.corrected_images_log[:]  
 
         if list_algo_to_use:
-            tomography_array = np.array(self.parent.corrected_images)
+            tomography_array = np.array(self.parent.corrected_images_log)
             logging.info(f"\t{type(tomography_array) =}")
             print(f"{np.shape(tomography_array) = }")
             list_algo_that_failed = []
@@ -344,7 +344,7 @@ class RemoveStrips:
                 list_algo_that_failed.append(_algo)
 
             self.nothing_to_display = False
-            self.parent.corrected_images = tomography_array
+            self.parent.corrected_images_log = tomography_array
         
             if list_algo_that_failed:
                 display(HTML("<font color=red><b>List of algo that failed:</b></font>"))
@@ -366,10 +366,10 @@ class RemoveStrips:
         if self.nothing_to_display:
             return
 
-        corrected_images_before = self.parent.corrected_images
+        corrected_images_before = self.parent.before_corrected_images
         sinogram_before = self.calculate_sinogram(corrected_images_before)
 
-        corrected_images_after = self.parent.corrected_images
+        corrected_images_after = self.parent.corrected_images_log
         sinogram_after = self.calculate_sinogram(corrected_images_after)
 
         nbr_projections, height, _ = np.shape(corrected_images_after)

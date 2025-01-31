@@ -336,9 +336,9 @@ class Visualization(Parent):
             if self.vmax is None:
                 self.vmax = np.max(data[index])
 
-            im = axs.imshow(data[index])
+            im = axs.imshow(data[index], vmin=self.vmin, vmax=self.vmax)
             axs.set_title(title)
-            plt.colorbar(im, ax=axs, vmin=self.vmin, vmax=self.vmax, shrink=0.5)
+            plt.colorbar(im, ax=axs, shrink=0.5)
 
             plt.tight_layout()
             

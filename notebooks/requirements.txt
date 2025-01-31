@@ -29,3 +29,8 @@
 # > cd eval "$(micromamba shell hook --shell bash)"
 # > micromamba activate hsnt_py310
 # > pip install .
+
+
+### warning !!!!!!
+# only works with local version of neutompy as I had to modify it to remove interactivity 
+# when calculating the tilt !!!!!

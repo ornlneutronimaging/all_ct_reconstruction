@@ -146,7 +146,6 @@ class Load(Parent):
         display(widgets.HTML("<hr>"))
         self.widget_angle = widgets.Label("")
         display(widgets.HBox([widgets.Label("Angle value:"), self.widget_angle]))
-       
 
     def get_list_index_of_checkboxes(self):
         self.parent.list_states_checkbox = [x.value for x in self.list_checkboxes]
@@ -212,6 +211,8 @@ class Load(Parent):
             list_of_angles.append(angle_value)
 
         self.parent.final_list_of_angles = np.array(list_of_angles)
+        list_of_angles_rad = np.array([np.deg2rad(float(_angle)) for _angle in list_of_angles])
+        self.parent.final_list_of_angles_rad = list_of_angles_rad
 
     def load_white_beam_data(self):
         """ from white beam notebook """
