@@ -17,7 +17,7 @@ from __code.workflow.images_cleaner import ImagesCleaner
 from __code.workflow.normalization import Normalization
 from __code.workflow.chips_correction import ChipsCorrection
 from __code.workflow.log_conversion import log_conversion
-from __code.workflow.data_handler import remove_negative_values
+from __code.workflow.data_handler import remove_negative_values, remove_0_values
 from __code.workflow.center_of_rotation_and_tilt import CenterOfRotationAndTilt
 from __code.workflow.remove_strips import RemoveStrips
 from __code.workflow.svmbir_handler import SvmbirHandler
@@ -29,6 +29,7 @@ from __code.workflow.rotate import Rotate
 from __code.workflow.crop import Crop
 from __code.workflow.test_reconstruction import TestReconstruction
 from __code.utilities.configuration_file import ReconstructionAlgorithm
+from __code.utilities.logging import logging_3d_array_infos
 
 LOG_BASENAME_FILENAME, _ = os.path.splitext(os.path.basename(__file__))
 
@@ -316,10 +317,14 @@ class Step1PrepareCcdImages:
     def log_conversion_and_cleaning(self):
         """creates: corrected_images_log
         """
-        normalized_images_log = log_conversion(self.normalized_images)
+        normalized_images_log = log_conversion(self.normalized_images[:])
+        o_cleaner = ImagesCleaner(parent=self)
+        normalized_images_log = o_cleaner.remove_outliers(normalized_images_log[:])
         normalized_images_log = remove_negative_values(normalized_images_log[:])
+
         # self.corrected_images_log = normalized_images_log[:]
         self.normalized_images_log = normalized_images_log[:]
+        logging_3d_array_infos(array=normalized_images_log, message="normalized_images_log")
 
     def visualize_images_after_log(self):
         o_vizu = Visualization(parent=self)

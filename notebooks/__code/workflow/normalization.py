@@ -189,7 +189,7 @@ class Normalization(Parent):
                 ob_roi_counts = np.sum(ob_data_combined[top: bottom+1, left: right+1])
                 coeff *= ob_roi_counts / sample_roi_counts
 
-            logging.info("coeff for normalization = {}".format(coeff))
+            # logging.info("coeff for normalization = {}".format(coeff))
 
             if not (dc_data_combined is None):
                 num = sample_data - dc_data_combined
@@ -222,6 +222,7 @@ class Normalization(Parent):
         normalized_data = tomopy.misc.corr.remove_neg(normalized_data, val=0, ncore=NUM_THREADS)
 
         self.parent.normalized_images = np.squeeze(np.asarray(normalized_data, dtype=np.float32))
+        logging_3d_array_infos(message="normalized images", array=self.parent.normalized_images)
 
     # def visualization_normalization_settings(self):
     #     self.display_ui = widgets.ToggleButtons(options=['1 image at a time',

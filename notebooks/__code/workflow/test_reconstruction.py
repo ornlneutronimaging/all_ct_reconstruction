@@ -78,7 +78,7 @@ class TestReconstruction(Parent):
         fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(7, 7))
 
         im0 = ax.imshow(reconstructed_slice, cmap='viridis')
-        plt.colorbar(im0, ax=ax[0], shrink=0.5)
+        plt.colorbar(im0, ax=ax, shrink=0.5)
         ax.set_title(f"Slice: {slice_number}")
         ax.axis('off')
 
