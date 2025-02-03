@@ -19,6 +19,7 @@ from __code.workflow.load import Load
 from __code.workflow.export import Export
 from __code.utilities.files import make_or_reset_folder
 from __code.utilities.images import replace_pixels
+from __code.utilities.logging import logging_3d_array_infos
 from __code.workflow.data_handler import remove_negative_values
 
 
@@ -172,10 +173,21 @@ class ImagesCleaner(Parent):
         logging.info(f"cleaning using median filter ...")
         _size = (1, 3, 3)
 
+        # sample
+        logging_3d_array_infos(message="before scipy cleaning of sample", array=self.parent.master_3d_data_array[DataType.sample])
         self.parent.master_3d_data_array[DataType.sample] = np.array(median_filter(self.parent.master_3d_data_array[DataType.sample], size=_size))
+        logging_3d_array_infos(message="after scipy cleaning of sample", array=self.parent.master_3d_data_array[DataType.sample])
+        
+        # ob
+        logging_3d_array_infos(message="before scipy cleaning of ob", array=self.parent.master_3d_data_array[DataType.ob])       
         self.parent.master_3d_data_array[DataType.ob] = np.array(median_filter(self.parent.master_3d_data_array[DataType.ob], size=_size))
+        logging_3d_array_infos(message="after scipy cleaning of ob", array=self.parent.master_3d_data_array[DataType.ob])       
+
         if self.parent.list_of_images[DataType.dc]:
+            logging_3d_array_infos(message="before scipy cleaning of dc", array=self.parent.master_3d_data_array[DataType.dc])       
             self.parent.master_3d_data_array[DataType.dc] = np.array(median_filter(self.parent.master_3d_data_array[DataType.dc], size=_size))
+            logging_3d_array_infos(message="after scipy cleaning of dc", array=self.parent.master_3d_data_array[DataType.dc])       
+        
         logging.info(f"cleaning using median filter ... done!")
 
     def cleaning_with_tomopy(self):
@@ -187,21 +199,27 @@ class ImagesCleaner(Parent):
         logging.info(f"cleaning using tomopy ...")
         sample_data = np.array(self.parent.master_3d_data_array[DataType.sample])
 
+        logging_3d_array_infos(message="before tomopy cleaning of sample", array=self.parent.master_3d_data_array[DataType.sample])
         sample_data = np.array(self.parent.master_3d_data_array[DataType.sample])
         cleaned_sample = remove_outlier(sample_data, self.tomopy_diff.value, ncore=NUM_THREADS).astype(np.ushort)
         #cleaned_sample = gamma_filter(arrays=sample_data, diff_tomopy=self.tomopy_diff.value)
         self.parent.master_3d_data_array[DataType.sample] = cleaned_sample[:]
-                
+        logging_3d_array_infos(message="after tomopy cleaning of sample", array=self.parent.master_3d_data_array[DataType.sample])
+
+        logging_3d_array_infos(message="before tomopy cleaning of ob", array=self.parent.master_3d_data_array[DataType.ob])
         ob_data = np.array(self.parent.master_3d_data_array[DataType.ob])
         cleaned_ob = remove_outlier(ob_data, self.tomopy_diff.value, ncore=NUM_THREADS).astype(np.ushort)
         # cleaned_ob = gamma_filter(arrays=ob_data, diff_tomopy=self.tomopy_diff.value)
         self.parent.master_3d_data_array[DataType.ob] = cleaned_ob[:]
+        logging_3d_array_infos(message="after tomopy cleaning of ob", array=self.parent.master_3d_data_array[DataType.ob])
 
         if self.parent.list_of_images[DataType.dc]:
+            logging_3d_array_infos(message="before tomopy cleaning of dc", array=self.parent.master_3d_data_array[DataType.dc])
             dc_data = np.array(self.parent.master_3d_data_array[DataType.dc])
             cleaned_dc = remove_outlier(dc_data, self.tomopy_diff.value, ncore=NUM_THREADS).astype(np.ushort)
             # cleaned_dc = gamma_filter(arrays=dc_data, diff_tomopy=self.tomopy_diff.value)
             self.parent.master_3d_data_array[DataType.dc] = cleaned_dc[:]
+            logging_3d_array_infos(message="after tomopy cleaning of dc", array=self.parent.master_3d_data_array[DataType.dc])
 
         logging.info(f"cleaning using tomopy ... done!")
             
@@ -233,6 +251,7 @@ class ImagesCleaner(Parent):
 
             logging.info(f"\tcleaning sample ...")
             cleaned_sample_data = []
+            logging_3d_array_infos(message="before histogram cleaning of sample", array=self.parent.master_3d_data_array[DataType.sample])
             for _data in tqdm(sample_data):
                 cleaned_im = replace_pixels(im=_data.copy(),
                                             nbr_bins=self.nbr_bins,
@@ -241,9 +260,11 @@ class ImagesCleaner(Parent):
                                             correct_radius=self.r)
                 cleaned_sample_data.append(cleaned_im)          
             self.parent.master_3d_data_array[DataType.sample] = np.array(cleaned_sample_data)
+            logging_3d_array_infos(message="after histogram cleaning of sample", array=self.parent.master_3d_data_array[DataType.sample])
             logging.info(f"\tcleaned sample!")
 
             logging.info(f"\tcleaning ob ...")
+            logging_3d_array_infos(message="before histogram cleaning of ob", array=self.parent.master_3d_data_array[DataType.ob])
             cleaned_ob_data = []
             for _data in tqdm(ob_data):
                 cleaned_im = replace_pixels(im=_data.copy(),
@@ -253,6 +274,7 @@ class ImagesCleaner(Parent):
                                             correct_radius=self.r)
                 cleaned_ob_data.append(cleaned_im)          
             self.parent.master_3d_data_array[DataType.ob] = np.array(cleaned_ob_data)
+            logging_3d_array_infos(message="after histogram cleaning of ob", array=self.parent.master_3d_data_array[DataType.ob])
             logging.info(f"\tcleaned ob!")
 
         # dislay result of cleaning
@@ -290,7 +312,6 @@ class ImagesCleaner(Parent):
         o_load.select_folder(data_type=DataType.cleaned_images)
     
     def export_clean_images(self):
-        
         logging.info(f"Exporting the cleaned images")
         logging.info(f"\tfolder selected: {self.parent.working_dir[DataType.cleaned_images]}")
 

@@ -239,7 +239,7 @@ class Step1PrepareCcdImages:
         """updates: master_3d_data_array"""
         self.o_crop1.run()
 
-    # cleaning low/high pixels
+    # cleaning low/high pixels - remove outliers
     def clean_images_settings(self):
         self.o_clean = ImagesCleaner(parent=self)
         self.o_clean.settings()
@@ -314,29 +314,30 @@ class Step1PrepareCcdImages:
 
     # log conversion
     def log_conversion_and_cleaning(self):
-        """creates: corrected_images
+        """creates: corrected_images_log
         """
         normalized_images_log = log_conversion(self.normalized_images)
         normalized_images_log = remove_negative_values(normalized_images_log[:])
-        self.corrected_images_log = normalized_images_log[:]
+        # self.corrected_images_log = normalized_images_log[:]
+        self.normalized_images_log = normalized_images_log[:]
 
     def visualize_images_after_log(self):
         o_vizu = Visualization(parent=self)
         o_vizu.visualize_2_stacks(left=self.normalized_images, 
                                   vmin_left=0, 
                                   vmax_left=1,
-                                  right=self.corrected_images_log,
+                                  right=self.normalized_images_log,
                                   vmin_right=None,
                                   vmax_right=None,)
         
     # sinograms
     def create_sinograms(self):
-        """creates: sinogram_corrected_images_log"""
-        self.sinogram_corrected_images_log = np.moveaxis(self.corrected_images_log, 1, 0)
+        """creates: sinogram_normalized_images_log"""
+        self.sinogram_normalized_images_log = np.moveaxis(self.normalized_images_log, 1, 0)
 
     def visualize_sinograms(self):
         o_vizu = Visualization(parent=self)
-        o_vizu.visualize_1_stack(data=self.sinogram_corrected_images_log,
+        o_vizu.visualize_1_stack(data=self.sinogram_normalized_images_log,
                                  title="Sinograms")
 
     # strips removal
@@ -348,11 +349,11 @@ class Step1PrepareCcdImages:
         self.o_remove.define_settings()
 
     def remove_strips(self):
-        """updates: corrected_images_log"""
+        """updates: normalized_images_log"""
         self.o_remove.perform_cleaning()
 
     def display_removed_strips(self):
-        self.o_removed.display()
+        self.o_remove.display()
 
     # calculate and apply tilt
     def select_sample_roi(self):
@@ -360,19 +361,18 @@ class Step1PrepareCcdImages:
         self.o_tilt.select_range()
 
     def perform_tilt_correction(self):
-        """updates: corrected_images_log"""
+        """updates: normalized_images_log"""
         self.o_tilt.run_tilt_correction()
 
     # calcualte center of rotation
     def center_of_rotation_settings(self):       
         if self.o_tilt is None:
             self.o_tilt = CenterOfRotationAndTilt(parent=self)
-            self.o_tilt.isolate_0_180_360_degrees_images()
-        
+        self.o_tilt.isolate_0_180_360_degrees_images()
         self.o_tilt.center_of_rotation_settings()
 
     def run_center_of_rotation(self):
-        """uses: corrected_images_log"""
+        """uses: normalized_images_log"""
         self.o_tilt.run_center_of_rotation()
 
     def perform_calculation_of_center_of_rotation(self):
@@ -380,6 +380,7 @@ class Step1PrepareCcdImages:
 
     # test reconstruction using gridrec (fast algorithm)
     def select_slices_to_use_to_test_reconstruction(self):
+        """uses: normalized_images_log"""
         self.o_test = TestReconstruction(parent=self)
         self.o_test.select_slices()
 
@@ -393,8 +394,8 @@ class Step1PrepareCcdImages:
 
     # run svmbir
     def reconstruction_settings(self):
-        if self.corrected_images is None:
-            self.corrected_images = self.normalized_images_log
+        # if self.corrected_images is None:
+        #     self.corrected_images = self.normalized_images_log
         
         if ReconstructionAlgorithm.svmbir in self.configuration.reconstruction_algorithm:
             self.o_svmbir = SvmbirHandler(parent=self)

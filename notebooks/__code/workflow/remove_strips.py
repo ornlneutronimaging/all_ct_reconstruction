@@ -12,6 +12,7 @@ from ipywidgets import interactive
 
 from __code import DataType, RemoveStripeAlgo, OperatingMode
 from __code.utilities import configuration_file
+from __code.utilities.logging import logging_3d_array_infos
 
 
 class RemoveStrips:
@@ -321,10 +322,14 @@ class RemoveStrips:
         list_algo_to_use = self.list_to_use_widget.options
         logging.info(f"Strip cleaning:")
 
-        self.parent.before_corrected_images = self.parent.corrected_images_log[:]  
+        self.parent.before_normalized_images = self.parent.normalized_images_log[:]  
 
         if list_algo_to_use:
-            tomography_array = np.array(self.parent.corrected_images_log)
+
+            logging_3d_array_infos(array=self.parent.before_normalized_images,
+                               message="before removing strips cleaning")
+        
+            tomography_array = np.array(self.parent.normalized_images_log)
             logging.info(f"\t{type(tomography_array) =}")
             print(f"{np.shape(tomography_array) = }")
             list_algo_that_failed = []
@@ -344,7 +349,7 @@ class RemoveStrips:
                 list_algo_that_failed.append(_algo)
 
             self.nothing_to_display = False
-            self.parent.corrected_images_log = tomography_array
+            self.parent.normalized_images_log = tomography_array
         
             if list_algo_that_failed:
                 display(HTML("<font color=red><b>List of algo that failed:</b></font>"))
@@ -355,9 +360,12 @@ class RemoveStrips:
                 for _algo in list_algo_that_worked:
                     display(HTML(f"<font color=green> * {_algo}</font>"))
         
+            logging_3d_array_infos(array=self.parent.before_normalized_images,
+                               message="after removing strips cleaning")
+
         else:
             logging.info(f"\tskipped!")
-            
+                  
     @staticmethod
     def run_algo(name_of_algo, array, **kwargs):
         return name_of_algo(array, **kwargs)
@@ -366,13 +374,13 @@ class RemoveStrips:
         if self.nothing_to_display:
             return
 
-        corrected_images_before = self.parent.before_corrected_images
-        sinogram_before = self.calculate_sinogram(corrected_images_before)
+        normalized_images_before = self.parent.before_normalized_images
+        sinogram_before = self.calculate_sinogram(normalized_images_before)
 
-        corrected_images_after = self.parent.corrected_images_log
-        sinogram_after = self.calculate_sinogram(corrected_images_after)
+        normalized_images_after = self.parent.normalized_images_log
+        sinogram_after = self.calculate_sinogram(normalized_images_after)
 
-        nbr_projections, height, _ = np.shape(corrected_images_after)
+        nbr_projections, height, _ = np.shape(normalized_images_after)
 
         final_list_of_angles = self.parent.list_of_angles_to_use_sorted
         final_list_of_runs = self.parent.list_of_runs_to_use[DataType.sample]
@@ -391,11 +399,11 @@ class RemoveStrips:
             if self.parent.MODE == OperatingMode.tof:
                 fig.suptitle(f"Run: {final_list_of_runs[image_index]}, Angle: {final_list_of_angles[image_index]}")
 
-            axs[0][0].imshow(corrected_images_before[image_index], vmin=0, vmax=1)
+            axs[0][0].imshow(normalized_images_before[image_index], vmin=0, vmax=1)
             axs[0][0].set_title("Before correction")
             axs[0][0].axhline(slice_index, color='red', linestyle='--')
 
-            axs[0][1].imshow(corrected_images_after[image_index], vmin=0, vmax=1)
+            axs[0][1].imshow(normalized_images_after[image_index], vmin=0, vmax=1)
             axs[0][1].set_title("After correction")
             axs[0][1].axhline(slice_index, color='red', linestyle='--')
 
@@ -408,11 +416,11 @@ class RemoveStrips:
             axs2[0][3].imshow(sinogram_before[slice_index] - sinogram_after[slice_index])
             axs2[0][3].set_title("Difference (before - after)")
 
-            # axs0.imshow(corrected_images_before[image_index], vmin=0, vmax=1)
+            # axs0.imshow(normalized_images_before[image_index], vmin=0, vmax=1)
             # axs0.set_title("Before correction")
             # axs0.axhline(slice_index, color='red', linestyle='--')
 
-            # axs1.imshow(corrected_images_after[image_index], vmin=0, vmax=1)
+            # axs1.imshow(normalized_images_after[image_index], vmin=0, vmax=1)
             # axs1.set_title("After correction")
             # axs1.axhline(slice_index, color='red', linestyle='--')
 

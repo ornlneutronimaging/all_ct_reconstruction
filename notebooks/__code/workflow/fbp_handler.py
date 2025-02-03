@@ -31,7 +31,7 @@ class FbpHandler(Parent):
 
         logging.info(f"Preparing reconstruction data to export json and projections")
 
-        corrected_array = self.parent.corrected_images
+        corrected_array = self.parent.normalized_images_log
         height, width = np.shape(corrected_array[0])
 
         list_of_angles = np.array(self.parent.final_list_of_angles)
