@@ -45,7 +45,7 @@ class CenterOfRotationAndTilt(Parent):
     def _isolate_0_and_180_degrees_images_white_beam_mode(self):
         logging.info(f"\tisolating 0 and 180 degres: ")
         list_of_angles = self.parent.final_list_of_angles
-        self._saving_0_180_360(list_of_angles)
+        self._saving_0_and_180(list_of_angles)
 
     def _saving_0_and_180(self, list_of_angles):
         angles_minus_180 = [float(_value) - 180 for _value in list_of_angles]
@@ -151,7 +151,7 @@ class CenterOfRotationAndTilt(Parent):
         corrected_images = correction_COR(corrected_images,
                        np.array(self.image_0_degree),
                        np.array(self.image_180_degree),
-                       shfit=0,
+                       shift=0,
                        rois=rois)
         logging.info(f"{np.shape(corrected_images) =}")
         self.parent.corrected_images_log = corrected_images
@@ -286,8 +286,6 @@ class CenterOfRotationAndTilt(Parent):
         self.calc_cor_with_algotom()
 
     def calc_cor_with_algotom(self):
-        print("in calculate_center_of_rotation_using_algotom")
-        print(f"{self.auto_mode_ui.value = }")
 
         if self.auto_mode_ui.value == "Manual":
             return

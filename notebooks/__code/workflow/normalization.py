@@ -72,7 +72,7 @@ class Normalization(Parent):
         #                                  description='Use frames',
         #                                  disabled=True,
         #                                  )
-        self.use_roi_ui = widgets.Checkbox(value=True,
+        self.use_roi_ui = widgets.Checkbox(value=False,
                                       description='Use ROI (sample / ob)')
         self.use_sample_roi_ui = widgets.Checkbox(value=False,
                                         description='Use ROI (sample)')

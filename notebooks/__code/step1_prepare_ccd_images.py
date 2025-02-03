@@ -33,7 +33,7 @@ from __code.utilities.configuration_file import ReconstructionAlgorithm
 LOG_BASENAME_FILENAME, _ = os.path.splitext(os.path.basename(__file__))
 
 
-class Step1PrepareWhiteBeamModeImages:
+class Step1PrepareCcdImages:
 
     MODE = OperatingMode.white_beam
 

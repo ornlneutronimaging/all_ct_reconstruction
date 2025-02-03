@@ -65,6 +65,5 @@ class TestReconstruction(Parent):
                                                  pad=100,
                                                  ncore=NUM_THREADS)
             reconstructed_slices.append(_rec_img)
-            logging.info(f"\tdone!)
+            logging.info(f"\tdone!")
       
-        
