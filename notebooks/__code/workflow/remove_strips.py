@@ -399,22 +399,22 @@ class RemoveStrips:
             if self.parent.MODE == OperatingMode.tof:
                 fig.suptitle(f"Run: {final_list_of_runs[image_index]}, Angle: {final_list_of_angles[image_index]}")
 
-            axs[0][0].imshow(normalized_images_before[image_index], vmin=0, vmax=1)
-            axs[0][0].set_title("Before correction")
-            axs[0][0].axhline(slice_index, color='red', linestyle='--')
+            axs[0].imshow(normalized_images_before[image_index], vmin=0, vmax=1)
+            axs[0].set_title("Before correction")
+            axs[0].axhline(slice_index, color='red', linestyle='--')
 
-            axs[0][1].imshow(normalized_images_after[image_index], vmin=0, vmax=1)
-            axs[0][1].set_title("After correction")
-            axs[0][1].axhline(slice_index, color='red', linestyle='--')
+            axs[1].imshow(normalized_images_after[image_index], vmin=0, vmax=1)
+            axs[1].set_title("After correction")
+            axs[1].axhline(slice_index, color='red', linestyle='--')
 
             fig2, axs2 = plt.subplots(nrows=1, ncols=3, figsize=(10, 5))
 
-            axs2[0][0].imshow(sinogram_before[slice_index], vmin=0, vmax=1)
-            axs2[0][0].set_title("Before correction")
-            axs2[0][1].imshow(sinogram_after[slice_index], vmin=0, vmax=1)
-            axs2[0][1].set_title("After correction")
-            axs2[0][3].imshow(sinogram_before[slice_index] - sinogram_after[slice_index])
-            axs2[0][3].set_title("Difference (before - after)")
+            axs2[0].imshow(sinogram_before[slice_index], vmin=0, vmax=1)
+            axs2[0].set_title("Before correction")
+            axs2[1].imshow(sinogram_after[slice_index], vmin=0, vmax=1)
+            axs2[1].set_title("After correction")
+            axs2[3].imshow(sinogram_before[slice_index] - sinogram_after[slice_index])
+            axs2[3].set_title("Difference (before - after)")
 
             # axs0.imshow(normalized_images_before[image_index], vmin=0, vmax=1)
             # axs0.set_title("Before correction")

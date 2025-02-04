@@ -36,8 +36,8 @@ class TestReconstruction(Parent):
 
         self.display_plot = interactive(plot_images,
                                    image_index=widgets.IntSlider(min=0, max=len(normalized_images_log)-1, step=1, value=0),
-                                   slice_1=widgets.IntSlider(min=0, max=height-1, step=1, value=500),
-                                   slice_2=widgets.IntSlider(min=0, max=height-1, step=1, value=height-500),
+                                   slice_1=widgets.IntSlider(min=0, max=height-1, step=1, value=400),
+                                   slice_2=widgets.IntSlider(min=0, max=height-1, step=1, value=height-800),
                                    vmin=widgets.FloatSlider(min=0, max=max_value, step=0.01, value=0),
                                    vmax=widgets.FloatSlider(min=0, max=max_value, step=0.01, value=1))
         display(self.display_plot)
@@ -77,7 +77,7 @@ class TestReconstruction(Parent):
 
         fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(7, 7))
 
-        im0 = ax.imshow(reconstructed_slice, cmap='viridis')
+        im0 = ax.imshow(reconstructed_slice, cmap='viridis', vmin=0)
         plt.colorbar(im0, ax=ax, shrink=0.5)
         ax.set_title(f"Slice: {slice_number}")
         ax.axis('off')

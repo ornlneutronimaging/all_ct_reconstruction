@@ -358,7 +358,7 @@ class Step1PrepareCcdImages:
         self.o_remove.perform_cleaning()
 
     def display_removed_strips(self):
-        self.o_remove.display()
+        self.o_remove.display_cleaning()
 
     # calculate and apply tilt
     def select_sample_roi(self):

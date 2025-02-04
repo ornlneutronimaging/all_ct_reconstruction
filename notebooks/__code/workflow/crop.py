@@ -53,7 +53,8 @@ class Crop(Parent):
 
             fig, axs = plt.subplots(figsize=(7,7))
 
-            axs.imshow(integrated, vmin=vmin, vmax=vmax)
+            img = axs.imshow(integrated, vmin=vmin, vmax=vmax)
+            plt.colorbar(img, ax=axs, shrink=0.5)
 
             width = right - left + 1
             height = bottom - top + 1
