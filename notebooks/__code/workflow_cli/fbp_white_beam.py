@@ -15,7 +15,7 @@ from __code.utilities.logging import setup_logging
 from __code.utilities.files import make_or_reset_folder, make_folder
 from __code.config import SVMBIR_LIB_PATH
 from __code.utilities.json import load_json_string
-from __code.utilities.load import load_data_using_multithreading
+from __code.utilities.load import load_data_using_multithreading, load_list_of_tif
 from __code.utilities.time import get_current_time_in_special_file_name_format
 from __code.workflow_cli.merge_reconstructed_slices import merge_reconstructed_slices
 from __code.utilities.configuration_file import ReconstructionAlgorithm
@@ -24,9 +24,9 @@ from __code.utilities.configuration_file import ReconstructionAlgorithm
 class FbpCliHandler:
 
     @staticmethod
-    def _run_reconstruction(_sino, center_of_rotation, list_of_angles_rad, algorithm, max_workers):
+    def _run_reconstruction(projections, center_of_rotation, list_of_angles_rad, algorithm, max_workers):
         
-        logging.info(f"\t -> {np.shape(_sino) = }")
+        logging.info(f"\t -> {np.shape(projections) = }")
         logging.info(f"\t -> {center_of_rotation = }")
         logging.info(f"\t -> {list_of_angles_rad = }")
         logging.info(f"\t -> {len(list_of_angles_rad) = }")
@@ -35,7 +35,7 @@ class FbpCliHandler:
 
         if algorithm == ReconstructionAlgorithm.algotom_fbp:
 
-            reconstruction_array = rec.fbp_reconstruction(_sino,
+            reconstruction_array = rec.fbp_reconstruction(projections,
                                                           center_of_rotation,
                                                           angles=list_of_angles_rad,
                                                           apply_log=False,
@@ -50,7 +50,7 @@ class FbpCliHandler:
         
         elif algorithm == ReconstructionAlgorithm.algotom_gridrec:
 
-            reconstruction_array = rec.gridrec_reconstruction(_sino,
+            reconstruction_array = rec.gridrec_reconstruction(projections,
                                                               center_of_rotation,
                                                               angles=list_of_angles_rad,
                                                               apply_log=False,
@@ -63,7 +63,7 @@ class FbpCliHandler:
             
         elif algorithm == ReconstructionAlgorithm.astra_fbb:
 
-            reconstruction_array = rec.astra_reconstruction(_sino,
+            reconstruction_array = rec.astra_reconstruction(projections,
                                                             center_of_rotation,
                                                             angles=list_of_angles_rad,
                                                             apply_log=False,
@@ -104,6 +104,7 @@ class FbpCliHandler:
         print(f"loading {len(list_tiff)} images ... ", end="")
         logging.info(f"loading {len(list_tiff)} images ... ")
         corrected_array_log = load_data_using_multithreading(list_tiff)
+        corrected_array_log = load_list_of_tif(list_tiff)
         print(f"done!")
         logging.info(f"loading {len(list_tiff)} images ... done")
       
@@ -116,13 +117,15 @@ class FbpCliHandler:
         if center_of_rotation == -1:
             center_of_rotation = None
 
-        logging.info(f"before swapping I have (angle, x, y): {np.shape(corrected_array_log) = }")
-        nbr_angles, nbr_pixels_wide, nbr_slices = np.shape(corrected_array_log)
+        logging.info(f"before swapping I have (angle, y, x): {np.shape(corrected_array_log) = }")
+        nbr_angles, nbr_slices, nbr_pixels_wide = np.shape(corrected_array_log)
         logging.info(f"{nbr_angles = }, {nbr_slices = }, {nbr_pixels_wide = }")
-        corrected_array_log = np.swapaxes(corrected_array_log, 1, 2)
-        logging.info(f"after swapping I should have (angles, y, x): {np.shape(corrected_array_log) = }")
+
         corrected_array_log = np.swapaxes(corrected_array_log, 0, 1)
-        logging.info(f"after swapping I should have (y, angles, x): {np.shape(corrected_array_log) = }")
+        logging.info(f"after swapping I should have (y, angle, x): {np.shape(corrected_array_log) = }")
+        
+        # corrected_array_log = np.swapaxes(corrected_array_log, 0, 1)
+        # logging.info(f"after swapping I should have (y, angles, x): {np.shape(corrected_array_log) = }")
 
         logging.info(f"{list_of_angles_rad = }")
         logging.info(f"{input_data_folder = }")
@@ -136,9 +139,6 @@ class FbpCliHandler:
 
             # if _algo == 'gridrec':
             #     continue
-
-
-
 
             logging.info(f"Reconstruction using {_algo} ...")
             output_data_folder = os.path.join(base_output_folder, f"{_algo}_reconstructed_data_{get_current_time_in_special_file_name_format()}")
@@ -165,9 +165,9 @@ class FbpCliHandler:
             
                     center_of_rotation = nbr_pixels_wide // 2
 
-                    _sino = np.swapaxes(_sino, 0, 1)  # [angles, y, x]
+                    projections = np.swapaxes(_sino, 0, 1)  # [angles, y, x]
 
-                    reconstruction_array = FbpCliHandler._run_reconstruction(_sino=_sino,
+                    reconstruction_array = FbpCliHandler._run_reconstruction(projections=projections,
                                                                             center_of_rotation=center_of_rotation,
                                                                             list_of_angles_rad=list_of_angles_rad,
                                                                             algorithm=_algo,

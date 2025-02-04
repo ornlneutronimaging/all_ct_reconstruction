@@ -29,20 +29,21 @@ def load_data(folder):
     o_norm.load(list_tif)
     return o_norm.data['sample']['data']
 
+def load_list_of_tif(list_of_tiff, dtype=None):
 
+    if dtype is None:
+        dtype = np.uint16
 
-def load_list_of_tif(list_of_tiff):
     # init array
     first_image = dxchange.read_tiff(list_of_tiff[0])
     size_3d = [len(list_of_tiff), np.shape(first_image)[0], np.shape(first_image)[1]]
-    data_3d_array = np.empty(size_3d, dtype=np.uint16)
+    data_3d_array = np.empty(size_3d, dtype=dtype)
 
     # load stack of tiff
     for _index, _file in enumerate(list_of_tiff):
         _array = dxchange.read_tiff(_file)
         data_3d_array[_index] = _array
     return data_3d_array
-
 
 def load_tiff(tif_file_name):
     o_norm = Normalization()

@@ -17,7 +17,7 @@ class TestReconstruction(Parent):
 
         normalized_images_log = self.parent.normalized_images_log
         height, width = normalized_images_log[0].shape
-        max_value = 10
+        max_value = 4
 
         def plot_images(image_index, slice_1, slice_2, vmin, vmax):
 
@@ -35,11 +35,13 @@ class TestReconstruction(Parent):
             return slice_1, slice_2
 
         self.display_plot = interactive(plot_images,
-                                   image_index=widgets.IntSlider(min=0, max=len(normalized_images_log)-1, step=1, value=0),
-                                   slice_1=widgets.IntSlider(min=0, max=height-1, step=1, value=400),
-                                   slice_2=widgets.IntSlider(min=0, max=height-1, step=1, value=height-800),
-                                   vmin=widgets.FloatSlider(min=0, max=max_value, step=0.01, value=0),
-                                   vmax=widgets.FloatSlider(min=0, max=max_value, step=0.01, value=1))
+                                   image_index=widgets.IntSlider(min=0, max=len(normalized_images_log)-1, step=1, value=0, layout=widgets.Layout(width='50%')),
+                                   slice_1=widgets.IntSlider(min=0, max=height-1, step=1, value=400, layout=widgets.Layout(width='50%')),
+                                   slice_2=widgets.IntSlider(min=0, max=height-1, step=1, value=height-800, layout=widgets.Layout(width='50%')),
+                                   vmin=widgets.FloatSlider(min=0, max=max_value, step=0.01, value=0, layout=widgets.Layout(width='50%')),
+                                   vmax=widgets.FloatSlider(min=0, max=max_value, step=0.01, value=max_value, layout=widgets.Layout(width='50%')),
+                )
+                                   
         display(self.display_plot)
 
     def run_reconstruction(self):
@@ -58,14 +60,30 @@ class TestReconstruction(Parent):
         for _slice in [slice_1, slice_2]:
 
             logging.info(f"\tworking with slice: {_slice}")
-            _rec_img = rec.gridrec_reconstruction(sinogram_normalized_images_log[_slice],
+
+            # logging.info(f"\tusing rec.gridrec_reconstruction")
+            # _rec_img = rec.gridrec_reconstruction(sinogram_normalized_images_log[_slice],
+            #                                      center_of_rotation,
+            #                                      angles=self.parent.final_list_of_angles_rad,
+            #                                      apply_log=False,
+            #                                      ratio=1.0,
+            #                                      filter_name='shepp',
+            #                                      pad=100,
+            #                                      ncore=NUM_THREADS)    
+            
+            logging.info(f"\tusing rec.astra_reconstruction")
+            _rec_img = rec.astra_reconstruction(sinogram_normalized_images_log[_slice],
                                                  center_of_rotation,
                                                  angles=self.parent.final_list_of_angles_rad,
                                                  apply_log=False,
                                                  ratio=1.0,
-                                                 filter_name='shepp',
-                                                 pad=100,
-                                                 ncore=NUM_THREADS)    
+                                                 filter_name='hann',
+                                                 pad=None,
+                                                 num_iter=300,
+                                                 method='SIRT_CUDA',
+                                                 ncore=NUM_THREADS)
+
+
             logging.info(f"\t{np.shape(_rec_img) =}")
             logging.info(f"\tslice: {_slice}")
 

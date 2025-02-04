@@ -13,14 +13,14 @@ from __code import DEBUG, debug_folder, OperatingMode, DataType, STEP3_SCRIPTS
 from __code.utilities.configuration_file import select_file, loading_config_file_into_model
 from __code.utilities.logging import setup_logging
 from __code.utilities.files import retrieve_list_of_tif
-from __code.utilities.load import load_data_using_multithreading
+from __code.utilities.load import load_data_using_multithreading, load_list_of_tif
 from __code.utilities.time import get_current_time_in_special_file_name_format
 from __code.utilities.json import save_json
 
 BASENAME_FILENAME, _ = os.path.splitext(os.path.basename(__file__))
 
 
-class Step2SliceWhiteBeamModeImages:
+class Step2SliceCcdImages:
 
     def __init__(self, system=None):
 
@@ -56,8 +56,9 @@ class Step2SliceWhiteBeamModeImages:
         logging.info(f"images_path: {self.images_path}")
         list_tiff = retrieve_list_of_tif(self.images_path)
         logging.info(f"list_tiff: {list_tiff}")
-        self.data = load_data_using_multithreading(list_tiff)
-        self.data = np.moveaxis(self.data, 1, 2)
+        self.data = load_list_of_tif(list_tiff, dtype=np.float32)
+        # self.data = load_data_using_multithreading(list_tiff)
+        # self.data = np.moveaxis(self.data, 1, 2)
         logging.info(f"loading images done!")
         logging.info(f"self.data.shape: {self.data.shape}")
 
@@ -67,7 +68,8 @@ class Step2SliceWhiteBeamModeImages:
 
         def plot_images(image_index, top_slice, bottom_slice, nbr):
             fig, ax = plt.subplots()
-            ax.imshow(self.data[image_index], cmap='jet')
+            im = ax.imshow(self.data[image_index], cmap='jet')
+            plt.colorbar(im, ax=ax, shrink=0.5)
             
             range_size = int((np.abs(top_slice - bottom_slice)) / nbr)
 
@@ -132,6 +134,6 @@ class Step2SliceWhiteBeamModeImages:
         save_json(full_config_file_name, json_dictionary=config_json)
         logging.info(f"config file saved: {full_config_file_name}")
 
-        display(HTML(f"Move to the next step by running the command <font color='blue' size=5>python {STEP3_SCRIPTS}</font> " +
-                     f"<font color='blue' size=5>{full_config_file_name}</font>"))
+        display(HTML(f"Move to the next step by running the command <font color='blue' size=3>python {STEP3_SCRIPTS}</font> " +
+                     f"<font color='blue' size=3>{full_config_file_name}</font>"))
                 

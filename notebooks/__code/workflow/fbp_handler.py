@@ -31,23 +31,23 @@ class FbpHandler(Parent):
 
         logging.info(f"Preparing reconstruction data to export json and projections")
 
-        corrected_array = self.parent.normalized_images_log
-        height, width = np.shape(corrected_array[0])
+        normalized_images_log = self.parent.normalized_images_log
+        height, width = np.shape(normalized_images_log[0])
 
         list_of_angles = np.array(self.parent.final_list_of_angles)
         list_of_angles_rad = np.array([np.deg2rad(float(_angle)) for _angle in list_of_angles])
 
         self.parent.configuration.list_of_angles = list(list_of_angles_rad)
 
-        corrected_array_log = tomopy.minus_log(corrected_array)
-        where_nan = np.where(np.isnan(corrected_array_log))
-        corrected_array_log[where_nan] = 0
+        # corrected_array_log = tomopy.minus_log(corrected_array)
+        # where_nan = np.where(np.isnan(corrected_array_log))
+        # corrected_array_log[where_nan] = 0
 
-        corrected_array = corrected_array_log
+        # corrected_array = corrected_array_log
 
-        logging.info(f"\t{np.min(corrected_array) =}")
-        logging.info(f"\t{np.max(corrected_array) =}")
-        logging.info(f"\t{np.mean(corrected_array) =}")
+        logging.info(f"\t{np.min(normalized_images_log) =}")
+        logging.info(f"\t{np.max(normalized_images_log) =}")
+        logging.info(f"\t{np.mean(normalized_images_log) =}")
 
         output_folder = self.parent.working_dir[DataType.extra]
         _time_ext = get_current_time_in_special_file_name_format()
@@ -63,12 +63,13 @@ class FbpHandler(Parent):
 
         # go from [angle, height, width] to [angle, width, height]
         # corrected_array_log = np.moveaxis(corrected_array_log, 1, 2)  # angle, y, x -> angle, x, y
-        logging.info(f"\t{np.shape(corrected_array) =}")
+        logging.info(f"\t{np.shape(normalized_images_log) =}")
 
-        for _index, _data in tqdm(enumerate(corrected_array)):
+        for _index, _data in tqdm(enumerate(normalized_images_log)):
 
             if _index == 0:
                 logging.info(f"\t{np.shape(_data) = }")
+                logging.info(f"\t{_data.dtype = }")
                 # logging.info(f"\t{top_slice = }")
                 # logging.info(f"\t{bottom_slice = }")
 
