@@ -103,8 +103,8 @@ class FbpCliHandler:
         list_tiff.sort()
         print(f"loading {len(list_tiff)} images ... ", end="")
         logging.info(f"loading {len(list_tiff)} images ... ")
-        corrected_array_log = load_data_using_multithreading(list_tiff)
-        corrected_array_log = load_list_of_tif(list_tiff)
+        #corrected_array_log = load_data_using_multithreading(list_tiff)
+        corrected_array_log = load_list_of_tif(list_tiff, dtype=np.float32)
         print(f"done!")
         logging.info(f"loading {len(list_tiff)} images ... done")
       
@@ -117,12 +117,13 @@ class FbpCliHandler:
         if center_of_rotation == -1:
             center_of_rotation = None
 
-        logging.info(f"before swapping I have (angle, y, x): {np.shape(corrected_array_log) = }")
+        # logging.info(f"before swapping I have (angle, y, x): {np.shape(corrected_array_log) = }")
+        logging.info(f"{np.shape(corrected_array_log) = }")
         nbr_angles, nbr_slices, nbr_pixels_wide = np.shape(corrected_array_log)
         logging.info(f"{nbr_angles = }, {nbr_slices = }, {nbr_pixels_wide = }")
 
-        corrected_array_log = np.swapaxes(corrected_array_log, 0, 1)
-        logging.info(f"after swapping I should have (y, angle, x): {np.shape(corrected_array_log) = }")
+        # corrected_array_log = np.swapaxes(corrected_array_log, 0, 1)
+        # logging.info(f"after swapping I should have (y, angle, x): {np.shape(corrected_array_log) = }")
         
         # corrected_array_log = np.swapaxes(corrected_array_log, 0, 1)
         # logging.info(f"after swapping I should have (y, angles, x): {np.shape(corrected_array_log) = }")
@@ -160,18 +161,18 @@ class FbpCliHandler:
                     print(f"launching reconstruction using {_algo} #{index} ... ", end="")
                     logging.info(f"launching reconstruction using {_algo} #{index} ...")
             
-#                    _sino = corrected_array_log[:, top_slice_index:bottom_slice_index, :]
-                    _sino = corrected_array_log[top_slice_index:bottom_slice_index, :, :]   # [y, angles, x]
+                    projections = corrected_array_log[:, top_slice_index:bottom_slice_index, :]
+                    #_sino = corrected_array_log[top_slice_index:bottom_slice_index, :, :]   # [y, angles, x]
             
                     center_of_rotation = nbr_pixels_wide // 2
 
-                    projections = np.swapaxes(_sino, 0, 1)  # [angles, y, x]
+                    # projections = np.swapaxes(_sino, 0, 1)  # [angles, y, x]
 
                     reconstruction_array = FbpCliHandler._run_reconstruction(projections=projections,
-                                                                            center_of_rotation=center_of_rotation,
-                                                                            list_of_angles_rad=list_of_angles_rad,
-                                                                            algorithm=_algo,
-                                                                            max_workers=NUM_THREADS)
+                                                                             center_of_rotation=center_of_rotation,
+                                                                             list_of_angles_rad=list_of_angles_rad,
+                                                                             algorithm=_algo,
+                                                                             max_workers=NUM_THREADS)
                               
                     print(f"done!")
                     logging.info(f"done with #{index}!")

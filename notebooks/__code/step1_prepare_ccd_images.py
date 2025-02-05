@@ -14,6 +14,7 @@ from __code.workflow.recap_data import RecapData
 from __code.workflow.mode_selection import ModeSelection
 from __code.workflow.reconstruction_selection import ReconstructionSelection
 from __code.workflow.images_cleaner import ImagesCleaner
+from __code.workflow.rebin import Rebin
 from __code.workflow.normalization import Normalization
 from __code.workflow.chips_correction import ChipsCorrection
 from __code.workflow.log_conversion import log_conversion
@@ -258,6 +259,14 @@ class Step1PrepareCcdImages:
 
     def visualize_cleaned_data(self):
         self.o_vizu.visualize_according_to_selection(mode='cleaned')
+
+    # rebin
+    def rebin_settings(self):
+        self.o_rebin = Rebin(parent=self)
+        self.o_rebin.set_rebinning()
+
+    def rebin(self):
+        self.o_rebin.execute_binning()
 
     # normalization
     def normalization_settings(self):

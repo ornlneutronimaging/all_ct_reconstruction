@@ -104,7 +104,7 @@ class Normalization(Parent):
 
             fig, axs = plt.subplots(nrows=1, ncols=1, figsize=(10,10))
             im1 = axs.imshow(integrated_images)
-            plt.colorbar(im1, ax=axs, shrink=0.8)
+            plt.colorbar(im1, ax=axs, shrink=0.5)
 
             axs.add_patch(Rectangle((left, top), width, height,
                                         edgecolor='yellow',
@@ -142,8 +142,8 @@ class Normalization(Parent):
                                         bottom=widgets.IntSlider(min=0,
                                                                  max=height-1,
                                                                  value=defualt_bottom,
-                                                                 layout=widgets.Layout(width='50%'))),
-                                        )
+                                                                 layout=widgets.Layout(width='50%')))
+                                        
         display(self.display_roi)
       
     def normalize(self):
