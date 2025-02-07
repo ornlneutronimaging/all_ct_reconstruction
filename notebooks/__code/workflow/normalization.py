@@ -93,9 +93,7 @@ class Normalization(Parent):
         # integrated_images = np.log(np.min(self.parent.master_3d_data_array[DataType.sample], axis=0))
         sample_images = self.parent.master_3d_data_array[DataType.sample]
         integrated_images = np.min(sample_images, axis=0)
-
-        height = self.parent.image_size['height']
-        width = self.parent.image_size['width']
+        height, width = np.shape(integrated_images)
 
         def plot_roi(left, right, top, bottom):
 

@@ -22,8 +22,13 @@ class Crop(Parent):
 
         self.before_normalization = before_normalization
     
-        width = self.parent.image_size['width']
-        height = self.parent.image_size['height']
+        if before_normalization:
+            _data = self.parent.master_3d_data_array[DataType.sample]
+        else:
+           _data = self.parent.normalized_images
+        integrated = np.min(_data, axis=0)
+
+        height, width = integrated.shape
 
         default_left = default_roi[OperatingMode.white_beam]['left']
         default_right = default_roi[OperatingMode.white_beam]['right']
@@ -35,12 +40,6 @@ class Crop(Parent):
 
         if default_bottom < 0:
             default_bottom = height - abs(default_bottom)
-
-        if before_normalization:
-            _data = self.parent.master_3d_data_array[DataType.sample]
-        else:
-           _data = self.parent.normalized_images
-        integrated = np.min(_data, axis=0)
 
         max_value = np.max(integrated)
 

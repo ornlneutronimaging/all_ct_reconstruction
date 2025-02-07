@@ -128,21 +128,32 @@ class Visualization(Parent):
                                                          )
         display(self.display_ui)
 
-    def visualize(self, data_before=None, data_after=None, label_before="", label_after="", turn_on_vrange=False):
+    def visualize(self, data_before=None, data_after=None, label_before="", label_after="", 
+                  turn_on_vrange=False, 
+                  vmin=None, 
+                  vmax=None):
 
         if self.display_ui.value == '1 image at a time':
 
             list_of_images = self.parent.list_of_images[DataType.sample]
             
             if turn_on_vrange:
+                
+                if vmin is None:
+                    vmin_before = np.min(data_before)
+                    vmin_after = 0
+                    
+                else:
+                    vmin_before = vmin
+                    vmin_after = vmin 
 
-                vmin_before = np.min(data_before)
-                vmax_before = np.max(data_before)
-                # vmin_after = np.min(data_after)
-                # vmax_after = np.max(data_after)
+                if vmax is None:
+                    vmax_before = np.max(data_before)
+                    vmax_after = 1
 
-                vmin_after = 0
-                vmax_after = 1
+                else:
+                    vmax_before = vmax
+                    vmax_after = vmax
 
                 def plot_norm(image_index=0, 
                               vmin_before=vmin_before, vmax_before=vmax_before):

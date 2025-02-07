@@ -48,7 +48,7 @@ clean_paras = {'if_clean': True,
 chips_offset = [2, 2]
 
 NUM_THREADS = 60
-SVMBIR_LIB_PATH = "/tmp/"
+SVMBIR_LIB_PATH = "/fastdata/"
 
 # if x percent of a pixel value is still above median, remove it
 TOMOPY_REMOVE_OUTLIER_THRESHOLD_RATIO = 0.1

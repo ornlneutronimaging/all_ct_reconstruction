@@ -31,7 +31,8 @@ if __name__ == "__main__":
     if ReconstructionAlgorithm.svmbir in list_reconstruction_algorithm:
         logging.info(f"about to call SvmbirCliHandler.run_reconstruction_from_pre_data_mode:")
         logging.info(f"\t{config_json_file = }")
-        SvmbirCliHandler.run_reconstruction_from_pre_data_mode(config_json_file=config_json_file)
+        # SvmbirCliHandler.run_reconstruction_from_pre_data_mode(config_json_file=config_json_file)
+        SvmbirCliHandler.run_reconstruction_from_pre_data_mode_for_ai_evaluation(config_json_file=config_json_file)
         list_reconstruction_algorithm.remove(ReconstructionAlgorithm.svmbir)
         logging.info(f"Svmbir reconstruction done!")
     

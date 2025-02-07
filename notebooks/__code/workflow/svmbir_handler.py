@@ -83,26 +83,26 @@ class SvmbirHandler(Parent):
         self.sharpness_ui = widgets.FloatSlider(min=0,
                                            max=1,
                                            value=0,
-                                           layout=widgets.Layout(width="100%"),
+                                           layout=widgets.Layout(width="50%"),
                                            description="sharpness")
         self.snr_db_ui = widgets.FloatSlider(min=0,
                                         max=100,
                                         value=30.0,
-                                        layout=widgets.Layout(width="100%"),
+                                        layout=widgets.Layout(width="50%"),
                                         description="snr db")
         self.positivity_ui = widgets.Checkbox(value=False,
                                          description="positivity")
         self.max_iterations_ui = widgets.IntSlider(value=20,
                                               min=10,
                                               max=500,
-                                              layout=widgets.Layout(width="100%"),
+                                              layout=widgets.Layout(width="50%"),
                                               description="max itera.")
         label = widgets.Label("max resolution (0-high, 4-low):")
         self.max_resolutions_ui = widgets.IntSlider(value=2,
                                                     min=0,
                                                     max=4,
                                                     description="",
-                                                    layout=widgets.Layout(width="100%"))      
+                                                    layout=widgets.Layout(width="50%"))      
         self.verbose_ui = widgets.Checkbox(value=True,
                                       description='verbose')
         
@@ -158,8 +158,8 @@ class SvmbirHandler(Parent):
 
         logging.info(f"Preparing reconstruction data to export json and projections")
 
-        corrected_array = self.parent.normalized_images_log
-        height, width = np.shape(corrected_array[0])
+        corrected_array_log = self.parent.normalized_images_log
+        height, width = np.shape(corrected_array_log[0])
 
         list_of_angles = np.array(self.parent.final_list_of_angles)
         list_of_angles_rad = np.array([np.deg2rad(float(_angle)) for _angle in list_of_angles])
@@ -226,10 +226,10 @@ class SvmbirHandler(Parent):
         logging.info(f"\t{list_of_angles_rad = }")
         logging.info(f"\t{width = }")
         logging.info(f"\t{height = }")
-        logging.info(f"\t{type(corrected_array) = }")
-        logging.info(f"\t{np.shape(corrected_array) = }")
+        logging.info(f"\t{type(corrected_array_log) = }")
+        logging.info(f"\t{np.shape(corrected_array_log) = }")
 
-        corrected_array_log = tomopy.minus_log(corrected_array)
+        # corrected_array_log = tomopy.minus_log(corrected_array)
 
         where_nan = np.where(np.isnan(corrected_array_log))
         corrected_array_log[where_nan] = 0
@@ -250,7 +250,7 @@ class SvmbirHandler(Parent):
 
         output_folder = os.path.abspath(self.parent.working_dir[DataType.extra])
         _time_ext = get_current_time_in_special_file_name_format()
-        base_sample_folder = os.path.basename(os.path.absptah(self.parent.working_dir[DataType.sample]))
+        base_sample_folder = os.path.basename(os.path.abspath(self.parent.working_dir[DataType.sample]))
         pre_projections_export_folder = os.path.join(output_folder, f"{base_sample_folder}_projections_pre_data_{_time_ext}")
         os.makedirs(pre_projections_export_folder)
         logging.info(f"\tprojections pre data will be exported to {pre_projections_export_folder}!")

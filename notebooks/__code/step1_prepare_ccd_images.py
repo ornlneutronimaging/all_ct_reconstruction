@@ -259,15 +259,7 @@ class Step1PrepareCcdImages:
 
     def visualize_cleaned_data(self):
         self.o_vizu.visualize_according_to_selection(mode='cleaned')
-
-    # rebin
-    def rebin_settings(self):
-        self.o_rebin = Rebin(parent=self)
-        self.o_rebin.set_rebinning()
-
-    def rebin(self):
-        self.o_rebin.execute_binning()
-
+ 
     # normalization
     def normalization_settings(self):
         self.o_norm = Normalization(parent=self)
@@ -299,6 +291,23 @@ class Step1PrepareCcdImages:
 
     def export_normalized_images(self):
         self.o_norm.export_images()
+    # rebin
+    def rebin_settings(self):
+        self.o_rebin = Rebin(parent=self)
+        self.o_rebin.set_rebinning()
+
+    def rebin(self):
+        """ modifies: normalized_images"""
+        self.o_rebin.execute_binning()
+
+    def visualize_rebinned_data(self):
+        self.o_vizu.visualize(data_after=self.normalized_images,
+                        label_before='raw',
+                        label_after='rebinned',
+                        data_before=self.before_rebinning,
+                        turn_on_vrange=True,
+                        vmin=0,
+                        vmax=1)
 
   # crop data
     def crop_settings(self):
@@ -389,8 +398,11 @@ class Step1PrepareCcdImages:
         """uses: normalized_images_log"""
         self.o_tilt.run_center_of_rotation()
 
-    def perform_calculation_of_center_of_rotation(self):
+    def run_center_of_rotation_or_skip_it(self):
         self.o_tilt.calculate_center_of_rotation()
+
+    def display_center_of_rotation(self):
+        self.o_tilt.test_center_of_rotation_calculated()
 
     # test reconstruction using gridrec (fast algorithm)
     def select_slices_to_use_to_test_reconstruction(self):

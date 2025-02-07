@@ -200,6 +200,7 @@ class CenterOfRotationAndTilt(Parent):
 
         _, width = np.shape(self.image_0_degree)
         vmax = np.max([self.image_0_degree, self.image_180_degree, self.image_360_degree])
+        vmax = 4 # debug
 
         def plot_images(angles, center, v_range):
             _, axs = plt.subplots(nrows=1, ncols=1, figsize=(10, 10))
@@ -272,12 +273,12 @@ class CenterOfRotationAndTilt(Parent):
 
         display(widgets.HTML("Select the slice to use to calculate the center of rotation"))
         max_value = np.max([image_0_degree, image_180_degree, image_360_degree])
+        max_value = 4 # DEBUG
 
         def plot_images(slice_value=int(height/2), vmin=0, vmax=max_value):
 
             fig, axs = plt.subplots(nrows=1, ncols=3, figsize=(15,5))
-            plt.title("Measured / Expected (angles in degrees)")
-
+            
             axs[0].imshow(image_0_degree, cmap='viridis', vmin=vmin, vmax=vmax)
             axs[0].set_title("0 / 0")
             axs[0].axhline(slice_value, color='blue', linestyle='--')
@@ -293,6 +294,8 @@ class CenterOfRotationAndTilt(Parent):
             plt.tight_layout()
 
             return slice_value
+
+        display(widgets.HTML("Measured / Expected (angles in degrees)"))
 
         self.plot_slice_to_use = interactive(plot_images,
                                              slice_value = widgets.IntSlider(min=0, max=height-1, value=int(height/2)),
@@ -314,6 +317,8 @@ class CenterOfRotationAndTilt(Parent):
     def calc_cor_with_algotom(self):
 
         if self.auto_mode_ui.value == "Manual":
+            print(f"center of rotation selected: {self.manual_center_selection.result}")
+            self.parent.configuration.center_of_rotation = self.manual_center_selection.result
             return
         
         logging.info(f"calculate center of rotation using algotom (auto mode)")
@@ -333,6 +338,9 @@ class CenterOfRotationAndTilt(Parent):
                 center_of_rotation = find_center_360(sinogram_of_normalized_images_log[self.slide_value][:],
                                                     win_width=800,
                                                     ncore=NUM_THREADS)
+                if type(center_of_rotation) == list:
+                    center_of_rotation = center_of_rotation[0]
+
             except ValueError as e:
                 logging.error(f"Error: {e}")
                 logging.info(f"Error: {e}")
@@ -341,3 +349,18 @@ class CenterOfRotationAndTilt(Parent):
         logging.info(f"center of rotation = {center_of_rotation}")
         self.parent.configuration.center_of_rotation = center_of_rotation
     
+    def test_center_of_rotation_calculated(self):
+        center_of_rotation_calculated = self.parent.configuration.center_of_rotation
+
+        image_0_degree = self.image_0_degree
+        image_180_degree = self.image_180_degree
+
+        combined_images = 0.5*image_0_degree + 0.5*image_180_degree
+
+        fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(10, 10))
+        
+        im = ax.imshow(combined_images, cmap='viridis', vmin=0, vmax=4)
+        plt.colorbar(im, ax=ax, shrink=0.5)
+        ax.axvline(center_of_rotation_calculated, color='blue', linestyle='--')
+
+        plt.tight_layout()
