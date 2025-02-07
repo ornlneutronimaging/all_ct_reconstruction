@@ -37,6 +37,7 @@ debug_folder = {OperatingMode.tof: {DataType.sample: "/SNS/VENUS/IPTS-33699/shar
                                     DataType.normalized: '/SNS/VENUS/IPTS-33699/shared/processed_data/jean_test',
                                     DataType.reconstructed: '/SNS/VENUS/IPTS-33699/shared/processed_data/jean_test',
                                     DataType.extra: '/SNS/VENUS/IPTS-33699/shared/processed_data/jean_test',
+                                    DataType.nexus: '/SNS/VENUS/IPTS-33699/nexus/'
                                     },
                 OperatingMode.white_beam: {DataType.sample: "/SNS/VENUS/IPTS-33531/shared/processed_data/November8_2024_PlantE/",
                                             DataType.ob: "/SNS/VENUS/IPTS-33531/shared/processed_data/ob_PlantE/",

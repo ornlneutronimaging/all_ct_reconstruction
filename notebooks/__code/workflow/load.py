@@ -22,7 +22,6 @@ class Load(Parent):
     }
 
     def select_folder(self, data_type=DataType.sample, multiple_flag=False):
-
         self.parent.current_data_type = data_type
         self.data_type = data_type
         if data_type in [DataType.reconstructed, DataType.extra]:
@@ -30,11 +29,13 @@ class Load(Parent):
         else:
             working_dir = self.parent.working_dir[DataType.top]
 
-        print(f"{working_dir = }")
-
         if DEBUG:
             self.data_selected(debug_folder[self.parent.MODE][data_type])
+            self.parent.working_dir[DataType.nexus] = debug_folder[self.parent.MODE][DataType.nexus]
+            logging.info(f"DEBUG MODE: {data_type} folder selected: {debug_folder[self.parent.MODE][data_type]}")
             return
+
+        print(f"{working_dir = }")
 
         if not os.path.exists(working_dir):
             working_dir = os.path.abspath(os.path.expanduser("~"))

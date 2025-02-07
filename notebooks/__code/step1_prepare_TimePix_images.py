@@ -110,6 +110,9 @@ class Step1PrepareTimePixImages:
     # reconstructed 3D array with svmbir
     reconstruction_array = None
 
+    at_least_one_frame_number_not_found = False
+    at_lest_one_proton_charge_not_found = False
+
     def __init__(self, system=None):
 
         self.configuration = Configuration()

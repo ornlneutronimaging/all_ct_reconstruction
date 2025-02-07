@@ -44,8 +44,8 @@ class CheckingData(Parent):
         # # retrieve rotation angle
         self.retrieve_rotation_angle()
 
-        # # retrieve frame number
-        # self.retrieve_frame_number()
+        # retrieve frame number
+        self.retrieve_frame_number()
 
         # # display graph
         # self.display_graph()
@@ -57,10 +57,13 @@ class CheckingData(Parent):
             logging.info(f"\t{_data_type}:")
             list_of_frame_number = []
             for _run in self.parent.list_of_runs[_data_type]:
+                logging.info(f"\t\t{_run}")
                 # _, number = os.path.basename(_run).split("_")
                 # nexus_path = os.path.join(top_nexus_path, f"{self.parent.instrument}_{number}.nxs.h5")
                 nexus_path = self.parent.list_of_runs[_data_type][_run][Run.nexus]
+                logging.info(f"\t\t{nexus_path}")
                 frame_number = get_frame_number(nexus_path)
+                logging.info(f"\t\t{frame_number}")
                 list_of_frame_number.append(frame_number)
                 self.parent.list_of_runs[_data_type][_run][Run.frame_number] = frame_number
                 if not frame_number:
@@ -140,7 +143,7 @@ class CheckingData(Parent):
         max_proton_charge_c = {DataType.sample: None,
                                DataType.ob: None}
 
-        ignore_proton_charge = False
+        at_lest_one_proton_charge_not_found = False
         for _data_type in self.parent.list_of_runs.keys():
             _list_proton_charge = []
             for _run in self.parent.list_of_runs[_data_type]:
@@ -154,10 +157,10 @@ class CheckingData(Parent):
                 if proton_charge is not None:
                     self.parent.list_of_runs[_data_type][_run][Run.proton_charge_c] = proton_charge/1e12
                 else:
-                    ignore_proton_charge = True
+                    at_lest_one_proton_charge_not_found = True
                     self.parent.list_of_runs[_data_type][_run][Run.proton_charge_c] = None
 
-            if not ignore_proton_charge:
+            if not at_lest_one_proton_charge_not_found:
                 list_proton_charge_c[_data_type] = [_pc/1e12 for _pc in _list_proton_charge]
                 min_proton_charge_c[_data_type] = min(list_proton_charge_c[_data_type]) - 1
                 max_proton_charge_c[_data_type] = max(list_proton_charge_c[_data_type]) + 1
@@ -168,7 +171,7 @@ class CheckingData(Parent):
         self.list_proton_charge_c = list_proton_charge_c
         self.min_proton_charge_c = min_proton_charge_c
         self.max_proton_charge_c = max_proton_charge_c
-        self.ignore_proton_charge = ignore_proton_charge
+        self.parent.at_lest_one_proton_charge_not_found = at_lest_one_proton_charge_not_found
   
     def display_graph(self):
         

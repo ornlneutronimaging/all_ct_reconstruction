@@ -1,4 +1,6 @@
 import h5py
+import os
+import logging
 
 
 def get_proton_charge(nexus, units='pc'):
@@ -17,6 +19,10 @@ def get_proton_charge(nexus, units='pc'):
 
 def get_frame_number(nexus):
     if nexus is None:
+        return None
+
+    if os.path.exists(nexus) is False:
+        logging.error(f"NeXus file {nexus} does not exist!")
         return None
 
     try:
