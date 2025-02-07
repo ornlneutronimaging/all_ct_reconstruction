@@ -3,13 +3,14 @@ import logging
 from collections import OrderedDict
 
 
-from __code import DataType
+from __code import DataType, OperatingMode, DEFAULT_OPERATING_MODE, DEBUG
 from __code.utilities.logging import setup_logging
+from __code.utilities.configuration_file import Configuration
 
 from __code.workflow.load import Load
 from __code.workflow.checking_data import CheckingData
 from __code.workflow.recap_data import RecapData
-from __code.workflow.combine import Combine
+# from notebooks.__code.workflow.combine_tof import Combine
 from __code.workflow.images_cleaner import ImagesCleaner
 from __code.workflow.normalization import Normalization
 from __code.workflow.chips_correction import ChipsCorrection
@@ -19,10 +20,12 @@ from __code.workflow.svmbir_handler import SvmbirHandler
 from __code.workflow.final_projections_review import FinalProjectionsReview
 from __code.workflow.export import ExportExtra
 
-LOG_BASENAME_FILENAME = "svmbir_white_beam"
+LOG_BASENAME_FILENAME, _ = os.path.splitext(os.path.basename(__file__))
 
 
-class WhiteBeam:
+class Step1PrepareTimePixImages:
+
+    MODE = OperatingMode.tof
 
     working_dir = {
         DataType.sample: "",
@@ -109,6 +112,8 @@ class WhiteBeam:
 
     def __init__(self, system=None):
 
+        self.configuration = Configuration()
+
         top_sample_dir = system.System.get_working_dir()
         self.instrument = system.System.get_instrument_selected()
 
@@ -119,6 +124,8 @@ class WhiteBeam:
         self.working_dir[DataType.processed] = os.path.join(top_sample_dir, "shared", "processed_data")
         logging.info(f"working_dir: {self.working_dir}")
         logging.info(f"instrument: {self.instrument}")
+        if DEBUG:
+            logging.info(f"WARNING!!!! we are running using DEBUG mode!")
 
     # Selection of data
     def select_top_sample_folder(self):
@@ -130,7 +137,7 @@ class WhiteBeam:
         o_load.select_folder(data_type=DataType.ob)
 
     # Checking data (proton charge, empty runs ...)
-    def checking_data(self):
+    def load_and_check_data(self):
         try:
             o_checking = CheckingData(parent=self)
             o_checking.run()

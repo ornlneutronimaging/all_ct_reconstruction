@@ -38,17 +38,17 @@ class CheckingData(Parent):
         # check empty runs
         self.reject_empty_runs()
 
-        # retrieve proton charge of runs
+        # # retrieve proton charge of runs
         self.retrieve_proton_charge()
 
-        # retrieve rotation angle
+        # # retrieve rotation angle
         self.retrieve_rotation_angle()
 
-        # retrieve frame number
-        self.retrieve_frame_number()
+        # # retrieve frame number
+        # self.retrieve_frame_number()
 
-        # display graph
-        self.display_graph()
+        # # display graph
+        # self.display_graph()
 
     def retrieve_frame_number(self):
         logging.info(f"Retrieving frame numbers:")
@@ -69,11 +69,15 @@ class CheckingData(Parent):
             logging.info(f"\t\t{list_of_frame_number}")
 
     def retrieve_rotation_angle(self):
+        logging.info(f"Retrieving rotation angles:")
         list_of_sample_runs = self.parent.list_of_runs[DataType.sample]
         for _run in list_of_sample_runs.keys():
             if list_of_sample_runs[_run][Run.use_it]:
                 angle_value = get_angle_value(run_full_path=list_of_sample_runs[_run][Run.full_path])
                 self.parent.list_of_runs[DataType.sample][_run][Run.angle] = angle_value
+                logging.info(f"\t{_run}: {angle_value}")
+            else:
+                logging.info(f"\t{_run}: not used")
 
     def retrieve_runs(self):
         ''' retrieve the full list of runs in the top folder of sample and ob '''
@@ -125,6 +129,8 @@ class CheckingData(Parent):
     def retrieve_proton_charge(self):
         logging.info(f"Retrieving proton charge values:")
         top_nexus_path = self.parent.working_dir[DataType.nexus]
+        logging.info(f"\ttop_nexus_path: {top_nexus_path}")
+
         list_proton_charge_c = {DataType.sample: [],
                                 DataType.ob: []} 
         
@@ -134,23 +140,35 @@ class CheckingData(Parent):
         max_proton_charge_c = {DataType.sample: None,
                                DataType.ob: None}
 
+        ignore_proton_charge = False
         for _data_type in self.parent.list_of_runs.keys():
             _list_proton_charge = []
             for _run in self.parent.list_of_runs[_data_type]:
+                logging.info(f"\t{_run = }")
                 nexus_path = self.parent.list_of_runs[_data_type][_run][Run.nexus]
+                logging.info(f"\t\t{nexus_path = }")
                 proton_charge = get_proton_charge(nexus_path)
+                logging.info(f"\t\t{proton_charge = }")
                 _list_proton_charge.append(proton_charge)
                 self.list_of_metadata[_run] = proton_charge
-                self.parent.list_of_runs[_data_type][_run][Run.proton_charge_c] = proton_charge/1e12
-            list_proton_charge_c[_data_type] = [_pc/1e12 for _pc in _list_proton_charge]
-            logging.info(f"\t{_data_type}: {list_proton_charge_c[_data_type]}")
+                if proton_charge is not None:
+                    self.parent.list_of_runs[_data_type][_run][Run.proton_charge_c] = proton_charge/1e12
+                else:
+                    ignore_proton_charge = True
+                    self.parent.list_of_runs[_data_type][_run][Run.proton_charge_c] = None
 
-            min_proton_charge_c[_data_type] = min(list_proton_charge_c[_data_type]) - 1
-            max_proton_charge_c[_data_type] = max(list_proton_charge_c[_data_type]) + 1
+            if not ignore_proton_charge:
+                list_proton_charge_c[_data_type] = [_pc/1e12 for _pc in _list_proton_charge]
+                min_proton_charge_c[_data_type] = min(list_proton_charge_c[_data_type]) - 1
+                max_proton_charge_c[_data_type] = max(list_proton_charge_c[_data_type]) + 1
+                logging.info(f"\t{_data_type}: {list_proton_charge_c[_data_type]}")
+            else:
+                logging.info(f"\t{_data_type}: proton charge not available")
 
         self.list_proton_charge_c = list_proton_charge_c
         self.min_proton_charge_c = min_proton_charge_c
         self.max_proton_charge_c = max_proton_charge_c
+        self.ignore_proton_charge = ignore_proton_charge
   
     def display_graph(self):
         
