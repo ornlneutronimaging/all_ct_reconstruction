@@ -10,7 +10,7 @@ from __code.utilities.configuration_file import Configuration
 from __code.workflow.load import Load
 from __code.workflow.checking_data import CheckingData
 from __code.workflow.recap_data import RecapData
-# from notebooks.__code.workflow.combine_tof import Combine
+from __code.workflow.combine_tof import CombineTof
 from __code.workflow.images_cleaner import ImagesCleaner
 from __code.workflow.normalization import Normalization
 from __code.workflow.chips_correction import ChipsCorrection
@@ -36,6 +36,12 @@ class Step1PrepareTimePixImages:
         DataType.processed: "",
         }
     
+    # {100.000: 'run_1234', 101.000: 'run_1235', ...}
+    list_angles_deg_vs_runs_dict = {}
+
+    # final list of angles used and sorted (to be used in reconstruction)
+    list_angles_of_data_loaded_deg = None
+
     image_size = {'height': None,
                   'width': None}
 
@@ -151,16 +157,16 @@ class Step1PrepareTimePixImages:
         o_recap = RecapData(parent=self)
         o_recap.run()
 
-    def checkin_data_entries(self):
-        o_check = CheckingData(parent=self)
-        o_check.checking_minimum_requirements()
+    # def checkin_data_entries(self):
+    #     o_check = CheckingData(parent=self)
+    #     o_check.checking_minimum_requirements()
 
     # combine images
     def combine_images(self):
         o_check = CheckingData(parent=self)
         o_check.checking_minimum_requirements()
-        if self.minimum_requirements_met:
-            o_combine = Combine(parent=self)
+        if self.minimum_requirements_met:           
+            o_combine = CombineTof(parent=self)
             o_combine.run()
         else:
             o_check.minimum_requirement_not_met()

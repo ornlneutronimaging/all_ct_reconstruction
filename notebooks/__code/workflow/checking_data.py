@@ -48,7 +48,7 @@ class CheckingData(Parent):
         self.retrieve_frame_number()
 
         # # display graph
-        # self.display_graph()
+        self.display_graph()
 
     def retrieve_frame_number(self):
         logging.info(f"Retrieving frame numbers:")
@@ -74,13 +74,16 @@ class CheckingData(Parent):
     def retrieve_rotation_angle(self):
         logging.info(f"Retrieving rotation angles:")
         list_of_sample_runs = self.parent.list_of_runs[DataType.sample]
+        list_angles_runs_dict = {}
         for _run in list_of_sample_runs.keys():
             if list_of_sample_runs[_run][Run.use_it]:
                 angle_value = get_angle_value(run_full_path=list_of_sample_runs[_run][Run.full_path])
+                list_angles_runs_dict[angle_value] = _run
                 self.parent.list_of_runs[DataType.sample][_run][Run.angle] = angle_value
                 logging.info(f"\t{_run}: {angle_value}")
             else:
                 logging.info(f"\t{_run}: not used")
+        self.parent.list_angles_runs_dict = list_angles_runs_dict
 
     def retrieve_runs(self):
         ''' retrieve the full list of runs in the top folder of sample and ob '''
