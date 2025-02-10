@@ -52,13 +52,12 @@ class Rotate(Parent):
 
         logging.info("applying rotation ...")
         str_angle_value = self.angle_ui.value
-        if str_angle_value == '-90 degrees':
+        if str_angle_value == '90 degrees':
             angle_value = -90
-        elif str_angle_value == '0 degree':
-            angle_value = 0
         else:
-            angle_value = +90
-
+            logging.info(f"not applying any rotation to the data!")
+            return
+    
         logging.info(f"\tangle_value = {angle_value}")
 
         # worker_with_angle = partial(_worker, angle_value=angle_value)

@@ -22,7 +22,9 @@ class OperatingMode:
 
 STEP3_SVMBIR_SCRIPTS = "/SNS/VENUS/shared/software/git/all_ct_reconstruction/notebooks/step3_reconstruction_white_beam_mode_images_using_svmbir.py"
 STEP3_FPB_SCRIPTS = "/SNS/VENUS/shared/software/git/all_ct_reconstruction/notebooks/step3_reconstruction_white_beam_mode_images_using_fbp.py"
-STEP3_SCRIPTS = "/SNS/VENUS/shared/software/git/all_ct_reconstruction/notebooks/step3_reconstruction_CCD_images.py"
+
+STEP3_SCRIPTS = "/SNS/VENUS/shared/software/git/all_ct_reconstruction/notebooks/step3_reconstruction_CCD_or_TimePix_images.py"
+STEP2_NOTEBOOK = "/SNS/VENUS/shared/software/git/all_ct_reconstruction/notebooks/step2_slice_CCD_or_TimePix_images.ipynb"
 
 DEFAULT_OPERATING_MODE = OperatingMode.white_beam
 DEFAULT_RECONSTRUCTION_ALGORITHM = ["tomopy_fbp"]
@@ -101,7 +103,7 @@ crop_roi = {OperatingMode.tof: {'left': 0,
                             'top': 0,
                             'bottom': 49},
         OperatingMode.white_beam: {'left': 5,
-                                   'right': -5,
+                                   'right': -200,
                                    'top': 5,
                                    'bottom': -5},
                                    }

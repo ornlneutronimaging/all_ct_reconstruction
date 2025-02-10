@@ -382,8 +382,9 @@ class RemoveStrips:
 
         nbr_projections, height, _ = np.shape(normalized_images_after)
 
-        final_list_of_angles = self.parent.list_of_angles_to_use_sorted
-        final_list_of_runs = self.parent.list_of_runs_to_use[DataType.sample]
+        final_list_of_angles = self.parent.final_list_of_angles
+        # final_list_of_runs = self.parent.list_of_runs_to_use[DataType.sample]
+        final_list_of_runs = self.parent.final_list_of_runs[DataType.sample]
 
         def plot_result(image_index, slice_index):
 
@@ -413,8 +414,8 @@ class RemoveStrips:
             axs2[0].set_title("Before correction")
             axs2[1].imshow(sinogram_after[slice_index], vmin=0, vmax=1)
             axs2[1].set_title("After correction")
-            axs2[3].imshow(sinogram_before[slice_index] - sinogram_after[slice_index])
-            axs2[3].set_title("Difference (before - after)")
+            axs2[2].imshow(sinogram_before[slice_index] - sinogram_after[slice_index])
+            axs2[2].set_title("Difference (before - after)")
 
             # axs0.imshow(normalized_images_before[image_index], vmin=0, vmax=1)
             # axs0.set_title("Before correction")

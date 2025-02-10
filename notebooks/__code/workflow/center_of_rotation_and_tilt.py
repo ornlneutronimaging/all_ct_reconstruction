@@ -298,9 +298,18 @@ class CenterOfRotationAndTilt(Parent):
         display(widgets.HTML("Measured / Expected (angles in degrees)"))
 
         self.plot_slice_to_use = interactive(plot_images,
-                                             slice_value = widgets.IntSlider(min=0, max=height-1, value=int(height/2)),
-                                             vmin=widgets.FloatSlider(min=0, max=max_value, value=0),
-                                             vmax=widgets.FloatSlider(min=0, max=max_value, value=max_value))
+                                             slice_value = widgets.IntSlider(min=0, 
+                                                                             max=height-1, 
+                                                                             value=int(height/2),
+                                                                             layout=widgets.Layout(width="75%")),
+                                             vmin=widgets.FloatSlider(min=0, 
+                                                                      max=max_value, 
+                                                                      value=0,
+                                                                      layout=widgets.Layout(width="75%")),
+                                             vmax=widgets.FloatSlider(min=0, 
+                                                                      max=max_value, 
+                                                                      value=max_value),
+                                                                      layout=widgets.Layout(width="75%"))
         display(self.plot_slice_to_use)
 
         display(widgets.HTML("Horizontal line shows the slide used to calculate the center of rotation"))

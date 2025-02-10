@@ -9,7 +9,7 @@ import numpy as np
 from __code.utilities.save import make_tiff
 from __code.utilities.json import save_json
 from __code.parent import Parent
-from __code import DataType
+from __code import DataType, STEP3_SCRIPTS, STEP2_NOTEBOOK
 from __code.utilities.time import get_current_time_in_special_file_name_format
 
 
@@ -69,9 +69,9 @@ class ExportExtra(Parent):
         save_json(config_file_name, json_dictionary=config_json)
 
         display(HTML(f"<font color='blue'>From this point you have two options:</font>"))
-        display(HTML(f"<font color='blue'> - reload the configuration file </font>(<font color='green'>{os.path.basename(config_file_name)}</font>) in the notebook <font color='green'> step2_slice_white_beam_mode_images</font>"))
+        display(HTML(f"<font color='blue'> - reload the configuration file </font>(<font color='green'>{os.path.basename(config_file_name)}</font>) in the notebook <font color='green'> {STEP2_NOTEBOOK}</font>"))
         display(HTML(f"<br>"))
         display(HTML(f"<font color='blue'> - launch the script directly from the command line"))
         display(HTML(f"\t> source /opt/anaconda/etc/profile.d/conda.sh"))
         display(HTML(f"\t> conda activate hsnt"))
-        display(HTML(f"\t> python /SNS/VENUS/shared/software/git/all_ct_reconstruction/notebooks/step3_reconstruction_CCD_images.py {config_file_name}"))
+        display(HTML(f"\t> python {STEP3_SCRIPTS} {config_file_name}"))

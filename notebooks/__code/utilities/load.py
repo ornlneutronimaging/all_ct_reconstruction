@@ -29,6 +29,7 @@ def load_data(folder):
     o_norm.load(list_tif)
     return o_norm.data['sample']['data']
 
+
 def load_list_of_tif(list_of_tiff, dtype=None):
     if dtype is None:
         dtype = np.uint16
@@ -43,6 +44,7 @@ def load_list_of_tif(list_of_tiff, dtype=None):
         _array = dxchange.read_tiff(_file)
         data_3d_array[_index] = _array
     return data_3d_array
+
 
 def load_tiff(tif_file_name):
     o_norm = Normalization()

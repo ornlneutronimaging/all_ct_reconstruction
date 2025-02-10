@@ -86,7 +86,6 @@ class Step1PrepareTimePixImages:
                           }
 
     final_list_of_angles = None
-    list_of_runs_to_use = None
     
     # set up in the checking_data. True if at least one of the run doesn't have this metadata in the NeXus
     at_least_one_frame_number_not_found = False
@@ -177,6 +176,7 @@ class Step1PrepareTimePixImages:
 
     # combine images
     def combine_images(self):
+        """creates the master_3d_data_array, final_list_of_runs, final_list_of_angles and final_list_of_angles_rad"""
         o_check = CheckingData(parent=self)
         o_check.checking_minimum_requirements()
         if self.minimum_requirements_met:           
@@ -234,14 +234,19 @@ class Step1PrepareTimePixImages:
         """creates: normalized_images"""
         o_combine = CombineObDc(parent=self)
         o_combine.run(ignore_dc=True)
-        self.o_norm.normalize()
+        self.o_norm.normalize(ignore_dc=True)
 
     def visualization_normalization_settings(self):
-        self.o_norm.visualization_normalization_settings()
+        self.o_vizu = Visualization(parent=self)
+        self.o_vizu.settings()
 
     def visualize_normalization(self):
-        self.o_norm.visualize_normalization()
-
+        self.o_vizu.visualize(data_after=self.normalized_images,
+                              label_before='cleaned',
+                              label_after='normalized',
+                              data_before=self.master_3d_data_array[DataType.sample],
+                              turn_on_vrange=True)
+    
     def select_export_normalized_folder(self):
         o_select = Load(parent=self)
         o_select.select_folder(data_type=DataType.normalized)
@@ -251,12 +256,78 @@ class Step1PrepareTimePixImages:
 
     # chips correction
     def chips_correction(self):
+        """updates: normalized_images"""
+        o_clean = ImagesCleaner(parent=self)
+        self.normalized_images = o_clean.remove_outliers(self.normalized_images[:])
+
         o_chips = ChipsCorrection(parent=self)
         o_chips.run()
 
     def visualize_chips_correction(self):
         o_chips = ChipsCorrection(parent=self)
         o_chips.visualize_chips_correction()
+
+    # rebin
+    def rebin_settings(self):
+        self.o_rebin = Rebin(parent=self)
+        self.o_rebin.set_rebinning()
+
+    def rebin(self):
+        """ modifies: normalized_images"""
+        self.o_rebin.execute_binning()
+
+    def visualize_rebinned_data(self):
+        self.o_vizu.visualize(data_after=self.normalized_images,
+                        label_before='raw',
+                        label_after='rebinned',
+                        data_before=self.before_rebinning,
+                        turn_on_vrange=True,
+                        vmin=0,
+                        vmax=1)
+
+    # crop data
+    def crop_settings(self):
+        self.o_crop = Crop(parent=self)
+        self.o_crop.set_region()
+
+    def crop(self):
+        """updates: normalized_images"""
+        self.o_crop.run()
+
+    # rotate sample
+    def rotate_data_settings(self):
+        self.o_rotate = Rotate(parent=self)
+        self.o_rotate.set_settings()
+
+    def apply_rotation(self):
+        """updates: normalized_images"""
+        self.o_rotate.apply_rotation()
+
+    def visualize_after_rotation(self):
+        o_review = FinalProjectionsReview(parent=self)
+        o_review.single_image(image=self.normalized_images[0])
+
+    # log conversion
+    def log_conversion_and_cleaning(self):
+        """creates: corrected_images_log
+        """
+        normalized_images_log = log_conversion(self.normalized_images[:])
+        o_cleaner = ImagesCleaner(parent=self)
+        normalized_images_log = o_cleaner.remove_outliers(normalized_images_log[:])
+        normalized_images_log = remove_negative_values(normalized_images_log[:])
+
+        # self.corrected_images_log = normalized_images_log[:]
+        self.normalized_images_log = normalized_images_log[:]
+        logging_3d_array_infos(array=normalized_images_log, message="normalized_images_log")
+
+    def visualize_images_after_log(self):
+        o_vizu = Visualization(parent=self)
+        o_vizu.visualize_2_stacks(left=self.normalized_images, 
+                                  vmin_left=0, 
+                                  vmax_left=1,
+                                  right=self.normalized_images_log,
+                                  vmin_right=None,
+                                  vmax_right=None,)
 
     # strips removal
     def select_remove_strips_algorithms(self):
@@ -266,41 +337,63 @@ class Step1PrepareTimePixImages:
     def define_settings(self):
         self.o_remove.define_settings()
 
-    def remove_strips_and_display(self):
-        self.o_remove.run()
+    def remove_strips(self):
+        """updates: normalized_images_log"""
+        self.o_remove.perform_cleaning()
 
-    # calculate center of rotation & tilt
+    def display_removed_strips(self):
+        self.o_remove.display_cleaning()
+
+    # calculate and apply tilt
     def select_sample_roi(self):
-        if self.strip_corrected_images is None:
-            # if the remove filter hasn't been ran
-            self.strip_corrected_images = self.corrected_images
+        self.o_tilt = CenterOfRotationAndTilt(parent=self)
+        self.o_tilt.select_range()
 
-        self.o_center_and_tilt = CenterOfRotationAndTilt(parent=self)
-        self.o_center_and_tilt.select_range()
+    def perform_tilt_correction(self):
+        """updates: normalized_images_log"""
+        self.o_tilt.run_tilt_correction()
 
-    def calculate_center_of_rotation_and_tilt(self):
-        self.o_center_and_tilt.run()
+    # calcualte center of rotation
+    def center_of_rotation_settings(self):       
+        if self.o_tilt is None:
+            self.o_tilt = CenterOfRotationAndTilt(parent=self)
+        self.o_tilt.isolate_0_180_360_degrees_images()
+        self.o_tilt.center_of_rotation_settings()
 
-    # last chance to reject runs
-    def final_projections_review(self):
-        o_review = FinalProjectionsReview(parent=self)
-        o_review.run(array=self.corrected_images)
-        o_review.list_runs_to_reject()
+    def run_center_of_rotation(self):
+        """uses: normalized_images_log"""
+        self.o_tilt.run_center_of_rotation()
+
+    def run_center_of_rotation_or_skip_it(self):
+        self.o_tilt.calculate_center_of_rotation()
+
+    def display_center_of_rotation(self):
+        self.o_tilt.test_center_of_rotation_calculated()
+
+    # test reconstruction using gridrec (fast algorithm)
+    def select_slices_to_use_to_test_reconstruction(self):
+        """uses: normalized_images_log"""
+        self.o_test = TestReconstruction(parent=self)
+        self.o_test.select_slices()
+
+    def run_reconstruction_of_slices_to_test(self):
+        self.o_test.run_reconstruction()
+
+    # select reconstruction method
+    def select_reconstruction_method(self):
+        self.o_mode = ReconstructionSelection(parent=self)
+        self.o_mode.select()
 
     # run svmbir
-    def svmbir_settings(self):
-        self.o_svmbir = SvmbirHandler(parent=self)
-        self.o_svmbir.set_settings()
-
-    def svmbir_display_sinograms(self):
-        self.o_svmbir.display_sinograms()
-
+    def reconstruction_settings(self):
+        
+        if ReconstructionAlgorithm.svmbir in self.configuration.reconstruction_algorithm:
+            self.o_svmbir = SvmbirHandler(parent=self)
+            self.o_svmbir.set_settings()
+       
     def svmbir_run(self):
         self.o_svmbir.run_reconstruction()
         self.o_svmbir.display_slices()
-
-    # def display_slices(self):
-    #     self.o_svmbir.display_slices()
 
     # export slices
     def select_export_slices_folder(self):
@@ -315,6 +408,16 @@ class Step1PrepareTimePixImages:
         o_select = Load(parent=self)
         o_select.select_folder(data_type=DataType.extra)
 
-    def export_extra_files(self):
+    def export_pre_reconstruction_data(self):
+        if self.o_svmbir is None:
+            o_fbp = FbpHandler(parent=self)
+            o_fbp.export_pre_reconstruction_data()
+        else:
+            self.o_svmbir.export_pre_reconstruction_data()
+
+    def export_extra_files(self, prefix=""):
+        self.export_pre_reconstruction_data()
         o_export = ExportExtra(parent=self)
-        o_export.run(base_log_file_name=LOG_BASENAME_FILENAME)
+        o_export.run(base_log_file_name=LOG_BASENAME_FILENAME,
+                     prefix=prefix)
+        

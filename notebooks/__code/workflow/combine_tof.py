@@ -15,10 +15,6 @@ class CombineTof(Parent):
         self.update_list_of_runs_status()
         self.load_data()
 
-        # combine the data in TOF
-
-
-
     def update_list_of_runs_status(self):
 
         # update list of runs to reject
@@ -53,6 +49,7 @@ class CombineTof(Parent):
                                 DataType.dc: None}
 
         list_sample_data = []
+        final_list_of_runs = {DataType.sample: [], DataType.ob: []}
 
         for _angle in tqdm(list_angles):
             _runs = list_angles_deg_vs_runs_dict[_angle]
@@ -69,6 +66,7 @@ class CombineTof(Parent):
                 # # combine all tof
                 # _data = np.sum(_data, axis=0)
                 list_sample_data.append(_data)
+                final_list_of_runs[DataType.sample].append(_runs)
             else:
                 logging.info(f"\twe reject that runs!")
 
@@ -87,6 +85,8 @@ class CombineTof(Parent):
                 _data = self.load_data_for_a_run(run=_run, data_type=DataType.ob)
                 logging.info(f"\t{_data.shape}")
                 list_ob_data.append(_data)
+                final_list_of_runs[DataType.ob].append(_runs)
+
             else:
                 logging.info(f"\twe reject that runs!")
 
@@ -94,6 +94,8 @@ class CombineTof(Parent):
 
         self.parent.master_3d_data_array = master_3d_data_array
         self.parent.final_list_of_angles = list_of_angles_of_runs_to_keep
+        self.parent.final_list_of_angles_rad = [np.deg2rad(float(_angle)) for _angle in list_of_angles_of_runs_to_keep]
+        self.parent.final_list_of_runs = final_list_of_runs
 
     def load_data_for_a_run(self, run=None, data_type=DataType.sample):
 

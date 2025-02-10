@@ -21,38 +21,43 @@ from __code.workflow.final_projections_review import FinalProjectionsReview
 from __code.config import NUM_THREADS
 
 
-class RectangleSelector:
-   def __init__(self, ax):
-      self.ax = ax
-      self.start_point = None
-      self.rect = None
-      self.cid_press = ax.figure.canvas.mpl_connect('button_press_event', self.on_press)
-      self.cid_release = ax.figure.canvas.mpl_connect('button_release_event', self.on_release)
-      self.cid_motion = ax.figure.canvas.mpl_connect('motion_notify_event', self.on_motion)
-   def on_press(self, event):
-      if event.inaxes == self.ax:
-         self.start_point = (event.xdata, event.ydata)
-         self.rect = Rectangle(self.start_point, 0, 0, edgecolor='red', alpha=0.2)
-         self.ax.add_patch(self.rect)
-   def on_motion(self, event):
-      if self.start_point is not None and event.inaxes == self.ax:
-         width = event.xdata - self.start_point[0]
-         height = event.ydata - self.start_point[1]
-         self.rect.set_width(width)
-         self.rect.set_height(height)
-         self.ax.figure.canvas.draw()
-   def on_release(self, event):
-      if self.start_point is not None:
-         # Determine the data points within the rectangle and perform actions as needed
-         selected_data = self.get_data_within_rectangle()
-         print("Selected Data:", selected_data)
-         self.start_point = None
-         self.rect.remove()
-         self.ax.figure.canvas.draw()
-   def get_data_within_rectangle(self):
-      # Placeholder function to determine data points within the rectangle
-      # Implement logic to identify data points based on the rectangle's coordinates
-      return [(1, 2), (3, 4)]  # Example data points
+# class RectangleSelector:
+   
+#    def __init__(self, ax):
+#       self.ax = ax
+#       self.start_point = None
+#       self.rect = None
+#       self.cid_press = ax.figure.canvas.mpl_connect('button_press_event', self.on_press)
+#       self.cid_release = ax.figure.canvas.mpl_connect('button_release_event', self.on_release)
+#       self.cid_motion = ax.figure.canvas.mpl_connect('motion_notify_event', self.on_motion)
+
+#    def on_press(self, event):
+#       if event.inaxes == self.ax:
+#          self.start_point = (event.xdata, event.ydata)
+#          self.rect = Rectangle(self.start_point, 0, 0, edgecolor='red', alpha=0.2)
+#          self.ax.add_patch(self.rect)
+
+#    def on_motion(self, event):
+#       if self.start_point is not None and event.inaxes == self.ax:
+#          width = event.xdata - self.start_point[0]
+#          height = event.ydata - self.start_point[1]
+#          self.rect.set_width(width)
+#          self.rect.set_height(height)
+#          self.ax.figure.canvas.draw()
+
+#    def on_release(self, event):
+#       if self.start_point is not None:
+#          # Determine the data points within the rectangle and perform actions as needed
+#          selected_data = self.get_data_within_rectangle()
+#          print("Selected Data:", selected_data)
+#          self.start_point = None
+#          self.rect.remove()
+#          self.ax.figure.canvas.draw()
+
+#    def get_data_within_rectangle(self):
+#       # Placeholder function to determine data points within the rectangle
+#       # Implement logic to identify data points based on the rectangle's coordinates
+#       return [(1, 2), (3, 4)]  # Example data points
    
 
 class Normalization(Parent):
@@ -144,7 +149,7 @@ class Normalization(Parent):
                                         
         display(self.display_roi)
       
-    def normalize(self):
+    def normalize(self, ignore_dc=False):
         master_3d_data = self.parent.master_3d_data_array
         
         size_data = np.shape(master_3d_data[DataType.sample])
@@ -178,8 +183,9 @@ class Normalization(Parent):
         self.parent.configuration.list_normalization_settings = list_norm_settings
 
         ob_data_combined = np.squeeze(master_3d_data[DataType.ob])
-        dc_data_combined = None if (self.parent.list_of_images[DataType.dc] is None) else np.squeeze(master_3d_data[DataType.dc])
-    
+        # dc_data_combined = None if (self.parent.list_of_images[DataType.dc] is None) else np.squeeze(master_3d_data[DataType.dc])
+        dc_data_combined = None if (master_3d_data[DataType.dc] is None) else np.squeeze(master_3d_data[DataType.dc])
+
         for _index, sample_data in enumerate(master_3d_data[DataType.sample]):
           
             sample_data = np.array(master_3d_data[DataType.sample][_index], dtype=np.float32)
@@ -225,54 +231,6 @@ class Normalization(Parent):
 
         self.parent.normalized_images = np.squeeze(np.asarray(normalized_data, dtype=np.float32))
         logging_3d_array_infos(message="normalized images", array=self.parent.normalized_images)
-
-    # def visualization_normalization_settings(self):
-    #     self.display_ui = widgets.ToggleButtons(options=['1 image at a time',
-    #                                                            'All images'],
-    #                                                            description="How to plot?",
-    #                                                            )
-    #     display(self.display_ui)
-
-    # def visualize_normalization(self):
-
-    #     if self.display_ui.value == '1 image at a time':
-
-    #         normalized_data = self.parent.normalized_images
-    #         list_of_runs_to_use = self.parent.list_of_runs_to_use[DataType.sample]
-    #         master_3d_sample_data = self.parent.master_3d_data_array_cleaned[DataType.sample]
-
-    #         def plot_norm(image_index=0, vmin=0, vmax=1):
-
-    #             fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
-
-    #             _norm_data = normalized_data[image_index]
-    #             _run_number = list_of_runs_to_use[image_index]
-    #             _raw_data = master_3d_sample_data[image_index]
-
-    #             im0 = axs[0].imshow(_raw_data)
-    #             axs[0].set_title("Raw data")
-    #             plt.colorbar(im0, ax=axs[0], shrink=0.5)
-
-    #             im1 = axs[1].imshow(_norm_data, vmin=vmin, vmax=vmax)
-    #             axs[1].set_title('Normalized')
-    #             plt.colorbar(im1, ax=axs[1], shrink=0.5)
-        
-    #             # fig.set_title(f"{_run_number}")
-                
-    #             plt.tight_layout()
-    #             plt.show()
-
-    #         display_plot = interactive(plot_norm,
-    #                                 image_index=widgets.IntSlider(min=0,
-    #                                                                 max=len(list_of_runs_to_use)-1,
-    #                                                                 value=0),
-    #                                 vmin=widgets.IntSlider(min=0, max=10, value=0),
-    #                                 vmax=widgets.IntSlider(min=0, max=10, value=1))
-    #         display(display_plot)
-
-    #     else:
-    #         o_review = FinalProjectionsReview(parent=self.parent)
-    #         o_review.run(array=self.parent.normalized_images)
 
     def export_images(self):
         

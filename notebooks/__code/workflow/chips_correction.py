@@ -23,7 +23,7 @@ class ChipsCorrection(Parent):
                                array=self.parent.normalized_images)
 
         normalized_images = np.array(self.parent.normalized_images)
-        logging.info(f"\t{np.shape(normalized_images) =}")
+        logging.info(f"\t{np.shape(normalized_images) =}")   # angle, y, x
         normalized_images_axis_swap = np.moveaxis(normalized_images, 0, 2)  # y, x, angle
         logging.info(f"\t{np.shape(normalized_images_axis_swap) =}")
         corrected_images = ChipsCorrection.correct_alignment(normalized_images_axis_swap,
@@ -152,7 +152,7 @@ class ChipsCorrection(Parent):
     def visualize_chips_correction(self):
 
         corrected_images  = self.parent.corrected_images
-        list_of_runs_to_use = self.parent.list_of_runs_to_use[DataType.sample]
+        # list_of_runs_to_use = self.parent.list_of_runs_to_use[DataType.sample]
         normalized_images = self.parent.normalized_images
 
         def plot_norm(image_index=0, vmin=0, vmax=1):
@@ -160,7 +160,7 @@ class ChipsCorrection(Parent):
             fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
 
             _norm_data = corrected_images[image_index]
-            _run_number = list_of_runs_to_use[image_index]
+            # _run_number = list_of_runs_to_use[image_index]
             _raw_data = normalized_images[image_index]
 
             im0 = axs[0].imshow(_raw_data, vmin=vmin, vmax=vmax)
@@ -178,7 +178,7 @@ class ChipsCorrection(Parent):
 
         display_plot = interactive(plot_norm,
                                   image_index=widgets.IntSlider(min=0,
-                                                                max=len(list_of_runs_to_use)-1,
+                                                                max=len(corrected_images) -1,
                                                                 value=0),
                                   vmin=widgets.IntSlider(min=0, max=10, value=0),
                                   vmax=widgets.IntSlider(min=0, max=10, value=1))

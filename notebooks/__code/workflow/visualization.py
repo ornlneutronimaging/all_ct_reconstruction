@@ -144,8 +144,9 @@ class Visualization(Parent):
 
         if self.display_ui.value == '1 image at a time':
 
-            list_of_images = self.parent.list_of_images[DataType.sample]
-            
+            # list_of_images = self.parent.list_of_images[DataType.sample]
+            nbr_images = len(self.parent.master_3d_data_array[DataType.sample])
+
             if turn_on_vrange:
                 
                 if vmin is None:
@@ -189,7 +190,7 @@ class Visualization(Parent):
 
                 display_plot = interactive(plot_norm,
                                         image_index=widgets.IntSlider(min=0,
-                                                                        max=len(list_of_images)-1,
+                                                                        max=nbr_images-1,
                                                                         value=0),
                                         vmin_before=widgets.IntSlider(min=vmin_before, max=vmax_before, value=vmin_before),
                                         vmax_before=widgets.IntSlider(min=vmin_before, max=vmax_before, value=vmax_before),
@@ -222,7 +223,7 @@ class Visualization(Parent):
 
                 display_plot = interactive(plot_norm,
                                         image_index=widgets.IntSlider(min=0,
-                                                                        max=len(list_of_images)-1,
+                                                                        max=nbr_images-1,
                                                                         value=0),
                 )
                 
@@ -241,12 +242,14 @@ class Visualization(Parent):
 
         for _data_type in master_3d_data_array.keys():
 
-            if not self.parent.list_of_images[_data_type]:
+            if master_3d_data_array[_data_type] is None:
+            # if not self.parent.list_of_images[_data_type]:
                 continue
             
             display(HTML(f"<b>{_data_type}</b>"))
             array = master_3d_data_array[_data_type]
-            nbr_images = len(self.parent.list_of_images[_data_type])
+            # nbr_images = len(self.parent.list_of_images[_data_type])
+            nbr_images = len(self.parent.master_3d_data_array[_data_type])
             nbr_rows = int(np.ceil(nbr_images / nbr_cols))
 
             fig, axs =  plt.subplots(nrows=nbr_rows, ncols=nbr_cols,

@@ -93,9 +93,10 @@ class RecapData(Parent):
             default_list_sample = None
             default_list_ob = None
 
+        final_list_of_sample = self.final_list_of_runs[DataType.sample][:]
         sample_runs = widgets.VBox([
             widgets.Label("Sample"),
-            widgets.SelectMultiple(options=self.final_list_of_runs[DataType.sample],
+            widgets.SelectMultiple(options=final_list_of_sample,
                                    value=default_list_sample,
                                     layout=widgets.Layout(height="100%",
                                                             width='100%',
@@ -105,9 +106,10 @@ class RecapData(Parent):
                                 height='300px'))
         self.parent.list_of_sample_runs_to_reject_ui = sample_runs.children[1]
 
+        final_list_of_ob = self.final_list_of_runs[DataType.ob][:]
         ob_runs = widgets.VBox([
             widgets.Label("OB"),
-            widgets.SelectMultiple(options=self.final_list_of_runs[DataType.ob],
+            widgets.SelectMultiple(options=final_list_of_ob,
                                    value=default_list_ob,
                                     layout=widgets.Layout(height="100%",
                                                             width='100%'))
@@ -121,3 +123,13 @@ class RecapData(Parent):
         hori_layout = widgets.HBox([sample_runs, ob_runs])
         verti_layout = widgets.VBox([title, hori_layout])
         display(verti_layout)
+
+        clear_all = widgets.Button(description="Clear All")
+        display(clear_all)
+        clear_all.on_click(self.clear_all)
+
+    def clear_all(self, _):
+        self.parent.list_of_sample_runs_to_reject_ui.value = []
+        self.parent.list_of_ob_runs_to_reject_ui.value = []
+        logging.info(f"Clearing all selected runs")
+        
