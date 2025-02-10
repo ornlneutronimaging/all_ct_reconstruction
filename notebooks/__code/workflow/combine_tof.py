@@ -4,6 +4,8 @@ import numpy as np
 from __code import OperatingMode
 from __code.parent import Parent
 from __code import DataType, Run
+from __code.utilities.load import load_list_of_tif, load_data_using_multithreading
+from __code.utilities.files import retrieve_list_of_tif
 
 
 class CombineTof(Parent):
@@ -33,36 +35,54 @@ class CombineTof(Parent):
         self.parent.list_of_runs = list_of_runs
 
     def load_data(self):
+
+        logging.info(f"loading data ...")
+
+        # for sample
+        logging.info(f"\tworking with sample")
         list_angles_deg_vs_runs_dict = self.parent.list_angles_deg_vs_runs_dict
         list_angles = list(list_angles_deg_vs_runs_dict.keys())
         list_angles.sort()
 
+        list_of_runs = self.parent.list_of_runs
 
-        ## work in progress
+        list_of_angles_of_runs_to_keep = []
+        master_3d_data_array = {DataType.sample: [],
+                                DataType.ob: []}
+
         for _angle in list_angles:
             _runs = list_angles_deg_vs_runs_dict[_angle]
             logging.info(f"Working with angle {_angle} degrees")
             logging.info(f"\t{_runs}")
 
-            # load data
-            for _run in _runs:
-                logging.info(f"Working with run {_run}")
-                _data = self.load_data_for_a_run(run=_run)
+            use_it = list_of_runs[DataType.sample][_runs][Run.use_it]
+            if use_it:
+                logging.info(f"\twe keep that runs!")
+                list_of_angles_of_runs_to_keep.append(_angle)
+                logging.info(f"\tloading run ...")
+                _data = self.load_data_for_a_run(run=_runs)
                 logging.info(f"\t{_data.shape}")
+                # # combine all tof
+                # _data = np.sum(_data, axis=0)
+                master_3d_data_array[DataType.sample].append(_data)
+            else:
+                logging.info(f"\twe reject that runs!")
+
+        self.parent.master_3d_data_array = master_3d_data_array
 
 
+    def load_data_for_a_run(self, run):
 
+        full_path_to_run = self.parent.list_of_runs[DataType.sample][run][Run.full_path]
 
+        # get list of tiff
+        list_tif = retrieve_list_of_tif(full_path_to_run)
 
+        # load data
+        # data = load_list_of_tif(list_tif)
+        data = load_data_using_multithreading(list_tif, combine_tof=True)
 
-
-
-
-
-
-def combine_all_tof(data):
-    pass
-
+        return data
 
 
 def combine_tof_data_range(config_model, master_data):
