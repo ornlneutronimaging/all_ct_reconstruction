@@ -213,19 +213,14 @@ class Step1PrepareTimePixImages:
 
     def clean_images(self):
         """updates: master_3d_data_array"""
-        self.o_clean.cleaning()
+        self.o_clean.cleaning(ignore_dc=True)
 
     def how_to_visualize_after_cleaning(self):
         self.o_vizu = Visualization(parent=self)
         self.o_vizu.how_to_visualize(data_type=DataType.cleaned_images)
 
     def visualize_cleaned_data(self):
-        self.o_vizu.visualize_according_to_selection(mode='cleaned')
-
-
-
-
-
+        self.o_vizu.visualize_timepix_according_to_selection(mode='cleaned')
    
     # normalization
     def normalization_settings(self):
@@ -236,7 +231,10 @@ class Step1PrepareTimePixImages:
         self.o_norm.select_roi()
 
     def normalization(self):
-        self.o_norm.run()
+        """creates: normalized_images"""
+        o_combine = CombineObDc(parent=self)
+        o_combine.run(ignore_dc=True)
+        self.o_norm.normalize()
 
     def visualization_normalization_settings(self):
         self.o_norm.visualization_normalization_settings()

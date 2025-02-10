@@ -46,6 +46,7 @@ debug_folder = {OperatingMode.tof: {DataType.sample: "/SNS/VENUS/IPTS-33699/shar
                                             DataType.normalized: '/SNS/VENUS/IPTS-33531/shared/processed_data/jean_test',
                                             DataType.reconstructed: '/SNS/VENUS/IPTS-33531/shared/processed_data/jean_test',
                                             DataType.extra: '/SNS/VENUS/IPTS-33531/shared/processed_data/jean_test',
+                                            DataType.nexus: '/SNS/VENUS/IPTS-33531/nexus/',
                                             },
                 # OperatingMode.white_beam: {DataType.sample: "/SNS/VENUS/IPTS-33531/shared/processed_data/November9_2024_Soil_microplastics_1/",
                 #                             DataType.ob: "/SNS/VENUS/IPTS-33531/shared/processed_data/ob_PlantE/",
@@ -99,10 +100,10 @@ crop_roi = {OperatingMode.tof: {'left': 0,
                             'right': 74,
                             'top': 0,
                             'bottom': 49},
-        OperatingMode.white_beam: {'left': 200,
-                                   'right': -1,
-                                   'top': 200,
-                                   'bottom': -50},
+        OperatingMode.white_beam: {'left': 5,
+                                   'right': -5,
+                                   'top': 5,
+                                   'bottom': -5},
                                    }
 
 ANGSTROMS = u"\u212b"

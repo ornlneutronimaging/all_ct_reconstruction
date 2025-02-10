@@ -147,7 +147,7 @@ class ImagesCleaner(Parent):
                                        description='Diff value')
             display(self.tomopy_diff)
         
-    def cleaning(self):
+    def cleaning(self, ignore_dc=False):
 
         # sample_data = self.parent.master_3d_data_array[DataType.sample]
         # ob_data = self.parent.master_3d_data_array[DataType.ob]
@@ -159,11 +159,11 @@ class ImagesCleaner(Parent):
             self.parent.histogram_sample_before_cleaning = sample_data.sum(axis=0)[self.edge_nbr_pixels: -self.edge_nbr_pixels,
                                                 self.edge_nbr_pixels: -self.edge_nbr_pixels]
 
-        self.cleaning_by_histogram()
-        self.cleaning_with_tomopy()
-        self.cleaning_with_scipy()
+        self.cleaning_by_histogram(ignore_dc=ignore_dc)
+        self.cleaning_with_tomopy(ignore_dc=ignore_dc)
+        self.cleaning_with_scipy(ignore_dc=ignore_dc)
 
-    def cleaning_with_scipy(self):
+    def cleaning_with_scipy(self, ignore_dc=False):
         """scipy"""
 
         if not self.scipy_ui.value:
@@ -183,14 +183,15 @@ class ImagesCleaner(Parent):
         self.parent.master_3d_data_array[DataType.ob] = np.array(median_filter(self.parent.master_3d_data_array[DataType.ob], size=_size))
         logging_3d_array_infos(message="after scipy cleaning of ob", array=self.parent.master_3d_data_array[DataType.ob])       
 
-        if self.parent.list_of_images[DataType.dc]:
-            logging_3d_array_infos(message="before scipy cleaning of dc", array=self.parent.master_3d_data_array[DataType.dc])       
-            self.parent.master_3d_data_array[DataType.dc] = np.array(median_filter(self.parent.master_3d_data_array[DataType.dc], size=_size))
-            logging_3d_array_infos(message="after scipy cleaning of dc", array=self.parent.master_3d_data_array[DataType.dc])       
+        if not ignore_dc:
+            if self.parent.list_of_images[DataType.dc]:
+                logging_3d_array_infos(message="before scipy cleaning of dc", array=self.parent.master_3d_data_array[DataType.dc])       
+                self.parent.master_3d_data_array[DataType.dc] = np.array(median_filter(self.parent.master_3d_data_array[DataType.dc], size=_size))
+                logging_3d_array_infos(message="after scipy cleaning of dc", array=self.parent.master_3d_data_array[DataType.dc])       
         
         logging.info(f"cleaning using median filter ... done!")
 
-    def cleaning_with_tomopy(self):
+    def cleaning_with_tomopy(self, ignore_dc=False):
         
         if not self.tomopy_ui.value:
             logging.info(f"cleaning using tomopy: OFF")
@@ -213,17 +214,18 @@ class ImagesCleaner(Parent):
         self.parent.master_3d_data_array[DataType.ob] = cleaned_ob[:]
         logging_3d_array_infos(message="after tomopy cleaning of ob", array=self.parent.master_3d_data_array[DataType.ob])
 
-        if self.parent.list_of_images[DataType.dc]:
-            logging_3d_array_infos(message="before tomopy cleaning of dc", array=self.parent.master_3d_data_array[DataType.dc])
-            dc_data = np.array(self.parent.master_3d_data_array[DataType.dc])
-            cleaned_dc = remove_outlier(dc_data, self.tomopy_diff.value, ncore=NUM_THREADS).astype(np.ushort)
-            # cleaned_dc = gamma_filter(arrays=dc_data, diff_tomopy=self.tomopy_diff.value)
-            self.parent.master_3d_data_array[DataType.dc] = cleaned_dc[:]
-            logging_3d_array_infos(message="after tomopy cleaning of dc", array=self.parent.master_3d_data_array[DataType.dc])
+        if not ignore_dc:
+            if self.parent.list_of_images[DataType.dc]:
+                logging_3d_array_infos(message="before tomopy cleaning of dc", array=self.parent.master_3d_data_array[DataType.dc])
+                dc_data = np.array(self.parent.master_3d_data_array[DataType.dc])
+                cleaned_dc = remove_outlier(dc_data, self.tomopy_diff.value, ncore=NUM_THREADS).astype(np.ushort)
+                # cleaned_dc = gamma_filter(arrays=dc_data, diff_tomopy=self.tomopy_diff.value)
+                self.parent.master_3d_data_array[DataType.dc] = cleaned_dc[:]
+                logging_3d_array_infos(message="after tomopy cleaning of dc", array=self.parent.master_3d_data_array[DataType.dc])
 
         logging.info(f"cleaning using tomopy ... done!")
             
-    def cleaning_by_histogram(self):
+    def cleaning_by_histogram(self, ignore_dc=False):
 
         if not self.in_house_ui.value:
             logging.info(f"cleaning by histogram: OFF")
