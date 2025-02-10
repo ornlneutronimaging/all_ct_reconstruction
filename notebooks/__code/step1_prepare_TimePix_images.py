@@ -19,6 +19,20 @@ from __code.workflow.remove_strips import RemoveStrips
 from __code.workflow.svmbir_handler import SvmbirHandler
 from __code.workflow.final_projections_review import FinalProjectionsReview
 from __code.workflow.export import ExportExtra
+from __code.workflow.visualization import Visualization
+from __code.workflow.crop import Crop
+from __code.workflow.combine_ob_dc import CombineObDc
+from __code.workflow.mode_selection import ModeSelection
+from __code.workflow.reconstruction_selection import ReconstructionSelection
+from __code.workflow.rebin import Rebin
+from __code.workflow.log_conversion import log_conversion
+from __code.workflow.data_handler import remove_negative_values, remove_0_values
+from __code.workflow.fbp_handler import FbpHandler
+from __code.workflow.rotate import Rotate
+from __code.workflow.test_reconstruction import TestReconstruction
+from __code.utilities.configuration_file import ReconstructionAlgorithm
+from __code.utilities.logging import logging_3d_array_infos
+
 
 LOG_BASENAME_FILENAME, _ = os.path.splitext(os.path.basename(__file__))
 
@@ -171,23 +185,48 @@ class Step1PrepareTimePixImages:
         else:
             o_check.minimum_requirement_not_met()
 
-    # cleaning low/high pixels
+    # visualization
+    def how_to_visualize(self):
+        self.o_vizu = Visualization(parent=self)
+        self.o_vizu.how_to_visualize()
+
+    def visualize_raw_data(self):
+        """uses: master_3d_data_array"""
+        self.o_vizu.visualize_timepix_according_to_selection(mode='raw')
+
+        # pre processing crop
+    def pre_processing_crop_settings(self):
+        self.o_crop1 = Crop(parent=self)
+        self.o_crop1.set_region(before_normalization=True)
+
+    def pre_processing_crop(self):
+        """updates: master_3d_data_array"""
+        self.o_crop1.run()
+
+    # cleaning low/high pixels - remove outliers
+    def clean_images_settings(self):
+        self.o_clean = ImagesCleaner(parent=self)
+        self.o_clean.settings()
+
     def clean_images_setup(self):
-        o_clean = ImagesCleaner(parent=self)
-        o_clean.cleaning_setup()
+        self.o_clean.cleaning_setup()
 
     def clean_images(self):
-        o_clean = ImagesCleaner(parent=self)
-        o_clean.cleaning()
+        """updates: master_3d_data_array"""
+        self.o_clean.cleaning()
 
-    def select_export_folder(self):
-        o_clean = ImagesCleaner(parent=self)
-        o_clean.select_export_folder()
+    def how_to_visualize_after_cleaning(self):
+        self.o_vizu = Visualization(parent=self)
+        self.o_vizu.how_to_visualize(data_type=DataType.cleaned_images)
 
-    def export_cleaned_images(self):
-        o_clean = ImagesCleaner(parent=self)
-        o_clean.export_clean_images()
+    def visualize_cleaned_data(self):
+        self.o_vizu.visualize_according_to_selection(mode='cleaned')
 
+
+
+
+
+   
     # normalization
     def normalization_settings(self):
         self.o_norm = Normalization(parent=self)

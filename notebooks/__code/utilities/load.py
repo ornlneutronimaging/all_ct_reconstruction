@@ -30,7 +30,6 @@ def load_data(folder):
     return o_norm.data['sample']['data']
 
 def load_list_of_tif(list_of_tiff, dtype=None):
-
     if dtype is None:
         dtype = np.uint16
 

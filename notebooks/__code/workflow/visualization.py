@@ -22,11 +22,20 @@ class Visualization(Parent):
         display(self.what_to_visualize_ui)
 
     def visualize_according_to_selection(self, mode='cleaned'):
+        # for QHY data
         self.mode = mode
         if self.what_to_visualize_ui.value == 'All images':
             self.visualize_all_images_at_once()
         else:
             self.visualize_statistics()
+
+    def visualize_timepix_according_to_selection(self, mode='cleaned'):
+        # for timepix data
+        self.mode = mode
+        if self.what_to_visualize_ui.value == 'All images':
+            self.visualize_all_images_at_once()
+        else:
+            self.visualize_timepix_statistics()
 
     def visualize_statistics(self):
 
@@ -359,3 +368,83 @@ class Visualization(Parent):
                                                         value=0),
         )
         display(_display_plot_images)
+
+    def visualize_timepix_statistics(self):
+
+        if self.mode in ['raw', 'cleaned']:
+            master_3d_data_array = self.parent.master_3d_data_array
+        else:
+            raise NotImplementedError(f"mode {self.mode} not implemented")
+            
+        sample_data = master_3d_data_array[DataType.sample]
+        ob_data = master_3d_data_array[DataType.ob]
+        list_of_angles = self.parent.final_list_of_angles
+      
+        vmax = ob_data.max()
+        vmin = sample_data.min()
+
+        vmax = remove_outlier(ob_data[0], GAMMA_DIFF, ncore=NUM_THREADS).astype(np.ushort).max()
+        vmin = remove_outlier(sample_data[0], GAMMA_DIFF, ncore=NUM_THREADS).astype(np.ushort).min()
+
+        # np.min of sample
+        sample_proj_min = np.min(sample_data, axis=0)
+
+        # np.min of ob
+        ob_proj_min = np.min(ob_data, axis=0)
+
+        # projection of first image loaded
+        sample_proj_first = sample_data[0]
+        
+        # projection of last image loaded
+        sample_proj_last = sample_data[-1]
+
+        # ratio firt / last
+        ratio_last_first = sample_proj_last / sample_proj_first
+
+        fig0, axs0 = plt.subplots(nrows=1, ncols=2, figsize=(15, 7))
+
+        im0 = axs0[0].imshow(sample_proj_min, vmin=vmin, vmax=vmax)
+        axs0[0].set_title("Sample (np.min)")
+        plt.colorbar(im0, ax=axs0[0], shrink=0.5)
+
+        im1 = axs0[1].imshow(ob_proj_min, vmin=vmin, vmax=vmax)   
+        axs0[1].set_title("OB (np.min)")
+        plt.colorbar(im1, ax=axs0[1], shrink=0.5)
+
+        fig1, axs1 = plt.subplots(nrows=1, ncols=3, figsize=(15, 7))
+
+        im3 = axs1[0].imshow(sample_proj_first, vmin=vmin, vmax=vmax)
+        axs1[0].set_title(f"Sample at angle {list_of_angles[0]}")
+        plt.colorbar(im3, ax=axs1[0], shrink=0.5)
+
+        im4 = axs1[1].imshow(sample_proj_last, vmin=vmin, vmax=vmax)
+        axs1[1].set_title(f"Sample at angle {list_of_angles[-1]}")
+        plt.colorbar(im4, ax=axs1[1], shrink=0.5)
+
+        im5 = axs1[2].imshow(ratio_last_first, vmin=0.9, vmax=1.1)
+        axs1[2].set_title("Ratio last/first")
+        plt.colorbar(im5, ax=axs1[2], shrink=0.5)
+
+        if (self.mode == 'cleaned') and (self.parent.histogram_sample_before_cleaning is not None):
+
+            # display histogram of sample before and after
+            fig, axs = plt.subplots(nrows=2, ncols=1)
+            
+            flatten_raw_histogram = self.parent.histogram_sample_before_cleaning.flatten()
+            # _, sample_bin_edges = np.histogram(flatten_raw_histogram, bins=100, density=False)
+            axs[0].hist(flatten_raw_histogram, bins=100)
+            axs[0].set_title('raw sample histogram')
+            axs[0].set_yscale('log')
+
+            edge_nbr_pixels = clean_paras['edge_nbr_pixels']
+
+            corrected_data = np.array(self.parent.master_3d_data_array[DataType.sample])
+            histogram_corrected_data = corrected_data.sum(axis=0)[edge_nbr_pixels: -edge_nbr_pixels,
+                                                        edge_nbr_pixels: -edge_nbr_pixels]
+            flatten_corrected_histogram = histogram_corrected_data.flatten()
+            axs[1].hist(flatten_corrected_histogram, bins=100)
+            axs[1].set_title('cleaned sample histogram')
+            axs[1].set_yscale('log')
+
+            plt.tight_layout()
+            plt.show()

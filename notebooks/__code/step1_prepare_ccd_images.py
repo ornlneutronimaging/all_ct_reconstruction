@@ -232,7 +232,7 @@ class Step1PrepareCcdImages:
         """uses: master_3d_data_array"""
         self.o_vizu.visualize_according_to_selection(mode='raw')
 
-    # pre processing cropt
+    # pre processing crop
     def pre_processing_crop_settings(self):
         self.o_crop1 = Crop(parent=self)
         self.o_crop1.set_region(before_normalization=True)

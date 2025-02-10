@@ -8,7 +8,7 @@ import ipywidgets as widgets
 from IPython.core.display import HTML, display
 
 from __code.parent import Parent
-from __code import DataType, Run
+from __code import DataType, Run, DEBUG
 
 
 class RecapData(Parent):
@@ -86,9 +86,17 @@ class RecapData(Parent):
 
     def display_list_of_runs(self):
 
+        if DEBUG:
+            default_list_sample = self.final_list_of_runs[DataType.sample][3:]
+            default_list_ob = self.final_list_of_runs[DataType.ob][1:]
+        else:
+            default_list_sample = None
+            default_list_ob = None
+
         sample_runs = widgets.VBox([
             widgets.Label("Sample"),
             widgets.SelectMultiple(options=self.final_list_of_runs[DataType.sample],
+                                   value=default_list_sample,
                                     layout=widgets.Layout(height="100%",
                                                             width='100%',
                                                             )),                                                       
@@ -100,6 +108,7 @@ class RecapData(Parent):
         ob_runs = widgets.VBox([
             widgets.Label("OB"),
             widgets.SelectMultiple(options=self.final_list_of_runs[DataType.ob],
+                                   value=default_list_ob,
                                     layout=widgets.Layout(height="100%",
                                                             width='100%'))
         ],
