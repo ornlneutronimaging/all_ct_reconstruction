@@ -8,7 +8,7 @@ from IPython.display import display
 from IPython.core.display import HTML
 import ipywidgets as widgets
 from scipy.ndimage import median_filter
-from imars3d.backend.corrections.gamma_filter import gamma_filter
+# from imars3d.backend.corrections.gamma_filter import gamma_filter
 from tomopy.misc.corr import remove_outlier
 from tomopy.misc.corr import remove_outlier_cuda
  

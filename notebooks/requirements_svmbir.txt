@@ -1,0 +1,54 @@
+> micromamba create -n svmbir_py310 python=3.10.16
+> micromamba activate svmbir_py310
+> pip install svmbir
+> micromamba remove numpy=1.16.4
+> micromamba install matplotlib=3.10.0
+> micromamba install jupyter
+> micromamba install scikit-image numpy
+> micromamba install olefile astropy
+
+> git clone https://github.com/dmici/NeuTomPy-toolbox/tree/master
+> cd NeuTomPy-toolbox
+> cd eval "$(micromamba shell hook --shell bash)"
+> micromamba activate hsnt_py310
+> pip install .
+
+> pip install opencv-python read-roi
+> micromamba install ipython numexpr astropy tifffile mkl_fft
+> micromamba install -c simpleitk simpleitk
+> micromamba install -c astra-toolbox astra-toolbox
+
+
+# > micromamba install algotom pydantic tqdm param dxchange tomopy
+# > micromamba install scipy=1.13.1
+
+# > micromamba install -c simpleitk simpleitk
+
+
+
+
+
+
+
+
+# - pip install neutronbraggedge
+# matplotlib, pandas
+# micromamba install -c simpleitk simpleitk
+# conda install scikit-image
+# micromamba install ipython numexpr astropy tifffile mkl_fft
+# micromamba install -c astra-toolbox astra-toolbox
+# micromamba install olefile
+# pip install opencv-python read-roi
+# pip install -U numpy
+# 
+
+# > git clone https://github.com/dmici/NeuTomPy-toolbox/tree/master
+# > cd NeuTomPy-toolbox
+# > cd eval "$(micromamba shell hook --shell bash)"
+# > micromamba activate hsnt_py310
+# > pip install .
+
+
+### warning !!!!!!
+# only works with local version of neutompy as I had to modify it to remove interactivity 
+# when calculating the tilt !!!!!

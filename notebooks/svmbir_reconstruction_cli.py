@@ -5,7 +5,7 @@ from __code.utilities.logging import setup_logging
 from __code.utilities.configuration_file import loading_config_file_into_model
 
 from __code.workflow_cli.load import load_data
-from __code.workflow_cli.combine import combine_tof_data
+from notebooks.__code.workflow.combine_tof import combine_tof_data
 from __code.workflow_cli.clean import clean_images
 from __code.workflow_cli.normalization import normalize
 from __code.workflow_cli.chips_correction import correct_data

@@ -10,19 +10,20 @@
 # - micromamba install pydantic
 # - micromamba install tqdm
 # - micromamba install jupyter
-# - pip install NeuNorm
+# - pip install NeuNorm   ## NOT NEEDED ANYMORE
 # - micromamba install h5py
 # - pip install neutronbraggedge
 # - micromamba install param
 # - micromamba install dxchange
 # - micromamba install tomopy
 # matplotlib, pandas
-# conda install -c simpleitk simpleitk
+# micromamba install -c simpleitk simpleitk
 # conda install scikit-image
-# conda install ipython numexpr astropy tifffile mkl_fft
-# conda install -c astra-toolbox astra-toolbox
+# micromamba install ipython numexpr astropy tifffile mkl_fft
+# micromamba install -c astra-toolbox astra-toolbox
 # pip install opencv-python read-roi
 # pip install -U numpy
+# 
 
 # > git clone https://github.com/dmici/NeuTomPy-toolbox/tree/master
 # > cd NeuTomPy-toolbox

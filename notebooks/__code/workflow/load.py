@@ -10,7 +10,7 @@ from __code import DataType, Run, OperatingMode
 from __code import DEBUG, debug_folder
 from __code.parent import Parent
 from __code.utilities.file_folder_browser import FileFolderBrowser
-from __code.utilities.load import load_data_using_multithreading, load_list_of_tif, load_tiff
+from __code.utilities.load import load_data_using_multithreading, load_list_of_tif
 from __code.utilities.files import retrieve_list_of_tif
 from __code.config import DEFAULT_NAMING_CONVENTION_INDICES, PERCENTAGE_OF_DATA_TO_USE_FOR_RECONSTRUCTION
 
