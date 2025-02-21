@@ -25,3 +25,10 @@ def remove_0_values(normalized_data):
     else:
         return normalized_data[:]
     
+def remove_above_1_values(normalized_data):
+    logging.info("Checking for values above 1 in normalized_data:")
+    if normalized_data.any() > 1:
+        logging.info("\tRemoving values above 1")
+        where_above_1 = np.where(normalized_data > 1)
+        normalized_data[where_above_1] = np.NaN
+        logging.info("Values above 1 removed!")

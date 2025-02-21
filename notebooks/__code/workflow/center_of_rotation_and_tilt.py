@@ -198,12 +198,12 @@ class CenterOfRotationAndTilt(Parent):
     def manual_center_of_rotation(self):
         display(HTML("Center of rotation"))
 
-        _, width = np.shape(self.image_0_degree)
+        height, width = self.image_0_degree.shape
         vmax = np.max([self.image_0_degree, self.image_180_degree, self.image_360_degree])
-        vmax = 4 # debug
+        # vmax = 4 # debug
 
-        def plot_images(angles, center, v_range):
-            _, axs = plt.subplots(nrows=1, ncols=1, figsize=(10, 10))
+        def plot_images(angles, center, profile_position, v_range):
+            _, axs = plt.subplots(nrows=2, ncols=1, figsize=(8, 15))
 
             at_least_one_image_selected = False
             list_images = []
@@ -225,18 +225,26 @@ class CenterOfRotationAndTilt(Parent):
             else:
                 final_image = list_images[0]
 
-            axs.imshow(final_image, vmin=v_range[0], vmax=v_range[1], cmap='viridis')
-            axs.axvline(center, color='blue', linestyle='--')
+            axs[0].imshow(final_image, vmin=v_range[0], vmax=v_range[1], cmap='viridis')
+            axs[0].axvline(center, color='blue', linestyle='--')
+            axs[0].axhline(profile_position, color='red', linestyle='--')
+
+            axs[1].plot(final_image[profile_position, :])
+            axs[1].axvline(center, color='blue', linestyle='--')
 
             return center
 
         self.manual_center_selection = interactive(plot_images,
                                    angles=widgets.SelectMultiple(options=[ImageAngles.degree_0, ImageAngles.degree_180, ImageAngles.degree_360],
                                                                       value=[ImageAngles.degree_0, ImageAngles.degree_180]),
-                                   center=widgets.IntSlider(min=0, 
+                                                                 center=widgets.IntSlider(min=0, 
                                                                       max=int(width-1), 
                                                                       layout=widgets.Layout(width="100%"),
                                                                       value=int(width/2)),
+                                    profile_position=widgets.IntSlider(min=0,
+                                                                       value=int(height/2),
+                                                                       max=int(height-1),
+                                                                       layout=widgets.Layout(width='100%')),
                                     v_range = widgets.FloatRangeSlider(min=0,
                                                                        max=vmax,
                                                                        layout=widgets.Layout(width='100%'),
