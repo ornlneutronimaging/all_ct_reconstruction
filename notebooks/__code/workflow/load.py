@@ -77,6 +77,7 @@ class Load(Parent):
         
         list_images.sort()
         logging.info(f"{len(list_images)} {self.data_type} images have been selected!")
+        print(f"{len(list_images)} {self.data_type} images have been selected!")
         self.parent.list_of_images[self.data_type] = list_images
 
     def select_percentage_of_data_to_use(self):
