@@ -162,7 +162,6 @@ class FbpCliHandler:
                     logging.info(f"launching reconstruction using {_algo} #{index} ...")
             
                     projections = corrected_array_log[:, top_slice_index:bottom_slice_index, :]
-                    #_sino = corrected_array_log[top_slice_index:bottom_slice_index, :, :]   # [y, angles, x]
             
                     center_of_rotation = nbr_pixels_wide // 2
 
@@ -192,7 +191,6 @@ class FbpCliHandler:
 
                     logging.info(f"Cleaning up ...")
                     del reconstruction_array
-                    del _sino
 
                 merge_reconstructed_slices(output_data_folder=output_data_folder, 
                                         top_slice=top_slice,
