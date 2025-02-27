@@ -221,7 +221,7 @@ class SvmbirCliHandler:
         number_of_projections = np.arange(15, len(list_of_angles_rad), 15)
         selected_indices = np.array([], dtype=int)
 
-        starting_number_of_projections = 360
+        starting_number_of_projections = 15
 
         from_slice = list_of_slices_to_reconstruct[0][0]
         to_slice = list_of_slices_to_reconstruct[0][1]
@@ -264,7 +264,7 @@ class SvmbirCliHandler:
                                                 num_threads = NUM_THREADS,
                                                 verbose = verbose,
                                                 svmbir_lib_path = svmbir_lib_path,
-                                                roi_radius=3000,
+                                                roi_radius=2000,
                                                 delta_pixel=2
                                                 )
 

@@ -231,8 +231,8 @@ class CenterOfRotationAndTilt(Parent):
 
             axs[1].plot(final_image[profile_position, :])
             axs[1].axvline(center, color='blue', linestyle='--')
-            axs[1].axvline(center-guide_width, color='yellow', linestyle='.')
-            axs[1].axvline(center+guide_width, color='yellow', linestyle='.')
+            axs[1].axvline(center-guide_width, color='yellow', linestyle=':')
+            axs[1].axvline(center+guide_width, color='yellow', linestyle=':')
 
             return center
 
