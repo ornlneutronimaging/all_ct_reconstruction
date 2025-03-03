@@ -3,15 +3,17 @@ import os
 import glob
 import logging
 import svmbir
+import shutil
 
 from __code.workflow.export import Export
 from __code.utilities.logging import setup_logging
 from __code.utilities.files import make_or_reset_folder, make_folder
-from __code.config import NUM_THREADS, SVMBIR_LIB_PATH
+from __code.config import NUM_THREADS, SVMBIR_LIB_PATH, SYSMATRIX_FOLDER
 from __code.utilities.json import load_json_string
 from __code.utilities.load import load_data_using_multithreading, load_list_of_tif
 from __code.utilities.time import get_current_time_in_special_file_name_format
 from __code.workflow_cli.merge_reconstructed_slices import merge_reconstructed_slices
+from __code import CLEANUP_SYSMATRIX_EVERY_N_ITERATIONS
 
 
 class SvmbirCliHandler:
@@ -155,6 +157,20 @@ class SvmbirCliHandler:
 
         logging.info(f"exporting reconstructed data ... done!")
 
+
+    @staticmethod
+    def cleanup_sysmatrix_folder():    
+        logging.info(f"cleanup_sysmatrix_folder")
+        logging.info(f"{SYSMATRIX_FOLDER = }")
+        if os.path.exists(SYSMATRIX_FOLDER):
+            logging.info(f"removing {SYSMATRIX_FOLDER}")
+            shutil.rmtree(SYSMATRIX_FOLDER)
+            make_folder(SYSMATRIX_FOLDER)
+            logging.info(f"removed {SYSMATRIX_FOLDER}")
+        else:
+            logging.info(f"{SYSMATRIX_FOLDER} doesn't exist!")
+
+
     @staticmethod
     def run_reconstruction_from_pre_data_mode_for_ai_evaluation(config_json_file):
 
@@ -221,10 +237,12 @@ class SvmbirCliHandler:
         number_of_projections = np.arange(15, len(list_of_angles_rad), 15)
         selected_indices = np.array([], dtype=int)
 
-        starting_number_of_projections = 15
+        starting_number_of_projections = 240
 
         from_slice = list_of_slices_to_reconstruct[0][0]
         to_slice = list_of_slices_to_reconstruct[0][1]
+
+        sys_matrix_counter = 0
 
         for _iter, _nbr_projections in enumerate(number_of_projections):
 
@@ -284,3 +302,7 @@ class SvmbirCliHandler:
             o_export.run()
 
             del reconstruction_array
+
+            sys_matrix_counter += 1
+            if sys_matrix_counter % CLEANUP_SYSMATRIX_EVERY_N_ITERATIONS == 0:
+                SvmbirCliHandler.cleanup_sysmatrix_folder()
