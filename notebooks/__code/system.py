@@ -55,8 +55,6 @@ class System:
                                         system_folder=system_folder,
                                         instrument=default_instrument)
 
-        cls.start_path = start_path
-
         select_instrument_ui = widgets.HBox([widgets.Label("Select Instrument",
                                                            layout=widgets.Layout(width='20%')),
                                              widgets.Select(options=full_list_instruments,
@@ -173,9 +171,8 @@ class System:
     def get_start_path(cls, debugger_folder='', system_folder='', instrument=''):
 
         facility = cls.get_facility_from_instrument(instrument=instrument)
-
         username = getpass.getuser()
-
+   
         debugging = config.debugging
         debugger_username = config.debugger_username
 

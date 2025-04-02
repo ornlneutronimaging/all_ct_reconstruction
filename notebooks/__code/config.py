@@ -1,4 +1,4 @@
-debugging = False
+debugging = True
 verbose = True
 debugger_username = 'j35'
 debugger_folder = ['/Users/j35/HFIR/CG1D/',

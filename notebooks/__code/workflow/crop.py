@@ -67,7 +67,7 @@ class Crop(Parent):
                                             ),
                 )     
 
-            return left, right, top, bottom    
+            return left, right, top, bottom            
         
         self.display_roi = interactive(plot_crop,
                                        left=widgets.IntSlider(min=0,

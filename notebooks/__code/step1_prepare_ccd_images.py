@@ -3,10 +3,10 @@ import logging
 from collections import OrderedDict
 import numpy as np
 
-from __code import DataType, OperatingMode, DEFAULT_OPERATING_MODE, DEBUG
+from __code import DataType, OperatingMode, DEFAULT_OPERATING_MODE
 from __code.utilities.logging import setup_logging
 from __code.utilities.configuration_file import Configuration
-
+from __code.config import debugging as DEBUG
 from __code.workflow.load import Load
 from __code.workflow.combine_ob_dc import CombineObDc
 from __code.workflow.checking_data import CheckingData
@@ -296,18 +296,43 @@ class Step1PrepareCcdImages:
         self.o_rebin = Rebin(parent=self)
         self.o_rebin.set_rebinning()
 
-    def rebin(self):
-        """ modifies: normalized_images"""
-        self.o_rebin.execute_binning()
+    def rebin_before_normalization(self):
+        """ modifies: master_3d_data_array"""
+        self.o_rebin.execute_binning_before_normalization()
 
-    def visualize_rebinned_data(self):
-        self.o_vizu.visualize(data_after=self.normalized_images,
-                        label_before='raw',
-                        label_after='rebinned',
-                        data_before=self.before_rebinning,
-                        turn_on_vrange=True,
-                        vmin=0,
-                        vmax=1)
+    def rebin_after_normalization(self):
+        """ modifies: normalized_images"""
+        self.o_rebin.execute_binning_after_normalization()
+
+    def visualize_rebinned_data(self, before_normalization=False):
+        if before_normalization:
+            data_after = self.master_3d_data_array[DataType.sample]
+            data_before = self.before_rebinning
+           
+            self.o_vizu.visualize(data_after=data_after,
+                                 label_before='raw',
+                                 label_after='rebinned',
+                                 data_before=data_before,
+                                 turn_on_vrange=True,
+            )
+
+        else:
+            data_after = self.normalized_images
+            data_before = self.before_rebinning
+            vmin = 0
+            vmax = 1
+            vmin_after = 0
+            vmax_after = 1
+        
+            self.o_vizu.visualize(data_after=data_after,
+                            label_before='raw',
+                            label_after='rebinned',
+                            data_before=data_before,
+                            turn_on_vrange=True,
+                            vmin=vmin,
+                            vmax=vmax,
+                            vmin_after=vmin_after,
+                            vmax_after=vmax_after)
 
   # crop data
     def crop_settings(self):
@@ -458,11 +483,11 @@ class Step1PrepareCcdImages:
         o_select.select_folder(data_type=DataType.extra)
 
     def export_pre_reconstruction_data(self):
-        if self.o_svmbir is None:
-            o_fbp = FbpHandler(parent=self)
-            o_fbp.export_pre_reconstruction_data()
-        else:
-            self.o_svmbir.export_pre_reconstruction_data()
+        # if self.o_svmbir is None:
+        o_fbp = FbpHandler(parent=self)
+        o_fbp.export_pre_reconstruction_data()
+        # else:
+        #     self.o_svmbir.export_pre_reconstruction_data()
 
     def export_extra_files(self, prefix=""):
         self.export_pre_reconstruction_data()

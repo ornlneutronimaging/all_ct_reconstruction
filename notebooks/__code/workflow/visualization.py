@@ -140,7 +140,9 @@ class Visualization(Parent):
     def visualize(self, data_before=None, data_after=None, label_before="", label_after="", 
                   turn_on_vrange=False, 
                   vmin=None, 
-                  vmax=None):
+                  vmax=None,
+                  vmin_after=None,
+                  vmax_after=None):
 
         if self.display_ui.value == '1 image at a time':
 
@@ -151,23 +153,23 @@ class Visualization(Parent):
                 
                 if vmin is None:
                     vmin_before = np.min(data_before)
-                    vmin_after = 0
-                    
                 else:
                     vmin_before = vmin
-                    vmin_after = vmin 
 
                 if vmax is None:
                     vmax_before = np.max(data_before)
-                    vmax_after = 1
-
                 else:
                     vmax_before = vmax
-                    vmax_after = vmax
+
+                if vmin_after is None:
+                    vmin_after = vmin_before
+            
+                if vmax_after is None:
+                    vmax_after = vmax_before
 
                 def plot_norm(image_index=0, 
-                              vmin_before=vmin_before, vmax_before=vmax_before):
-                            #   vmin_after=vmin_after, vmax_after=vmax_after):
+                              vmin_before=vmin_before, vmax_before=vmax_before,
+                              vmin_after=vmin_after, vmax_after=vmax_after):
 
                     fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
 
@@ -192,11 +194,23 @@ class Visualization(Parent):
                                         image_index=widgets.IntSlider(min=0,
                                                                         max=nbr_images-1,
                                                                         value=0),
-                                        vmin_before=widgets.IntSlider(min=vmin_before, max=vmax_before, value=vmin_before),
-                                        vmax_before=widgets.IntSlider(min=vmin_before, max=vmax_before, value=vmax_before),
-                )
-                                        # vmin_after=widgets.FloatSlider(min=vmin_after, max=vmax_after, value=0),
-                                        # vmax_after=widgets.FloatSlider(min=vmin_after, max=vmax_after, value=1))
+                                        vmin_before=widgets.IntSlider(min=vmin_before, 
+                                                                      max=vmax_before, 
+                                                                      value=vmin_before,
+                                                                      continuous_update=False),
+                                        vmax_before=widgets.IntSlider(min=vmin_before, 
+                                                                      max=vmax_before, 
+                                                                      value=vmax_before,
+                                                                      continuous_update=False),
+                                        vmin_after=widgets.FloatSlider(min=vmin_after, 
+                                                                       max=vmax_after,
+                                                                       value=vmin_after,
+                                                                       continuous_update=False),
+                                        vmax_after=widgets.FloatSlider(min=vmin_after, 
+                                                                       max=vmax_after, 
+                                                                       value=vmax_after,
+                                                                       continuous_update=False),
+                                                                       )
 
             else:
 
@@ -223,8 +237,8 @@ class Visualization(Parent):
 
                 display_plot = interactive(plot_norm,
                                         image_index=widgets.IntSlider(min=0,
-                                                                        max=nbr_images-1,
-                                                                        value=0),
+                                                                    max=nbr_images-1,
+                                                                    value=0),
                 )
                 
             display(display_plot)
