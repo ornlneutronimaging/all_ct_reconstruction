@@ -272,18 +272,43 @@ class Step1PrepareTimePixImages:
         self.o_rebin = Rebin(parent=self)
         self.o_rebin.set_rebinning()
 
-    def rebin(self):
+    def rebin_before_normalization(self):
         """ modifies: normalized_images"""
-        self.o_rebin.execute_binning()
+        self.o_rebin.execute_binning_before_normalization()
 
-    def visualize_rebinned_data(self):
-        self.o_vizu.visualize(data_after=self.normalized_images,
-                        label_before='raw',
-                        label_after='rebinned',
-                        data_before=self.before_rebinning,
-                        turn_on_vrange=True,
-                        vmin=0,
-                        vmax=1)
+    def rebin_after_normalization(self):
+        """ modifies: normalized_images"""
+        self.o_rebin.execute_binning_after_normalization()
+
+    def visualize_rebinned_data(self, before_normalization=False):
+        if before_normalization:
+            data_after = self.master_3d_data_array[DataType.sample]
+            data_before = self.before_rebinning
+           
+            self.o_vizu.visualize(data_after=data_after,
+                                 label_before='raw',
+                                 label_after='rebinned',
+                                 data_before=data_before,
+                                 turn_on_vrange=True,
+            )
+
+        else:
+            data_after = self.normalized_images
+            data_before = self.before_rebinning
+            vmin = 0
+            vmax = 1
+            vmin_after = 0
+            vmax_after = 1
+        
+            self.o_vizu.visualize(data_after=data_after,
+                            label_before='raw',
+                            label_after='rebinned',
+                            data_before=data_before,
+                            turn_on_vrange=True,
+                            vmin=vmin,
+                            vmax=vmax,
+                            vmin_after=vmin_after,
+                            vmax_after=vmax_after)
 
     # crop data
     def crop_settings(self):
