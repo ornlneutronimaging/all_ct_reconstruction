@@ -423,7 +423,7 @@ class Step1PrepareCcdImages:
         """uses: normalized_images_log"""
         self.o_tilt.run_center_of_rotation()
 
-    def run_center_of_rotation_or_skip_it(self):
+    def record_center_of_rotation(self):
         self.o_tilt.calculate_center_of_rotation()
 
     def display_center_of_rotation(self):

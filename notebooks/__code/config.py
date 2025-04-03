@@ -61,3 +61,11 @@ GAMMA_DIFF = 20
 
 # remove outlier tomopy diff
 TOMOPY_DIFF = 0.2
+
+svmbir_parameters = {'sharpness': 0,
+                     'max_resolutions': 2,
+                     'positivity': False,
+                     'snr_db': 30,
+                     'max_iterations': 20,
+                     'verbose': True,
+                    }

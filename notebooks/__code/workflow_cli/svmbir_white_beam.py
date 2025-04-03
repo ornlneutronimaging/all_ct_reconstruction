@@ -7,7 +7,7 @@ import svmbir
 from __code.workflow.export import Export
 from __code.utilities.logging import setup_logging
 from __code.utilities.files import make_or_reset_folder, make_folder
-from __code.config import NUM_THREADS, SVMBIR_LIB_PATH
+from __code.config import NUM_THREADS, SVMBIR_LIB_PATH, svmbir_parameters
 from __code.utilities.json import load_json_string
 from __code.utilities.load import load_data_using_multithreading, load_list_of_tif
 from __code.utilities.time import get_current_time_in_special_file_name_format
@@ -49,7 +49,7 @@ class SvmbirCliHandler:
         list_of_slices_to_reconstruct = config['list_of_slices_to_reconstruct']
         top_slice = config['crop_region']['top']
 
-        logging.info(f"Before switching y and x coordinates:")
+        logging.info(f"Shape of corrected_array_log:")
         logging.info(f"{np.shape(corrected_array_log) = }")
 
         logging.info(f"{list_of_angles_rad = }")
@@ -91,12 +91,12 @@ class SvmbirCliHandler:
                                                     num_cols = _sino.shape[2],  # width,
                                                     center_offset = center_offset,
                                                     max_resolutions = max_resolutions,
-                                                    sharpness = sharpness,
-                                                    snr_db = snr_db,
-                                                    positivity = positivity,
-                                                    max_iterations = max_iterations,
+                                                    sharpness = svmbir_parameters['sharpness'],
+                                                    snr_db = svmbir_parameters['snr_db'],
+                                                    positivity = svmbir_parameters['positivity'],
+                                                    max_iterations = svmbir_parameters['max_iterations'],
                                                     num_threads = NUM_THREADS,
-                                                    verbose = verbose,
+                                                    verbose = svmbir_parameters['verbose'],
                                                     roi_radius=3000,
                                                     svmbir_lib_path = svmbir_lib_path,
                                                     )
