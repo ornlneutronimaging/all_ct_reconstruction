@@ -4,6 +4,7 @@ import glob
 import logging
 import svmbir
 import tomopy
+from tomopy.prep import stripe
 
 # from imars3d.backend.reconstruction import recon
 from tomopy.recon.algorithm import recon as tomopy_recon
@@ -20,7 +21,7 @@ from __code.utilities.load import load_data_using_multithreading, load_list_of_t
 from __code.utilities.time import get_current_time_in_special_file_name_format
 from __code.workflow_cli.merge_reconstructed_slices import merge_reconstructed_slices
 from __code.utilities.configuration_file import ReconstructionAlgorithm
-
+from __code.workflow.remove_strips import RemoveStrips
 
 class FbpCliHandler:
 
@@ -34,18 +35,28 @@ class FbpCliHandler:
         :return: 3D numpy array with stripes removed
         """
         nore = NUM_THREADS
-        image_array_cleaned = None
 
+        list_algo_to_remove_stripes = config.get('list_clean_stripes_algorithm', [])
+        if not list_algo_to_remove_stripes:
+            logging.info("No strip removal algorithms specified. Returning original image array.")
+            return image_array
+        
+        logging.info(f"Applying strip removal algorithms: {list_algo_to_remove_stripes}")
+        try:
+            for _algo in list_algo_to_remove_stripes:
+                logging.info(f"\t -> Applying {_algo} ...")
+                kwargs = config.get(f'remove_stripe_{_algo.lower()}_options', {})
+                kwargs['ncore'] = nore  # Ensure we set the number of threads
+                logging.info(f"\t -> Options for {_algo}: {kwargs}")
+                image_array = RemoveStrips.run_algo(RemoveStrips.list_algo[_algo]['function'],
+                                                    image_array,
+                                                    **kwargs)
+                logging.info(f"\t -> {_algo} applied successfully.")
 
-
-
-
-
-
-
-
-
-        return image_array_cleaned
+        except np.linalg.LinAlgError as e:
+            logging.info(f"ERROR: LinAlgError during strip removal: {e} running {_algo}.")
+            
+        return image_array
 
     @staticmethod
     def _run_reconstruction(projections, center_of_rotation, list_of_angles_rad, algorithm, max_workers):
