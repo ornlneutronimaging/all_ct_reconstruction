@@ -1,6 +1,8 @@
 from tqdm import tqdm
+import logging
+import numpy as np
 
-from __code import RemoveStripeAlgo
+from __code import RemoveStripeAlgo, NUM_THREADS
 from __code.utilities.general import retrieve_parameters
 from __code.workflow.remove_strips import RemoveStrips
 
@@ -60,3 +62,39 @@ def stripes_removal(config_model, data_array):
         print(" done!")
 
     return data_array
+
+
+class StripesRemovalHandler:
+
+    @staticmethod
+    def remove_stripes(image_array, config):
+        """
+        Apply the strip removal algorithms on the input image array.
+        :param image_array: 3D numpy array of shape (angles, slices, pixels)
+        :param config: configuration dictionary containing parameters for strip removal
+        :param ncore: number of threads to use for parallel processing
+        :return: 3D numpy array with stripes removed
+        """
+        nore = NUM_THREADS
+
+        list_algo_to_remove_stripes = config.get('list_clean_stripes_algorithm', [])
+        if not list_algo_to_remove_stripes:
+            logging.info("No strip removal algorithms specified. Returning original image array.")
+            return image_array
+        
+        logging.info(f"Applying strip removal algorithms: {list_algo_to_remove_stripes}")
+        try:
+            for _algo in list_algo_to_remove_stripes:
+                logging.info(f"\t -> Applying {_algo} ...")
+                kwargs = config.get(f'remove_stripe_{_algo.lower()}_options', {})
+                kwargs['ncore'] = nore  # Ensure we set the number of threads
+                logging.info(f"\t -> Options for {_algo}: {kwargs}")
+                image_array = RemoveStrips.run_algo(RemoveStrips.list_algo[_algo]['function'],
+                                                    image_array,
+                                                    **kwargs)
+                logging.info(f"\t -> {_algo} applied successfully.")
+
+        except np.linalg.LinAlgError as e:
+            logging.info(f"ERROR: LinAlgError during strip removal: {e} running {_algo}.")
+            
+        return image_array
