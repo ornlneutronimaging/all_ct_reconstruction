@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field
 from typing import List
 
 from __code.utilities.json import load_json_string
-from __code import CleaningAlgorithm, NormalizationSettings, OperatingMode
+from __code import CleaningAlgorithm, NormalizationSettings, OperatingMode, WhenToRemoveStripes
 from __code.utilities.file_folder_browser import FileFolderBrowser
 from __code.config import SVMBIR_LIB_PATH
 
@@ -179,7 +179,11 @@ class Configuration(BaseModel):
     remove_dead_stripe_options: RemoveDeadStripe = Field(default=RemoveDeadStripe())
     remove_all_stripe_options: RemoveAllStripe = Field(default=RemoveAllStripe())
     remove_stripe_based_interpolation_options: RemoveStripeBasedInterpolation = Field(default=RemoveStripeBasedInterpolation())
-    
+    when_to_remove_stripes: str = Field(
+        default=WhenToRemoveStripes.out_notebook,
+        description="When to remove stripes: 'in the notebook' or 'outside the notebook'."
+    )
+
     calculate_center_of_rotation: bool = Field(default=False)
     range_of_slices_for_center_of_rotation: list[int, int] = Field(default=[0, -1])
     center_of_rotation: float = Field(default=-1)

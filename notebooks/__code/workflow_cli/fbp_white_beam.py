@@ -9,6 +9,7 @@ import tomopy
 from tomopy.recon.algorithm import recon as tomopy_recon
 import algotom.rec.reconstruction as rec
 
+from __code import WhenToRemoveStripes
 from __code.workflow.export import Export
 from __code.config import NUM_THREADS
 from __code.utilities.logging import setup_logging
@@ -22,6 +23,29 @@ from __code.utilities.configuration_file import ReconstructionAlgorithm
 
 
 class FbpCliHandler:
+
+    @staticmethod
+    def remove_stripes(image_array, config):
+        """
+        Apply the strip removal algorithms on the input image array.
+        :param image_array: 3D numpy array of shape (angles, slices, pixels)
+        :param config: configuration dictionary containing parameters for strip removal
+        :param ncore: number of threads to use for parallel processing
+        :return: 3D numpy array with stripes removed
+        """
+        nore = NUM_THREADS
+        image_array_cleaned = None
+
+
+
+
+
+
+
+
+
+
+        return image_array_cleaned
 
     @staticmethod
     def _run_reconstruction(projections, center_of_rotation, list_of_angles_rad, algorithm, max_workers):
@@ -108,6 +132,14 @@ class FbpCliHandler:
         print(f"done!")
         logging.info(f"loading {len(list_tiff)} images ... done")
       
+        # this is where we will apply the strip removal algorithms if requested
+        if config['when_to_remove_stripes'] == WhenToRemoveStripes.out_notebook:
+            logging.info("Applying strip removal algorithms ...")
+            corrected_array_log = FbpCliHandler.remove_stripes(corrected_array_log,
+                                                               config=config,
+                                                               )
+            logging.info("Strip removal done!")
+
         list_of_angles_rad = np.array(config['list_of_angles'])
         
         list_of_slices_to_reconstruct = config['list_of_slices_to_reconstruct']

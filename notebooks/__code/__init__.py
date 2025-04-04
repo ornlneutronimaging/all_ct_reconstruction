@@ -146,3 +146,8 @@ class RemoveStripeAlgo:
     remove_all_stripe = "remove_all_stripe"
     remove_dead_stripe = "remove_dead_stripe"
     remove_stripe_based_interpolation = "remove_stripe_based_interpolation"
+
+
+class WhenToRemoveStripes:
+    in_notebook = "in notebook"
+    out_notebook = "outside notebook"

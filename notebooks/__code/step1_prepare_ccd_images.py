@@ -396,6 +396,10 @@ class Step1PrepareCcdImages:
     def define_settings(self):
         self.o_remove.define_settings()
 
+    def when_to_remove_strips(self):
+        """updates: normalized_images_log"""
+        self.o_remove.when_to_remove_strips()
+
     def remove_strips(self):
         """updates: normalized_images_log"""
         self.o_remove.perform_cleaning()

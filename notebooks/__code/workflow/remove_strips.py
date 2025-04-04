@@ -10,9 +10,10 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 from ipywidgets import interactive
 
-from __code import DataType, RemoveStripeAlgo, OperatingMode
+from __code import DataType, RemoveStripeAlgo, OperatingMode, WhenToRemoveStripes
 from __code.utilities import configuration_file
 from __code.utilities.logging import logging_3d_array_infos
+from __code.config import NUM_THREADS
 
 
 class RemoveStrips:
@@ -258,6 +259,27 @@ class RemoveStrips:
     def help_button_clicked(self, value):
         self.window_open("https://tomopy.readthedocs.io/en/latest/api/tomopy.prep.stripe.html")
 
+    def when_to_remove_strips(self):
+        label = widgets.Label(
+            value="Do you want to remove stripes NOW or in the BACKGROUND when running the reconstruction?"
+        )
+        options = [WhenToRemoveStripes.in_notebook, WhenToRemoveStripes.out_notebook]
+        self.when_to_remove_widget = widgets.RadioButtons(
+            value=WhenToRemoveStripes.out_notebook,  # default value
+            options=options,
+            disabled=False)
+        display(label, self.when_to_remove_widget)
+        self.when_to_remove_widget.observe(self.on_change, names='value')
+
+    def on_change(self, change):
+        if change['new'] == WhenToRemoveStripes.in_notebook:
+            logging.info("Strips removal will be done in the next cell (in-notebook).")
+        elif change['new'] == WhenToRemoveStripes.out_notebook:
+            logging.info("Strips removal will be done in the background just before reconstruction.")
+            self.parent.configuration.when_to_remove_stripes = WhenToRemoveStripes.out_notebook
+        else:
+            logging.error("Unexpected option selected for when to remove stripes.")
+
     def run(self):
         self.perform_cleaning()
         self.display_cleaning()
@@ -319,6 +341,12 @@ class RemoveStrips:
         setattr(self.parent.configuration, f"{algorithm_name}_options", my_instance)
 
     def perform_cleaning(self):
+
+        if self.parent.configuration.when_to_remove_stripes == WhenToRemoveStripes.out_notebook:
+            logging.info("Strips removal will be done in the background just before reconstruction.")
+            print("Strips removal was set to be done in the background. No cleaning performed now.")
+            return
+
         list_algo_to_use = self.list_to_use_widget.options
         logging.info(f"Strip cleaning:")
 
@@ -338,6 +366,8 @@ class RemoveStrips:
                 for _algo in tqdm(list_algo_to_use):
                     logging.info(f"\t{_algo} ... running")
                     kwargs = self.get_keyword_arguments(algorithm_name=_algo)
+                    # add the number of cores to use
+                    kwargs['ncore'] = NUM_THREADS
                     logging.info(f"\t\t{kwargs =}")
                     tomography_array = RemoveStrips.run_algo(self.list_algo[_algo]['function'], 
                                                             tomography_array, 
@@ -371,9 +401,14 @@ class RemoveStrips:
         return name_of_algo(array, **kwargs)
 
     def display_cleaning(self):
+        if self.parent.configuration.when_to_remove_stripes == WhenToRemoveStripes.out_notebook:
+            logging.info("Strips removal will be done in the background just before reconstruction. No display.")
+            print("Strips removal was set to be done in the background. No display of results.")
+            return
+        
         if self.nothing_to_display:
             return
-
+        
         normalized_images_before = self.parent.before_normalized_images
         sinogram_before = self.calculate_sinogram(normalized_images_before)
 
