@@ -72,15 +72,18 @@ class Normalization(Parent):
 
         self.use_proton_charge_ui = widgets.Checkbox(value=False,
                                                 description='Use proton charge',
-                                                disabled=True)
+                                                disabled=True,
+                                                layout=widgets.Layout(width="100%"))
         # self.use_frames_ui = widgets.Checkbox(value=False,
         #                                  description='Use frames',
         #                                  disabled=True,
         #                                  )
         self.use_roi_ui = widgets.Checkbox(value=False,
-                                      description='Use beam fluctuation correction (ROI)')
+                                      description='Use beam fluctuation correction (ROI)',
+                                      layout=widgets.Layout(width="100%"))
         self.use_sample_roi_ui = widgets.Checkbox(value=False,
-                                        description='Use sample ROI normalization',)
+                                        description='Use sample ROI normalization',
+                                        layout=widgets.Layout(width="100%"))
         vertical_layout = widgets.VBox([self.use_proton_charge_ui,
                                         # self.use_frames_ui,
                                         self.use_roi_ui,

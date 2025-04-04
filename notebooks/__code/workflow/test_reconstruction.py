@@ -77,7 +77,7 @@ class TestReconstruction(Parent):
 
         sinogram_normalized_images_log = np.moveaxis(self.parent.normalized_images_log, 0, 1)
         logging.info(f"\t{np.shape(sinogram_normalized_images_log) = }")
-        logging.info(f"\t{np.shape(self.parent.normalized_images_loglog) = }")
+        logging.info(f"\t{np.shape(self.parent.normalized_images_log) = }")
         logging.info(f"\t{np.shape(self.parent.final_list_of_angles_rad) = }")
 
         if self.parent.configuration.center_of_rotation == -1:
@@ -127,6 +127,19 @@ class TestReconstruction(Parent):
             logging.info(f"\t{width = }")
             logging.info(f"\t{center_offset = }")
 
+            logging.info(f"\tprojections_normalized_images_log shape: {projections_normalized_images_log.shape}")
+            logging.info(f"\t{np.min(projections_normalized_images_log)}")
+            logging.info(f"\t{np.max(projections_normalized_images_log)}")
+
+            # how many nans are in the projections
+            if np.isnan(projections_normalized_images_log).any():
+                logging.info("Warning: NaN values found in projections. Replacing with 0.")
+                projections_normalized_images_log = np.nan_to_num(projections_normalized_images_log, nan=0.0)
+            # how many infs are in the projections
+            if np.isinf(projections_normalized_images_log).any():
+                logging.info("Warning: Inf values found in projections. Replacing with 0.")
+                projections_normalized_images_log = np.nan_to_num(projections_normalized_images_log, posinf=0.0, neginf=0.0)
+
             _rec_img_svmbir = svmbir.recon(projections_normalized_images_log,
                                            angles=self.parent.final_list_of_angles_rad,
                                            num_rows = width,  
@@ -142,7 +155,7 @@ class TestReconstruction(Parent):
                                            max_iterations = 100,
                                            num_threads = NUM_THREADS,
                                            verbose=0,
-                                           roi_radius=1000,
+                                        #    roi_radius=1000,
                                            svmbir_lib_path = SVMBIR_LIB_PATH,
                                            )
             logging.info(f"\tslice: {_slice}")
@@ -172,12 +185,11 @@ class TestReconstruction(Parent):
         if svmbir is None:
             logging.warning("SVMBIR reconstruction is None, skipping display.")
             axs[2].set_visible(False)
-            plt.tight_layout()
-            plt.show()
+    
         else:
             im2 = axs[2].imshow(svmbir, cmap='viridis', vmin=0)
             plt.colorbar(im2, ax=axs[2], shrink=0.5)
             axs[2].set_title(f"Slice: {slice} SVMBIR")
             axs[2].axis('off')
-            plt.tight_layout()
-            plt.show()
+        plt.tight_layout()
+        plt.show()
