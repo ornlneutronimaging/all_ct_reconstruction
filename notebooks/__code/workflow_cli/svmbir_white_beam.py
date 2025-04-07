@@ -4,6 +4,7 @@ import glob
 import logging
 import svmbir
 
+from __code import WhenToRemoveStripes
 from __code.workflow.export import Export
 from __code.utilities.logging import setup_logging
 from __code.utilities.files import make_or_reset_folder, make_folder
@@ -12,6 +13,7 @@ from __code.utilities.json import load_json_string
 from __code.utilities.load import load_data_using_multithreading, load_list_of_tif
 from __code.utilities.time import get_current_time_in_special_file_name_format
 from __code.workflow_cli.merge_reconstructed_slices import merge_reconstructed_slices
+from __code.workflow_cli.stripes_removal import StripesRemovalHandler
 
 
 class SvmbirCliHandler:
@@ -33,6 +35,18 @@ class SvmbirCliHandler:
         print(f"done!")
         logging.info(f"loading {len(list_tiff)} images ... done")
       
+        logging.info(f"when to remove stripes: {config['when_to_remove_stripes']}")
+
+        # this is where we will apply the strip removal algorithms if requested
+        if config['when_to_remove_stripes'] == WhenToRemoveStripes.out_notebook:
+            print("Applying strip removal algorithms ...", end="")
+            logging.info("Applying strip removal algorithms ...")
+            corrected_array_log = StripesRemovalHandler.remove_stripes(corrected_array_log,
+                                                                       config=config,
+                                                                      )
+            logging.info("Strip removal done!")
+            print(" done!")
+ 
         list_of_angles_rad = np.array(config['list_of_angles'])
         width = np.shape(corrected_array_log)[2]
 
@@ -174,7 +188,17 @@ class SvmbirCliHandler:
         corrected_array_log = load_list_of_tif(list_tiff, dtype=np.float32)
         print(f"done!")
         logging.info(f"loading {len(list_tiff)} images ... done")
-      
+
+        # this is where we will apply the strip removal algorithms if requested
+        if config['when_to_remove_stripes'] == WhenToRemoveStripes.out_notebook:
+            print("Applying strip removal algorithms ...", end="")
+            logging.info("Applying strip removal algorithms ...")
+            corrected_array_log = StripesRemovalHandler.remove_stripes(corrected_array_log,
+                                                                       config=config,
+                                                                      )
+            logging.info("Strip removal done!")
+            print(" done!")
+
         list_of_angles_rad = np.array(config['list_of_angles'])
         width = np.shape(corrected_array_log)[2]
         

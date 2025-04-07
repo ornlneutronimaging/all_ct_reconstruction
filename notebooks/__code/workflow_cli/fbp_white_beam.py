@@ -27,8 +27,6 @@ from __code.workflow_cli.stripes_removal import StripesRemovalHandler
 
 class FbpCliHandler:
 
-
-
     @staticmethod
     def _run_reconstruction(projections, center_of_rotation, list_of_angles_rad, algorithm, max_workers):
         
@@ -113,7 +111,7 @@ class FbpCliHandler:
         corrected_array_log = load_list_of_tif(list_tiff, dtype=np.float32)
         print(f"done!")
         logging.info(f"loading {len(list_tiff)} images ... done")
-        logging.info(f"wen to remove stripes: {config['when_to_remove_stripes']}")
+        logging.info(f"when to remove stripes: {config['when_to_remove_stripes']}")
 
         # this is where we will apply the strip removal algorithms if requested
         if config['when_to_remove_stripes'] == WhenToRemoveStripes.out_notebook:
