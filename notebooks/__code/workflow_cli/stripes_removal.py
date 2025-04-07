@@ -2,7 +2,8 @@ from tqdm import tqdm
 import logging
 import numpy as np
 
-from __code import RemoveStripeAlgo, NUM_THREADS
+from __code import RemoveStripeAlgo
+from __code.config import NUM_THREADS
 from __code.utilities.general import retrieve_parameters
 from __code.workflow.remove_strips import RemoveStrips
 

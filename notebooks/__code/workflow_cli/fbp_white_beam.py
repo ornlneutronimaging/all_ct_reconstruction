@@ -113,14 +113,17 @@ class FbpCliHandler:
         corrected_array_log = load_list_of_tif(list_tiff, dtype=np.float32)
         print(f"done!")
         logging.info(f"loading {len(list_tiff)} images ... done")
-      
+        logging.info(f"wen to remove stripes: {config['when_to_remove_stripes']}")
+
         # this is where we will apply the strip removal algorithms if requested
         if config['when_to_remove_stripes'] == WhenToRemoveStripes.out_notebook:
+            print("Applying strip removal algorithms ...", end="")
             logging.info("Applying strip removal algorithms ...")
-            corrected_array_log = StripesRemovalHandler(corrected_array_log,
-                                                        config=config,
-                                                        )
+            corrected_array_log = StripesRemovalHandler.remove_stripes(corrected_array_log,
+                                                                       config=config,
+                                                                      )
             logging.info("Strip removal done!")
+            print(" done!")
 
         list_of_angles_rad = np.array(config['list_of_angles'])
         
@@ -151,11 +154,9 @@ class FbpCliHandler:
             
         list_algorithm = config['reconstruction_algorithm']
         for _algo in list_algorithm: 
-
-            # if _algo == 'gridrec':
-            #     continue
-
+        
             logging.info(f"Reconstruction using {_algo} ...")
+            print(f"Reconstruction using {_algo} ...")
             output_data_folder = os.path.join(base_output_folder, f"{_algo}_reconstructed_data_{get_current_time_in_special_file_name_format()}")
             logging.info(f"\t{output_data_folder = }")
 
