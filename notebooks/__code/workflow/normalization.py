@@ -9,6 +9,7 @@ from IPython.core.display import HTML
 import ipywidgets as widgets
 from scipy.ndimage import median_filter
 import tomopy
+from copy import copy
 
 from __code.parent import Parent
 from __code import DEBUG, roi
@@ -68,7 +69,14 @@ class Normalization(Parent):
 
     enable_frame_number = False
 
+    do_not_run_normalization = False
+
     def normalization_settings(self):
+
+        if self.parent.master_3d_data_array[DataType.ob] is None:
+            self.do_not_run_normalization = True
+            logging.warning(f"Normalization settings: No ob data found, normalization will not be applied.")
+            return
 
         self.use_proton_charge_ui = widgets.Checkbox(value=False,
                                                 description='Use proton charge',
@@ -92,6 +100,10 @@ class Normalization(Parent):
 
     def select_roi(self):
 
+        if self.do_not_run_normalization:
+            logging.info(f"Skipping ROI selection for normalization.")
+            return
+        
         if (not self.use_roi_ui.value) and (not self.use_sample_roi_ui.value):
             logging.info(f"User skipped normalization ROI selection.")
             return
@@ -155,6 +167,10 @@ class Normalization(Parent):
     def normalize(self, ignore_dc=False):
         master_3d_data = self.parent.master_3d_data_array
         
+        if self.parent.master_3d_data_array[DataType.ob] is None:
+            self.parent.normalized_images = copy(self.parent.master_3d_data_array[DataType.sample])
+            return
+
         size_data = np.shape(master_3d_data[DataType.sample])
         normalized_data = np.empty(size_data, dtype=np.float32)
 

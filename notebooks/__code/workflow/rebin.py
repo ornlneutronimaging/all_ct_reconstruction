@@ -45,13 +45,14 @@ class Rebin(Parent):
         self.parent.master_3d_data_array[DataType.sample] = _sample_data_rebinned[:]
         logging.info(f"\rebinning raw data ... Done!")
 
-        logging.info(f"\rebinning ob data ...")
-        _ob_data_rebinned = block_reduce(ob_raw_images, 
-                                    block_size=block_size, 
-                                    func=np.sum,
-                                    func_kwargs={'dtype': dtype})
-        self.parent.master_3d_data_array[DataType.ob] = _ob_data_rebinned[:]
-        logging.info(f"\rebinning ob data ... Done!")
+        if ob_raw_images is not None:
+            logging.info(f"\rebinning ob data ...")
+            _ob_data_rebinned = block_reduce(ob_raw_images, 
+                                        block_size=block_size, 
+                                        func=np.sum,
+                                        func_kwargs={'dtype': dtype})
+            self.parent.master_3d_data_array[DataType.ob] = _ob_data_rebinned[:]
+            logging.info(f"\rebinning ob data ... Done!")
 
         if dc_raw_images is not None:
             logging.info(f"\rebinning dc data ...")

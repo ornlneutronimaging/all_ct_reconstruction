@@ -67,7 +67,7 @@ debug_folder = {OperatingMode.tof: {DataType.sample: "/SNS/VENUS/IPTS-33699/shar
                 #                             DataType.extra: '/SNS/VENUS/IPTS-33531/shared/processed_data/jean_test',
                 #                             DataType.nexus: '/SNS/VENUs/IPTS-33531/nexus',
                 #                             },
-                 OperatingMode.white_beam: {DataType.sample: "/SNS/SNAP/IPTS-25265/shared/Jean/moon_rocks_combined_renamed",
+                 OperatingMode.white_beam: {DataType.sample: "/SNS/SNAP/IPTS-25265/shared/Jean/moon_rocks_combined_normalized_53_angles_renamed",
                                             DataType.ob: "",
                                             DataType.dc: "",
                                             DataType.cleaned_images: '/SNS/SNAP/IPTS-25265/shared/processed_data/jean_test',

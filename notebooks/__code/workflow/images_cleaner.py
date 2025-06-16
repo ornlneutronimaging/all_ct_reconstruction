@@ -128,7 +128,7 @@ class ImagesCleaner(Parent):
                 axs0.set_title('sample histogram')
                 axs0.set_yscale('log')
                 axs0.axvspan(sample_bin_edges[0], sample_bin_edges[nbr_exclude], facecolor='red', alpha=0.2)
-                axs[0].axvspan(sample_bin_edges[-nbr_exclude-1], sample_bin_edges[-1], facecolor='red', alpha=0.2)
+                axs0.axvspan(sample_bin_edges[-nbr_exclude-1], sample_bin_edges[-1], facecolor='red', alpha=0.2)
                 
                 if not self.ignore_ob:
                     _, ob_bin_edges = np.histogram(ob_histogram.flatten(), bins=nbr_bins, density=False)
@@ -236,9 +236,15 @@ class ImagesCleaner(Parent):
         logging.info(f"cleaning using tomopy ...")
         sample_data = np.array(self.parent.master_3d_data_array[DataType.sample])
 
+        if self.parent.master_3d_data_array[DataType.ob] is None:
+            # we are dealing with normalized data
+            dtype = np.float32
+        else:
+            dtype = np.ushort
+
         logging_3d_array_infos(message="before tomopy cleaning of sample", array=self.parent.master_3d_data_array[DataType.sample])
         sample_data = np.array(self.parent.master_3d_data_array[DataType.sample])
-        cleaned_sample = remove_outlier(sample_data, self.tomopy_diff.value, ncore=NUM_THREADS).astype(np.ushort)
+        cleaned_sample = remove_outlier(sample_data, self.tomopy_diff.value, ncore=NUM_THREADS).astype(dtype)
         #cleaned_sample = gamma_filter(arrays=sample_data, diff_tomopy=self.tomopy_diff.value)
         self.parent.master_3d_data_array[DataType.sample] = cleaned_sample[:]
         logging_3d_array_infos(message="after tomopy cleaning of sample", array=self.parent.master_3d_data_array[DataType.sample])
@@ -247,7 +253,7 @@ class ImagesCleaner(Parent):
             if self.parent.list_of_images[DataType.ob]:
                 logging_3d_array_infos(message="before tomopy cleaning of ob", array=self.parent.master_3d_data_array[DataType.ob])
                 ob_data = np.array(self.parent.master_3d_data_array[DataType.ob])
-                cleaned_ob = remove_outlier(ob_data, self.tomopy_diff.value, ncore=NUM_THREADS).astype(np.ushort)
+                cleaned_ob = remove_outlier(ob_data, self.tomopy_diff.value, ncore=NUM_THREADS).astype(dtype)
                 # cleaned_ob = gamma_filter(arrays=ob_data, diff_tomopy=self.tomopy_diff.value)
                 self.parent.master_3d_data_array[DataType.ob] = cleaned_ob[:]
                 logging_3d_array_infos(message="after tomopy cleaning of ob", array=self.parent.master_3d_data_array[DataType.ob])
@@ -258,7 +264,7 @@ class ImagesCleaner(Parent):
             if self.parent.list_of_images[DataType.dc]:
                 logging_3d_array_infos(message="before tomopy cleaning of dc", array=self.parent.master_3d_data_array[DataType.dc])
                 dc_data = np.array(self.parent.master_3d_data_array[DataType.dc])
-                cleaned_dc = remove_outlier(dc_data, self.tomopy_diff.value, ncore=NUM_THREADS).astype(np.ushort)
+                cleaned_dc = remove_outlier(dc_data, self.tomopy_diff.value, ncore=NUM_THREADS).astype(dtype)
                 # cleaned_dc = gamma_filter(arrays=dc_data, diff_tomopy=self.tomopy_diff.value)
                 self.parent.master_3d_data_array[DataType.dc] = cleaned_dc[:]
                 logging_3d_array_infos(message="after tomopy cleaning of dc", array=self.parent.master_3d_data_array[DataType.dc])

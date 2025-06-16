@@ -148,6 +148,8 @@ class Step1PrepareCcdImages:
 
     strip_corrected_images = None # Array 3D after strip correction
 
+    before_rebinning = None # only if rebin is ran, will change
+
     # center of rotation
     o_center_and_tilt = None
     # remove strips
@@ -305,6 +307,11 @@ class Step1PrepareCcdImages:
         self.o_rebin.execute_binning_after_normalization()
 
     def visualize_rebinned_data(self, before_normalization=False):
+        if self.before_rebinning is None:
+            logging.warning(f"before_rebinning is None, cannot visualize rebinned data!")
+            print("No rebinning, nothing to visualize!")
+            return
+
         if before_normalization:
             data_after = self.master_3d_data_array[DataType.sample]
             data_before = self.before_rebinning

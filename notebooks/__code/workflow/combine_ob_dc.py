@@ -9,6 +9,10 @@ class CombineObDc(Parent):
 
     def run(self, ignore_dc=False):
 
+        if self.parent.master_3d_data_array[DataType.ob] is None:
+            logging.warning(f"Combine obs: No ob data found, skipping combination.")
+            return
+
         if ignore_dc:
             logging.info(f"Combine obs:")
             list_to_combine = [DataType.ob]

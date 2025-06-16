@@ -273,7 +273,7 @@ class CenterOfRotationAndTilt(Parent):
 
         display(widgets.HTML("Select the slice to use to calculate the center of rotation"))
         max_value = np.max([image_0_degree, image_180_degree, image_360_degree])
-        max_value = 4 # DEBUG
+        # max_value = 4 # DEBUG
 
         def plot_images(slice_value=int(height/2), vmin=0, vmax=max_value):
 
@@ -308,8 +308,10 @@ class CenterOfRotationAndTilt(Parent):
                                                                       layout=widgets.Layout(width="75%")),
                                              vmax=widgets.FloatSlider(min=0, 
                                                                       max=max_value, 
-                                                                      value=max_value),
-                                                                      layout=widgets.Layout(width="75%"))
+                                                                      value=max_value,
+                                                                      layout=widgets.Layout(width="75%"),
+                                                                      ),
+        )
         display(self.plot_slice_to_use)
 
         display(widgets.HTML("Horizontal line shows the slide used to calculate the center of rotation"))
@@ -365,11 +367,23 @@ class CenterOfRotationAndTilt(Parent):
         image_180_degree = self.image_180_degree
 
         combined_images = 0.5*image_0_degree + 0.5*image_180_degree
+        vmax = np.max(combined_images)
+        vmin = 0
 
-        fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(10, 10))
-        
-        im = ax.imshow(combined_images, cmap='viridis', vmin=0, vmax=4)
-        plt.colorbar(im, ax=ax, shrink=0.5)
-        ax.axvline(center_of_rotation_calculated, color='blue', linestyle='--')
+        def plot_result(v_range):
+            fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(10, 10))
+            
+            im = ax.imshow(combined_images, cmap='viridis', vmin=v_range[0], vmax=v_range[1])
+            plt.colorbar(im, ax=ax, shrink=0.5)
+            ax.axvline(center_of_rotation_calculated, color='blue', linestyle='--')
 
-        plt.tight_layout()
+            plt.tight_layout()
+
+        manual_center_selection = interactive(plot_result,
+                                    v_range = widgets.FloatRangeSlider(min=vmin,
+                                                                       max=vmax,
+                                                                       layout=widgets.Layout(width='100%'),
+                                                                       value=[0, vmax]),
+
+                                    )                                                                     
+        display(manual_center_selection)

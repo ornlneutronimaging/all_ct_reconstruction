@@ -8,6 +8,7 @@ import ipywidgets as widgets
 from matplotlib.patches import Rectangle
 
 from __code.parent import Parent
+from __code import DEBUG
 from __code.utilities.configuration_file import CropRegion
 from __code import crop_roi as default_roi
 from __code import OperatingMode
@@ -30,10 +31,16 @@ class Crop(Parent):
 
         height, width = integrated.shape
 
-        default_left = default_roi[OperatingMode.white_beam]['left']
-        default_right = default_roi[OperatingMode.white_beam]['right']
-        default_top = default_roi[OperatingMode.white_beam]['top']
-        default_bottom = default_roi[OperatingMode.white_beam]['bottom'] 
+        if DEBUG:
+            default_left = default_roi[OperatingMode.white_beam]['left']
+            default_right = default_roi[OperatingMode.white_beam]['right']
+            default_top = default_roi[OperatingMode.white_beam]['top']
+            default_bottom = default_roi[OperatingMode.white_beam]['bottom'] 
+        else:
+            default_left = 0
+            default_top = 0
+            default_right = width - 1
+            default_bottom = height - 1
 
         if default_right < 0:
             default_right = width - abs(default_right)

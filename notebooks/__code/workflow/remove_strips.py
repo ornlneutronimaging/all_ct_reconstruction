@@ -274,6 +274,7 @@ class RemoveStrips:
     def on_change(self, change):
         if change['new'] == WhenToRemoveStripes.in_notebook:
             logging.info("Strips removal will be done in the next cell (in-notebook).")
+            self.parent.configuration.when_to_remove_stripes = WhenToRemoveStripes.in_notebook
         elif change['new'] == WhenToRemoveStripes.out_notebook:
             logging.info("Strips removal will be done in the background just before reconstruction.")
             self.parent.configuration.when_to_remove_stripes = WhenToRemoveStripes.out_notebook

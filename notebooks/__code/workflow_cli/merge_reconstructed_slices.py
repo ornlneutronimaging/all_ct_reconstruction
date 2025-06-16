@@ -40,5 +40,11 @@ def merge_reconstructed_slices(output_data_folder=None, top_slice=0, list_of_out
                 os.rename(list_folder_tiff[_index][_tiff_index], _new_tiff_file)
                 
         # remove the input folder
-        logging.info(f"removing folder {list_of_output_folders[_index]}!")
-        os.rmdir(list_of_output_folders[_index])
+        try:
+            logging.info(f"removing folder {list_of_output_folders[_index]}!")
+            os.rmdir(list_of_output_folders[_index])
+        except OSError as e:
+            logging.error(f"Error removing folder {list_of_output_folders[_index]}: {e}")
+            raise e
+        
+    logging.info(f"all slices merged into {final_output_folder}!")

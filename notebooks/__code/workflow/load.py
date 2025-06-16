@@ -248,7 +248,14 @@ class Load(Parent):
                 self.save_list_of_angles(list_tiff)
 
             # self.parent.master_3d_data_array[_data_type] = load_data_using_multithreading(list_of_images[_data_type])
-            self.parent.master_3d_data_array[_data_type] = load_list_of_tif(list_of_images[_data_type])
+
+            if list_of_images[DataType.ob] is None:
+                # we are dealing with normalized data
+                dtype = np.float32
+            else:
+                dtype = np.uint16
+
+            self.parent.master_3d_data_array[_data_type] = load_list_of_tif(list_of_images[_data_type], dtype=dtype)
             logging.info(f"{np.shape(self.parent.master_3d_data_array[_data_type]) = }")
             logging.info(f"\tloading {_data_type} ... done !")
 
