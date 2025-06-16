@@ -107,6 +107,10 @@ class Load(Parent):
 
         # random file name
         first_file = self.parent.list_of_images[DataType.sample][random_index]
+
+        # remove extension
+        first_file = os.path.splitext(first_file)[0]
+
         self.selected_file_label = widgets.Label(os.path.basename(first_file))
 
         first_hori_box = widgets.HBox([widgets.HTML("<b>File name:</b>"),
@@ -205,6 +209,7 @@ class Load(Parent):
         base_list_of_images = [os.path.basename(_file) for _file in list_of_images]
         list_of_angles = []
         for _file in base_list_of_images:
+            _file = os.path.splitext(_file)[0]  # remove extension
             _splitted_named = _file.split("_")
             angle_degree = _splitted_named[list_indices[0]]
             angle_minute = _splitted_named[list_indices[1]]

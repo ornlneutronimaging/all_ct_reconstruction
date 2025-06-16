@@ -49,22 +49,34 @@ class Visualization(Parent):
         dc_data = master_3d_data_array[DataType.dc]
         list_of_angles = self.parent.final_list_of_angles
         
-        if dc_data is None:
+        if ob_data is None:
+            no_ob_data = True
             no_dc_data = True
         else:
-            no_dc_data = False
+            no_ob_data = False
+            if dc_data is None:
+                no_dc_data = True
+            else:
+                no_dc_data = False
 
-        vmax = ob_data.max()
-        vmin = sample_data.min()
+        # if no_ob_data:
+        #     vmax = sample_data.max()
+        # else:
+        #     vmax = ob_data.max()
+        # vmin = sample_data.min()
 
-        vmax = remove_outlier(ob_data[0], GAMMA_DIFF, ncore=NUM_THREADS).astype(np.ushort).max()
+        if no_ob_data:
+            vmax = sample_data.max()
+        else:
+            vmax = remove_outlier(ob_data[0], GAMMA_DIFF, ncore=NUM_THREADS).astype(np.ushort).max()
         vmin = remove_outlier(sample_data[0], GAMMA_DIFF, ncore=NUM_THREADS).astype(np.ushort).min()
 
         # np.min of sample
         sample_proj_min = np.min(sample_data, axis=0)
 
-        # np.min of ob
-        ob_proj_min = np.min(ob_data, axis=0)
+        if not no_ob_data:
+            # np.min of ob
+            ob_proj_min = np.min(ob_data, axis=0)
 
         if not no_dc_data:
             # np.max of dark current
@@ -78,21 +90,27 @@ class Visualization(Parent):
 
         # ratio firt / last
         ratio_last_first = sample_proj_last / sample_proj_first
+        nrows = 2
 
-        fig, axs = plt.subplots(nrows=2, ncols=3, figsize=(15, 15))
+        fig, axs = plt.subplots(nrows=nrows, ncols=3, figsize=(15, 15))
 
         im0 = axs[0, 0].imshow(sample_proj_min, vmin=vmin, vmax=vmax)
         axs[0, 0].set_title("Sample (np.min)")
         plt.colorbar(im0, ax=axs[0, 0], shrink=0.5)
 
-        im1 = axs[0, 1].imshow(ob_proj_min, vmin=vmin, vmax=vmax)   
-        axs[0, 1].set_title("OB (np.min)")
-        plt.colorbar(im1, ax=axs[0, 1], shrink=0.5)
+        if not no_ob_data:
+            im1 = axs[0, 1].imshow(ob_proj_min, vmin=vmin, vmax=vmax)
+            axs[0, 1].set_title("OB (np.min)")
+            plt.colorbar(im1, ax=axs[0, 1], shrink=0.5)
+        else:
+            axs[0, 1].axis('off')
 
         if not no_dc_data:
             im2 = axs[0, 2].imshow(dc_proj_max, vmin=vmin, vmax=vmin+1000)
             axs[0, 2].set_title("DC (np.max)")
             plt.colorbar(im2, ax=axs[0, 2], shrink=0.5)
+        else:
+            axs[0, 2].axis('off')
 
         im3 = axs[1, 0].imshow(sample_proj_first, vmin=vmin, vmax=vmax)
         axs[1, 0].set_title(f"Sample at angle {list_of_angles[0]}")
@@ -105,6 +123,33 @@ class Visualization(Parent):
         im5 = axs[1, 2].imshow(ratio_last_first, vmin=0.9, vmax=1.1)
         axs[1, 2].set_title("Ratio last/first")
         plt.colorbar(im5, ax=axs[1, 2], shrink=0.5)
+
+
+        # im0 = axs[0, 0].imshow(sample_proj_min, vmin=vmin, vmax=vmax)
+        # axs[0, 0].set_title("Sample (np.min)")
+        # plt.colorbar(im0, ax=axs[0, 0], shrink=0.5)
+
+        # if no_ob_data:
+        #     im1 = axs[0, 1].imshow(ob_proj_min, vmin=vmin, vmax=vmax)   
+        #     axs[0, 1].set_title("OB (np.min)")
+        #     plt.colorbar(im1, ax=axs[0, 1], shrink=0.5)
+
+        # if not no_dc_data:
+        #     im2 = axs[0, 2].imshow(dc_proj_max, vmin=vmin, vmax=vmin+1000)
+        #     axs[0, 2].set_title("DC (np.max)")
+        #     plt.colorbar(im2, ax=axs[0, 2], shrink=0.5)
+
+        # im3 = axs[1, 0].imshow(sample_proj_first, vmin=vmin, vmax=vmax)
+        # axs[1, 0].set_title(f"Sample at angle {list_of_angles[0]}")
+        # plt.colorbar(im3, ax=axs[1, 0], shrink=0.5)
+
+        # im4 = axs[1, 1].imshow(sample_proj_last, vmin=vmin, vmax=vmax)
+        # axs[1, 1].set_title(f"Sample at angle {list_of_angles[-1]}")
+        # plt.colorbar(im4, ax=axs[1, 1], shrink=0.5)
+
+        # im5 = axs[1, 2].imshow(ratio_last_first, vmin=0.9, vmax=1.1)
+        # axs[1, 2].set_title("Ratio last/first")
+        # plt.colorbar(im5, ax=axs[1, 2], shrink=0.5)
    
         if (self.mode == 'cleaned') and (self.parent.histogram_sample_before_cleaning is not None):
 

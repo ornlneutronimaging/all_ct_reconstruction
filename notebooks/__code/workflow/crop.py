@@ -111,8 +111,9 @@ class Crop(Parent):
         if self.before_normalization:
             self.parent.master_3d_data_array[DataType.sample] = np.array([image[top: bottom+1, left: right+1] 
                                                  for image in self.parent.master_3d_data_array[DataType.sample]])
-            self.parent.master_3d_data_array[DataType.ob] = np.array([image[top: bottom+1, left: right+1] 
-                                                                      for image in self.parent.master_3d_data_array[DataType.ob]])
+            if self.parent.master_3d_data_array[DataType.ob] is not None:
+                self.parent.master_3d_data_array[DataType.ob] = np.array([image[top: bottom+1, left: right+1] 
+                                                                        for image in self.parent.master_3d_data_array[DataType.ob]])
             if self.parent.master_3d_data_array[DataType.dc] is not None:
                 self.parent.master_3d_data_array[DataType.dc] = np.array([image[top: bottom+1, left: right+1] 
                                                                           for image in self.parent.master_3d_data_array[DataType.dc]])

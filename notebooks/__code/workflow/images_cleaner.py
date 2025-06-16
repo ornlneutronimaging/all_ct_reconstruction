@@ -46,7 +46,10 @@ class ImagesCleaner(Parent):
     SAVE_CLEAN = clean_paras['if_save_clean']
     edge_nbr_pixels = clean_paras['edge_nbr_pixels']
     nbr_bins = clean_paras['nbr_bins']
-            
+
+    ignore_ob = False
+    ignore_dc = False
+
     def settings(self):
         self.in_house_ui = widgets.Checkbox(value=False,
                                          description="In-house (histogram)")
@@ -70,9 +73,23 @@ class ImagesCleaner(Parent):
         
         self.parent.configuration.list_clean_algorithm = list_algo
 
+        if self.parent.master_3d_data_array[DataType.ob] is None:
+            self.ignore_ob = True
+            self.ignore_dc = True
+        else:
+            self.ignore_ob = False
+
+            if self.parent.master_3d_data_array[DataType.dc] is None:
+                self.ignore_dc = True
+            else:
+                self.ignore_dc = False
+
         if self.in_house_ui.value:
             sample_data = np.array(self.parent.master_3d_data_array[DataType.sample])
-            ob_data = np.array(self.parent.master_3d_data_array[DataType.ob])
+            
+            if not self.ignore_ob:
+                ob_data = np.array(self.parent.master_3d_data_array[DataType.ob])
+
             # if self.parent.master_3d_data_array[DataType.dc] is not None:
             #     dc_data = self.parent.master_3d_data_array[DataType.dc]
             # else:
@@ -81,34 +98,47 @@ class ImagesCleaner(Parent):
 
             sample_histogram = sample_data.sum(axis=0)[self.edge_nbr_pixels: -self.edge_nbr_pixels,
                                                     self.edge_nbr_pixels: -self.edge_nbr_pixels]
-            ob_histogram = ob_data.sum(axis=0)[self.edge_nbr_pixels: -self.edge_nbr_pixels,
-                                            self.edge_nbr_pixels: -self.edge_nbr_pixels]
+            
+            if not self.ignore_ob:
+                ob_histogram = ob_data.sum(axis=0)[self.edge_nbr_pixels: -self.edge_nbr_pixels,
+                                                self.edge_nbr_pixels: -self.edge_nbr_pixels]
 
             # if dc_data is not None:
             #     dc_histogram = dc_data.sum(axis=0)[self.edge_nbr_pixels: -self.edge_nbr_pixels,
             #                     self.edge_nbr_pixels: -self.edge_nbr_pixels]
 
-            nrows = 2 if dc_data is None else 3
+            if self.ignore_ob:
+                nrows = 1
+            else:
+                nrows = 2
             
             display(HTML("<h2> Histogram settings </h2>"))
             def plot_histogram(nbr_bins=100, nbr_exclude=1):
             
                 fig, axs = plt.subplots(nrows=nrows, ncols=1)
+                
+                if self.ignore_ob:
+                    axs0 = axs
+                else:
+                    axs0 = axs[0]
+                    axs1 = axs[1]
+                
                 _, sample_bin_edges = np.histogram(sample_histogram.flatten(), bins=nbr_bins, density=False)
-                axs[0].hist(sample_histogram.flatten(), bins=nbr_bins)
-                axs[0].set_title('sample histogram')
-                axs[0].set_yscale('log')
-                axs[0].axvspan(sample_bin_edges[0], sample_bin_edges[nbr_exclude], facecolor='red', alpha=0.2)
+                axs0.hist(sample_histogram.flatten(), bins=nbr_bins)
+                axs0.set_title('sample histogram')
+                axs0.set_yscale('log')
+                axs0.axvspan(sample_bin_edges[0], sample_bin_edges[nbr_exclude], facecolor='red', alpha=0.2)
                 axs[0].axvspan(sample_bin_edges[-nbr_exclude-1], sample_bin_edges[-1], facecolor='red', alpha=0.2)
                 
-                _, ob_bin_edges = np.histogram(ob_histogram.flatten(), bins=nbr_bins, density=False)
-                axs[1].hist(ob_histogram.flatten(), bins=nbr_bins)
-                axs[1].set_title('ob histogram')
-                axs[1].set_yscale('log')
-                axs[1].axvspan(ob_bin_edges[0], ob_bin_edges[nbr_exclude], facecolor='red', alpha=0.2)
-                axs[1].axvspan(ob_bin_edges[-nbr_exclude-1], ob_bin_edges[-1], facecolor='red', alpha=0.2)
-                plt.tight_layout()
-                plt.show()
+                if not self.ignore_ob:
+                    _, ob_bin_edges = np.histogram(ob_histogram.flatten(), bins=nbr_bins, density=False)
+                    axs1.hist(ob_histogram.flatten(), bins=nbr_bins)
+                    axs1.set_title('ob histogram')
+                    axs1.set_yscale('log')
+                    axs1.axvspan(ob_bin_edges[0], ob_bin_edges[nbr_exclude], facecolor='red', alpha=0.2)
+                    axs1.axvspan(ob_bin_edges[-nbr_exclude-1], ob_bin_edges[-1], facecolor='red', alpha=0.2)
+                    plt.tight_layout()
+                    plt.show()
 
                 # if dc_data is not None:
                 #     _, dc_bin_edges = np.histogram(dc_histogram.flatten(), bins=nbr_bins, density=False)
@@ -159,11 +189,11 @@ class ImagesCleaner(Parent):
             self.parent.histogram_sample_before_cleaning = sample_data.sum(axis=0)[self.edge_nbr_pixels: -self.edge_nbr_pixels,
                                                 self.edge_nbr_pixels: -self.edge_nbr_pixels]
 
-        self.cleaning_by_histogram(ignore_dc=ignore_dc)
-        self.cleaning_with_tomopy(ignore_dc=ignore_dc)
-        self.cleaning_with_scipy(ignore_dc=ignore_dc)
+        self.cleaning_by_histogram(ignore_dc=self.ignore_dc, ignore_ob=self.ignore_ob)
+        self.cleaning_with_tomopy(ignore_dc=ignore_dc, ignore_ob=self.ignore_ob)
+        self.cleaning_with_scipy(ignore_dc=ignore_dc, ignore_ob=self.ignore_ob)
 
-    def cleaning_with_scipy(self, ignore_dc=False):
+    def cleaning_with_scipy(self, ignore_dc=False, ignore_ob=False):
         """scipy"""
 
         if not self.scipy_ui.value:
@@ -179,19 +209,25 @@ class ImagesCleaner(Parent):
         logging_3d_array_infos(message="after scipy cleaning of sample", array=self.parent.master_3d_data_array[DataType.sample])
         
         # ob
-        logging_3d_array_infos(message="before scipy cleaning of ob", array=self.parent.master_3d_data_array[DataType.ob])       
-        self.parent.master_3d_data_array[DataType.ob] = np.array(median_filter(self.parent.master_3d_data_array[DataType.ob], size=_size))
-        logging_3d_array_infos(message="after scipy cleaning of ob", array=self.parent.master_3d_data_array[DataType.ob])       
+        if not ignore_ob:
+            if self.parent.list_of_images[DataType.ob]:
+                logging_3d_array_infos(message="before scipy cleaning of ob", array=self.parent.master_3d_data_array[DataType.ob])       
+                self.parent.master_3d_data_array[DataType.ob] = np.array(median_filter(self.parent.master_3d_data_array[DataType.ob], size=_size))
+                logging_3d_array_infos(message="after scipy cleaning of ob", array=self.parent.master_3d_data_array[DataType.ob])       
+        else:
+            logging.info(f"ignoring ob cleaning, no ob data available")
 
         if not ignore_dc:
             if self.parent.list_of_images[DataType.dc]:
                 logging_3d_array_infos(message="before scipy cleaning of dc", array=self.parent.master_3d_data_array[DataType.dc])       
                 self.parent.master_3d_data_array[DataType.dc] = np.array(median_filter(self.parent.master_3d_data_array[DataType.dc], size=_size))
                 logging_3d_array_infos(message="after scipy cleaning of dc", array=self.parent.master_3d_data_array[DataType.dc])       
+            else:
+                logging.info(f"ignoring dc cleaning, no dc data available")
         
         logging.info(f"cleaning using median filter ... done!")
 
-    def cleaning_with_tomopy(self, ignore_dc=False):
+    def cleaning_with_tomopy(self, ignore_dc=False, ignore_ob=False):
         
         if not self.tomopy_ui.value:
             logging.info(f"cleaning using tomopy: OFF")
@@ -207,12 +243,16 @@ class ImagesCleaner(Parent):
         self.parent.master_3d_data_array[DataType.sample] = cleaned_sample[:]
         logging_3d_array_infos(message="after tomopy cleaning of sample", array=self.parent.master_3d_data_array[DataType.sample])
 
-        logging_3d_array_infos(message="before tomopy cleaning of ob", array=self.parent.master_3d_data_array[DataType.ob])
-        ob_data = np.array(self.parent.master_3d_data_array[DataType.ob])
-        cleaned_ob = remove_outlier(ob_data, self.tomopy_diff.value, ncore=NUM_THREADS).astype(np.ushort)
-        # cleaned_ob = gamma_filter(arrays=ob_data, diff_tomopy=self.tomopy_diff.value)
-        self.parent.master_3d_data_array[DataType.ob] = cleaned_ob[:]
-        logging_3d_array_infos(message="after tomopy cleaning of ob", array=self.parent.master_3d_data_array[DataType.ob])
+        if not ignore_ob:
+            if self.parent.list_of_images[DataType.ob]:
+                logging_3d_array_infos(message="before tomopy cleaning of ob", array=self.parent.master_3d_data_array[DataType.ob])
+                ob_data = np.array(self.parent.master_3d_data_array[DataType.ob])
+                cleaned_ob = remove_outlier(ob_data, self.tomopy_diff.value, ncore=NUM_THREADS).astype(np.ushort)
+                # cleaned_ob = gamma_filter(arrays=ob_data, diff_tomopy=self.tomopy_diff.value)
+                self.parent.master_3d_data_array[DataType.ob] = cleaned_ob[:]
+                logging_3d_array_infos(message="after tomopy cleaning of ob", array=self.parent.master_3d_data_array[DataType.ob])
+            else:
+                logging.info(f"ignoring ob cleaning with tomopy, no ob data available")
 
         if not ignore_dc:
             if self.parent.list_of_images[DataType.dc]:
@@ -222,10 +262,12 @@ class ImagesCleaner(Parent):
                 # cleaned_dc = gamma_filter(arrays=dc_data, diff_tomopy=self.tomopy_diff.value)
                 self.parent.master_3d_data_array[DataType.dc] = cleaned_dc[:]
                 logging_3d_array_infos(message="after tomopy cleaning of dc", array=self.parent.master_3d_data_array[DataType.dc])
+            else:
+                logging.info(f"ignoring dc cleaning with tomopy, no dc data available")
 
         logging.info(f"cleaning using tomopy ... done!")
             
-    def cleaning_by_histogram(self, ignore_dc=False):
+    def cleaning_by_histogram(self, ignore_dc=False, ignore_ob=False):
 
         if not self.in_house_ui.value:
             logging.info(f"cleaning by histogram: OFF")
@@ -265,47 +307,62 @@ class ImagesCleaner(Parent):
             logging_3d_array_infos(message="after histogram cleaning of sample", array=self.parent.master_3d_data_array[DataType.sample])
             logging.info(f"\tcleaned sample!")
 
-            logging.info(f"\tcleaning ob ...")
-            logging_3d_array_infos(message="before histogram cleaning of ob", array=self.parent.master_3d_data_array[DataType.ob])
-            cleaned_ob_data = []
-            for _data in tqdm(ob_data):
-                cleaned_im = replace_pixels(im=_data.copy(),
-                                            nbr_bins=self.nbr_bins,
-                                            low_gate=nbr_bins_to_exclude,
-                                            high_gate=self.nbr_bins - nbr_bins_to_exclude,
-                                            correct_radius=self.r)
-                cleaned_ob_data.append(cleaned_im)          
-            self.parent.master_3d_data_array[DataType.ob] = np.array(cleaned_ob_data)
-            logging_3d_array_infos(message="after histogram cleaning of ob", array=self.parent.master_3d_data_array[DataType.ob])
-            logging.info(f"\tcleaned ob!")
+            if not ignore_ob:
+                logging.info(f"\tcleaning ob ...")
+                logging_3d_array_infos(message="before histogram cleaning of ob", array=self.parent.master_3d_data_array[DataType.ob])
+                cleaned_ob_data = []
+                for _data in tqdm(ob_data):
+                    cleaned_im = replace_pixels(im=_data.copy(),
+                                                nbr_bins=self.nbr_bins,
+                                                low_gate=nbr_bins_to_exclude,
+                                                high_gate=self.nbr_bins - nbr_bins_to_exclude,
+                                                correct_radius=self.r)
+                    cleaned_ob_data.append(cleaned_im)          
+                self.parent.master_3d_data_array[DataType.ob] = np.array(cleaned_ob_data)
+                logging_3d_array_infos(message="after histogram cleaning of ob", array=self.parent.master_3d_data_array[DataType.ob])
+                logging.info(f"\tcleaned ob!")
+            else:
+                logging.info(f"ignoring ob cleaning by histogram, no ob data available")
 
         # dislay result of cleaning
         sample_data = np.array(self.parent.master_3d_data_array[DataType.sample])
-        ob_data = np.array(self.parent.master_3d_data_array[DataType.ob])
-
+        
         sample_histogram = sample_data.sum(axis=0)[self.edge_nbr_pixels: -self.edge_nbr_pixels,
                                                 self.edge_nbr_pixels: -self.edge_nbr_pixels]
-        ob_histogram = ob_data.sum(axis=0)[self.edge_nbr_pixels: -self.edge_nbr_pixels,
-                                        self.edge_nbr_pixels: -self.edge_nbr_pixels]
 
+        if not ignore_ob:
+            ob_data = np.array(self.parent.master_3d_data_array[DataType.ob])
+            ob_histogram = ob_data.sum(axis=0)[self.edge_nbr_pixels: -self.edge_nbr_pixels,
+                                            self.edge_nbr_pixels: -self.edge_nbr_pixels]
         
         nbr_bins = self.nbr_bins
 
-        fig, axs = plt.subplots(nrows=2, ncols=1)
+        if ignore_ob:
+            nrows = 1
+        else:
+            nrows = 2
+        fig, axs = plt.subplots(nrows=nrows, ncols=1)
+
+        if ignore_ob:
+            axs0 = axs
+        else:
+            axs0 = axs[0]
+            axs1 = axs[1]
 
         flatten_sample_histogram = sample_histogram.flatten()
         _, sample_bin_edges = np.histogram(flatten_sample_histogram, bins=nbr_bins, density=False)
-        axs[0].hist(flatten_sample_histogram, bins=nbr_bins)
-        axs[0].set_title('cleaned sample histogram')
-        axs[0].set_yscale('log')
-        
-        flatten_ob_histogram = ob_histogram.flatten()
-        _, ob_bin_edges = np.histogram(flatten_ob_histogram, bins=nbr_bins, density=False)
-        axs[1].hist(flatten_ob_histogram, bins=nbr_bins)
-        axs[1].set_title('cleaned ob histogram')
-        axs[1].set_yscale('log')
-        plt.tight_layout()
-        plt.show()
+        axs0.hist(flatten_sample_histogram, bins=nbr_bins)
+        axs0.set_title('cleaned sample histogram')
+        axs0.set_yscale('log')
+
+        if not ignore_ob:
+            flatten_ob_histogram = ob_histogram.flatten()
+            _, ob_bin_edges = np.histogram(flatten_ob_histogram, bins=nbr_bins, density=False)
+            axs1.hist(flatten_ob_histogram, bins=nbr_bins)
+            axs1.set_title('cleaned ob histogram')
+            axs1.set_yscale('log')
+            plt.tight_layout()
+            plt.show()
 
         logging.info(f"cleaning by histogram ... done!")
 
@@ -333,15 +390,16 @@ class ImagesCleaner(Parent):
                           output_folder=sample_full_output_folder)
         o_export.run()
 
-        # ob
-        logging.info(f"working with ob:")
-        ob_full_output_folder = os.path.join(full_output_folder, 'ob')
-        logging.info(f"\t {ob_full_output_folder =}")
-        make_or_reset_folder(ob_full_output_folder)
+        if not self.ignore_ob:
+            # ob
+            logging.info(f"working with ob:")
+            ob_full_output_folder = os.path.join(full_output_folder, 'ob')
+            logging.info(f"\t {ob_full_output_folder =}")
+            make_or_reset_folder(ob_full_output_folder)
 
-        o_export = Export(image_3d=master_3d_data[DataType.ob],
-                          output_folder=ob_full_output_folder)
-        o_export.run()
+            o_export = Export(image_3d=master_3d_data[DataType.ob],
+                            output_folder=ob_full_output_folder)
+            o_export.run()
         
     def remove_outliers(self, data_3d):
         _data_3d = remove_outlier_cuda(data_3d, TOMOPY_DIFF)
