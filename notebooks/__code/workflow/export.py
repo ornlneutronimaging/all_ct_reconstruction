@@ -72,6 +72,5 @@ class ExportExtra(Parent):
         display(HTML(f"<font color='blue'> - reload the configuration file </font>(<font color='green'>{os.path.basename(config_file_name)}</font>) in the notebook <font color='green'> {STEP2_NOTEBOOK}</font>"))
         display(HTML(f"<br>"))
         display(HTML(f"<font color='blue'> - launch the script directly from the command line"))
-        display(HTML(f"\t> source /opt/anaconda/etc/profile.d/conda.sh"))
-        display(HTML(f"\t> conda activate hsnt"))
+        display(HTML(f"\t> micromamba activate /SNS/users/j35/micromamba/envs/svmbir_py310_micromamba"))
         display(HTML(f"\t> python {STEP3_SCRIPTS} {config_file_name}"))
