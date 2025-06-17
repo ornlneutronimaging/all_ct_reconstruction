@@ -26,7 +26,6 @@ if __name__ == "__main__":
 
     config_json_file = args.config_json_file[0]
     config = load_json_string(config_json_file)
-    print(f"config_json_file = {config_json_file}")
     list_reconstruction_algorithm = list(config['reconstruction_algorithm'])
 
     if ReconstructionAlgorithm.svmbir in list_reconstruction_algorithm:
