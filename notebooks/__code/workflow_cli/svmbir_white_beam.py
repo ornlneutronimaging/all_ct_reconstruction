@@ -7,7 +7,7 @@ import svmbir
 from __code import WhenToRemoveStripes
 from __code.workflow.export import Export
 from __code.utilities.logging import setup_logging
-from __code.utilities.files import make_or_reset_folder, make_folder
+from __code.utilities.files import make_or_reset_folder, remove_folder
 from __code.config import NUM_THREADS, SVMBIR_LIB_PATH, svmbir_parameters
 from __code.utilities.json import load_json_string
 from __code.utilities.load import load_data_using_multithreading, load_list_of_tif
@@ -20,6 +20,10 @@ class SvmbirCliHandler:
 
     @staticmethod
     def run_reconstruction_from_pre_data_mode(config_json_file):
+
+        logging.info(f"clearing {SVMBIR_LIB_PATH}/sysmatrix folder")
+        # remove folder
+        remove_folder(os.path.join(SVMBIR_LIB_PATH, 'sysmatrix'))
 
         config = load_json_string(config_json_file)
         logging.info(f"config = {config}")

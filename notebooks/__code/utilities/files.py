@@ -51,6 +51,12 @@ def make_or_reset_folder(folder_name):
     os.makedirs(folder_name)
 
 
+def remove_folder(folder_name):
+    if not os.path.exists(folder_name):
+        return
+    shutil.rmtree(folder_name)
+
+
 def make_folder(folder_name):
     if os.path.exists(folder_name):
         return
