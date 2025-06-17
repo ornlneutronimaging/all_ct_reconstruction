@@ -4,7 +4,7 @@ import os
 
 def load_json(json_file_name):
     if not os.path.exists(json_file_name):
-        return None
+        raise FileNotFoundError(f"JSON file {json_file_name} does not exist or you don't have permission to read it.")
 
     with open(json_file_name) as json_file:
         data = json.load(json_file)
@@ -13,8 +13,9 @@ def load_json(json_file_name):
 
 
 def load_json_string(json_file_name):
+
     if not os.path.exists(json_file_name):
-        return None
+        raise FileNotFoundError(f"JSON file {json_file_name} does not exist or you don't have permission to read it.")
 
     json_string = load_json(json_file_name)  
     dict = json.loads(json_string)

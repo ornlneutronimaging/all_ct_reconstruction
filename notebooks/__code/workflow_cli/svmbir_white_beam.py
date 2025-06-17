@@ -21,9 +21,19 @@ class SvmbirCliHandler:
     @staticmethod
     def run_reconstruction_from_pre_data_mode(config_json_file):
 
-        # logging.info(f"clearing {SVMBIR_LIB_PATH}/sysmatrix folder")
-        # # remove folder
-        # remove_folder(os.path.join(SVMBIR_LIB_PATH, 'sysmatrix'))
+        logging.info(f"clearing {SVMBIR_LIB_PATH}/sysmatrix folder")
+        # removing all the files in the sysmatrix folder the owner owns
+        # this is needed to avoid the error "PermissionError: [Errno 13] Permission denied: '/fastdata/sysmatrix/...' when running svmbir
+        if os.path.exists(os.path.join(SVMBIR_LIB_PATH, 'sysmatrix')):
+           list_files = glob.glob(os.path.join(SVMBIR_LIB_PATH, 'sysmatrix', '*'))
+           for _file in list_files:
+               if os.path.isfile(_file):
+                   try:
+                       os.remove(_file)
+                   except PermissionError as e:
+                       logging.error(f"PermissionError: {e} for file {_file}")
+               else:
+                   logging.info(f"skipping {_file} as it is not a file") 
 
         config = load_json_string(config_json_file)
         logging.info(f"config = {config}")

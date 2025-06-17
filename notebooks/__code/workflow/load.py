@@ -102,6 +102,11 @@ class Load(Parent):
 
     def define_naming_convention(self):
         number_of_images = len(self.parent.list_of_images[DataType.sample])
+
+        if number_of_images == 0:
+            display(widgets.HTML("<font color='red'><b>ERROR</b>: Check the sample folder you selected! Folder does not contain any images. </font>"))
+            return
+
         # random number between 0 and number_of_images
         random_index = np.random.randint(0, number_of_images)
 

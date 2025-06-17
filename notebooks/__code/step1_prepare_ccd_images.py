@@ -351,6 +351,10 @@ class Step1PrepareCcdImages:
         self.o_crop.run()
 
     # rotate sample
+    def is_rotation_needed(self):
+        self.o_rotate = Rotate(parent=self)
+        self.o_rotate.is_rotation_needed()
+
     def rotate_data_settings(self):
         self.o_rotate = Rotate(parent=self)
         self.o_rotate.set_settings()
@@ -361,7 +365,7 @@ class Step1PrepareCcdImages:
 
     def visualize_after_rotation(self):
         o_review = FinalProjectionsReview(parent=self)
-        o_review.single_image(image=self.normalized_images[0])
+        o_review.stack_of_images(array=self.normalized_images[:])
 
     # log conversion
     def log_conversion_and_cleaning(self):

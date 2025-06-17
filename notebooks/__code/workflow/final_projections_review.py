@@ -2,6 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from IPython.display import display
 import ipywidgets as widgets
+from IPython.display import display
+from IPython.core.display import HTML
+from ipywidgets import interactive
 
 from __code.parent import Parent
 from __code import DataType
@@ -61,6 +64,27 @@ class FinalProjectionsReview(Parent):
         plt.colorbar(im1, ax=ax, shrink=0.5)
         ax.axis('off')
         plt.show()
+
+    def stack_of_images(self, array: np.ndarray = None):
+        if array is None:
+            return
+        
+        _, width = array.shape[-2:]
+        horizontal_center = width // 2
+
+        def plot_images(index):
+            fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(5, 5))
+            image = array[index]
+            ax.imshow(image, cmap='viridis', vmin=0, vmax=1)
+            ax.axvline(x=horizontal_center, color='red', linestyle='--', label='Rotation Axis')
+            ax.set_title(f"Image {index}")
+
+        display_plot_images = interactive(plot_images, 
+                                          index=widgets.IntSlider(min=0, 
+                                                                  max=len(array)-1, 
+                                                                  step=1, 
+                                                                  value=0))
+        display(display_plot_images)
 
     def list_runs_to_reject(self):
         

@@ -22,8 +22,29 @@ def _worker(_data, angle_value):
 
 class Rotate(Parent):
 
-    def set_settings(self):
+    def is_rotation_needed(self):
+        
+        _, width = self.parent.normalized_images[0].shape[-2:]
+        horizontal_center = width // 2
 
+        display(HTML(f"<h3>The rotation axis of the sample must be VERTICAL! If it's not, you will need to rotate by 90degrees</h3>"))
+
+        def plot_images(index):
+            fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(5, 5))
+            image = self.parent.normalized_images[index]
+            ax.imshow(image, cmap='viridis', vmin=0, vmax=1)
+            ax.axvline(x=horizontal_center, color='red', linestyle='--', label='Rotation Axis')
+            ax.set_title(f"Image {index}")
+
+        display_plot_images = interactive(plot_images, 
+                                          index=widgets.IntSlider(min=0, 
+                                                                  max=len(self.parent.normalized_images)-1, 
+                                                                  step=1, 
+                                                                  value=0))
+        display(display_plot_images)
+
+    def set_settings(self):
+    
         title_ui = widgets.HTML("Select rotation angle")
         self.angle_ui = widgets.RadioButtons(options=['90 degrees', '0 degree'],
                                              value='90 degrees',
