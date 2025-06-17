@@ -45,6 +45,6 @@ def merge_reconstructed_slices(output_data_folder=None, top_slice=0, list_of_out
             os.rmdir(list_of_output_folders[_index])
         except OSError as e:
             logging.error(f"Error removing folder {list_of_output_folders[_index]}: {e}")
-            raise e
+            continue
         
     logging.info(f"all slices merged into {final_output_folder}!")
