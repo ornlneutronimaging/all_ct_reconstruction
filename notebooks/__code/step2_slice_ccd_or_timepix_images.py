@@ -14,6 +14,7 @@ from __code.utilities.configuration_file import CropRegion
 from __code.utilities.configuration_file import select_file, loading_config_file_into_model
 from __code.utilities.logging import setup_logging
 from __code.utilities.files import retrieve_list_of_tif
+from __code.utilities.create_scripts import create_sh_file
 from __code.utilities.load import load_data_using_multithreading, load_list_of_tif
 from __code.utilities.time import get_current_time_in_special_file_name_format
 from __code.utilities.json import save_json
@@ -164,11 +165,11 @@ class Step2SliceCcdOrTimePixImages:
                                                                 layout=widgets.Layout(width="50%"),
                                                                     max=height-1,
                                                                     value=height-1),
-                                        vmin=widgets.FloatSlider(min=0,
+                                        vmin=widgets.FloatSlider(min=master_vmin,
                                                                 layout=widgets.Layout(width="50%"),
-                                                                    max=master_vmin,
-                                                                    value=0),
-                                        vmax=widgets.FloatSlider(min=0,
+                                                                    max=master_vmax,
+                                                                    value=master_vmin),
+                                        vmax=widgets.FloatSlider(min=master_vmin,
                                                                 layout=widgets.Layout(width="50%"),
                                                                     max=master_vmax,
                                                                     value=master_vmax),
@@ -209,6 +210,7 @@ class Step2SliceCcdOrTimePixImages:
         save_json(full_config_file_name, json_dictionary=config_json)
         logging.info(f"config file saved: {full_config_file_name}")
 
-        display(HTML(f"Move to the next step by running the command <font color='blue' size=3>python {STEP3_SCRIPTS}</font> " +
-                     f"<font color='blue' size=3>{full_config_file_name}</font>"))
-                
+        sh_file_name = create_sh_file(json_file_name=full_config_file_name,
+                                      output_folder=working_dir)
+        display(HTML(f"Next and final step. Launch the following script from the command line:"))
+        display(HTML(f"<font color='green'>{sh_file_name}</font>"))
