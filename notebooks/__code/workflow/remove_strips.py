@@ -9,6 +9,7 @@ import logging
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 from ipywidgets import interactive
+import webbrowser
 
 from __code import DataType, RemoveStripeAlgo, OperatingMode, WhenToRemoveStripes
 from __code.utilities import configuration_file
@@ -477,4 +478,4 @@ class RemoveStrips:
         display(display_plot)
     
     def window_open(self, url):
-        display(Javascript('window.open("{url}");'.format(url=url)))
+        webbrowser.open(url)

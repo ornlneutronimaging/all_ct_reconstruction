@@ -88,8 +88,8 @@ class Visualization(Parent):
         # projection of last image loaded
         sample_proj_last = sample_data[-1]
 
-        # ratio firt / last
-        ratio_last_first = sample_proj_last / sample_proj_first
+        # # ratio firt / last
+        # ratio_last_first = sample_proj_last / sample_proj_first
         nrows = 2
 
         fig, axs = plt.subplots(nrows=nrows, ncols=3, figsize=(15, 15))
@@ -120,9 +120,10 @@ class Visualization(Parent):
         axs[1, 1].set_title(f"Sample at angle {list_of_angles[-1]}")
         plt.colorbar(im4, ax=axs[1, 1], shrink=0.5)
 
-        im5 = axs[1, 2].imshow(ratio_last_first, vmin=0.9, vmax=1.1)
-        axs[1, 2].set_title("Ratio last/first")
-        plt.colorbar(im5, ax=axs[1, 2], shrink=0.5)
+        # im5 = axs[1, 2].imshow(ratio_last_first, vmin=0.9, vmax=1.1)
+        # axs[1, 2].set_title("Ratio last/first")
+        # plt.colorbar(im5, ax=axs[1, 2], shrink=0.5)
+        axs[1, 2].axis('off')
 
 
         # im0 = axs[0, 0].imshow(sample_proj_min, vmin=vmin, vmax=vmax)

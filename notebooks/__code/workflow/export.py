@@ -36,6 +36,24 @@ class Export:
 
 class ExportExtra(Parent):
 
+    def create_sh_file(self, json_file_name, output_folder):
+        """
+        Create a shell script to run the reconstruction with the given configuration file.
+        """
+        time_stamp = get_current_time_in_special_file_name_format()
+        sh_file_name = os.path.join(output_folder, f"run_reconstruction_{time_stamp}.sh")
+
+        json_file_name_on_linux = json_file_name.replace(" ", "\ ")
+
+        with open(sh_file_name, 'w') as sh_file:
+            sh_file.write("#!/bin/bash\n")
+            sh_file.write(f"source /opt/anaconda/etc/profile.d/conda.sh\n")
+            sh_file.write(f"conda activate /SNS/users/j35/micromamba/envs/svmbir_py310_micromamba\n")
+            sh_file.write(f"python {STEP3_SCRIPTS} {json_file_name_on_linux}\n")
+        
+        os.chmod(sh_file_name, 0o755)
+        return sh_file_name
+
     def run(self, base_log_file_name=None, prefix=""):
         log_file_name = f"/SNS/VENUS/shared/log/{base_log_file_name}.log"
         output_folder = self.parent.working_dir[DataType.extra]
@@ -68,10 +86,11 @@ class ExportExtra(Parent):
         config_json = configuration.model_dump_json()
         save_json(config_file_name, json_dictionary=config_json)
 
+        sh_file_name = self.create_sh_file(json_file_name=config_file_name, 
+                                      output_folder=output_folder)
+
         display(HTML(f"<font color='blue'>From this point you have two options:</font>"))
-        display(HTML(f"<font color='blue'> - reload the configuration file </font>(<font color='green'>{os.path.basename(config_file_name)}</font>) in the notebook <font color='green'> {STEP2_NOTEBOOK}</font>"))
+        display(HTML(f"<font color='blue'> - reload the configuration file </font>(<font color='green'>{config_file_name}</font>) in the notebook <font color='green'> {STEP2_NOTEBOOK}</font>"))
         display(HTML(f"<br>"))
-        display(HTML(f"<font color='blue'> - launch the script directly from the command line"))
-        display(HTML(f"\t> source /opt/anaconda/etc/profile.d/conda.sh"))
-        display(HTML(f"\t> conda activate /SNS/users/j35/micromamba/envs/svmbir_py310_micromamba"))
-        display(HTML(f"\t> python {STEP3_SCRIPTS} {config_file_name}"))
+        display(HTML(f"<font color='blue'> - launch the following script from the command line"))
+        display(HTML(f"<font color='green'>{sh_file_name}</font>"))
