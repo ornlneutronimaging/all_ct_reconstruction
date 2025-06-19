@@ -10,6 +10,7 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 from ipywidgets import interactive
 import webbrowser
+from matplotlib.patches import Rectangle
 
 from __code import DataType, RemoveStripeAlgo, OperatingMode, WhenToRemoveStripes
 from __code.utilities import configuration_file
@@ -153,6 +154,55 @@ class RemoveStrips:
     def __init__(self, parent=None):
         self.parent = parent
         self.define_default_lists()
+
+    def select_range_of_data_to_test_stripes_removal(self):
+        normalized_images = self.parent.normalized_images_log
+        nbr_projections, height, width = np.shape(normalized_images)
+
+        default_top_slice = height//2 - height//4
+        default_bottom_slice = height//2 + height//4 
+
+        default_left_slice = width//2 - width//4
+        default_right_slice = width//2 + width//4
+
+        def select_range_of_data(left_slice=default_left_slice,
+                                 right_slice=default_right_slice,
+                                 top_slice=default_top_slice, 
+                                 bottom_slice=default_bottom_slice,
+                                 image_index=0):
+            fig, ax = plt.subplots(figsize=(10, 5))
+            ax.imshow(normalized_images[image_index])
+
+            width = right_slice - left_slice
+            height = bottom_slice - top_slice
+
+            ax.add_patch(Rectangle((left_slice, top_slice), width, height,
+                                                edgecolor='yellow',
+                                                facecolor='green',
+                                                fill=True,
+                                                lw=2,
+                                                alpha=0.3,
+                                                ),
+                            )    
+            return left_slice, right_slice, top_slice, bottom_slice
+
+        self.range_to_use_to_test = interactive(select_range_of_data,
+                                                left_slice=widgets.IntSlider(min=0,
+                                                                                max=width-1,
+                                                                                value=default_left_slice),
+                                                right_slice=widgets.IntSlider(min=0,
+                                                                                max=width-1,
+                                                                                value=default_right_slice),
+                                                top_slice=widgets.IntSlider(min=0,
+                                                                            max=height-1,
+                                                                            value=default_top_slice),
+                                                bottom_slice=widgets.IntSlider(min=0,
+                                                                                max=height-1,
+                                                                                value=default_bottom_slice),
+                                                image_index=widgets.IntSlider(min=0,
+                                                                                max=nbr_projections-1,
+                                                                                value=0))
+        display(self.range_to_use_to_test)
 
     def define_default_lists(self):
         full_list_options = self.list_options
@@ -342,24 +392,30 @@ class RemoveStrips:
 
         setattr(self.parent.configuration, f"{algorithm_name}_options", my_instance)
 
-    def perform_cleaning(self):
+    def perform_cleaning(self, test=False):
 
-        if self.parent.configuration.when_to_remove_stripes == WhenToRemoveStripes.out_notebook:
-            logging.info("Strips removal will be done in the background just before reconstruction.")
-            print("Strips removal was set to be done in the background. No cleaning performed now.")
-            return
+        if not test:
+            if self.parent.configuration.when_to_remove_stripes == WhenToRemoveStripes.out_notebook:
+                logging.info("Strips removal will be done in the background just before reconstruction.")
+                print("Strips removal was set to be done in the background. No cleaning performed now.")
+                return
 
         list_algo_to_use = self.list_to_use_widget.options
         logging.info(f"Strip cleaning:")
+       
+        if test:
+            left_slice, right_slice, top_slice, bottom_slice = self.range_to_use_to_test.result
+            data_to_use = np.copy(self.parent.normalized_images_log[:, top_slice:bottom_slice, left_slice:right_slice])
+        else:
+            data_to_use = self.parent.normalized_images_log[:]    
 
-        self.parent.before_normalized_images = self.parent.normalized_images_log[:]  
+        tomography_array = np.array(data_to_use)
+        self.parent.before_normalized_images = data_to_use
 
         if list_algo_to_use:
 
-            logging_3d_array_infos(array=self.parent.before_normalized_images,
+            logging_3d_array_infos(array=data_to_use,
                                message="before removing strips cleaning")
-        
-            tomography_array = np.array(self.parent.normalized_images_log)
             logging.info(f"\t{type(tomography_array) =}")
             print(f"{np.shape(tomography_array) = }")
             list_algo_that_failed = []
@@ -381,8 +437,13 @@ class RemoveStrips:
                 list_algo_that_failed.append(_algo)
 
             self.nothing_to_display = False
-            self.parent.normalized_images_log = tomography_array
-        
+            
+            if test:
+                self.parent.test_normalized_images_log = tomography_array
+            else:
+                self.parent.normalized_images_log = tomography_array
+            
+            
             if list_algo_that_failed:
                 display(HTML("<font color=red><b>List of algo that failed:</b></font>"))
                 for _algo in list_algo_that_failed:
@@ -402,11 +463,13 @@ class RemoveStrips:
     def run_algo(name_of_algo, array, **kwargs):
         return name_of_algo(array, **kwargs)
 
-    def display_cleaning(self):
-        if self.parent.configuration.when_to_remove_stripes == WhenToRemoveStripes.out_notebook:
-            logging.info("Strips removal will be done in the background just before reconstruction. No display.")
-            print("Strips removal was set to be done in the background. No display of results.")
-            return
+    def display_cleaning(self, test=False):
+
+        if not test:
+            if self.parent.configuration.when_to_remove_stripes == WhenToRemoveStripes.out_notebook:
+                logging.info("Strips removal will be done in the background just before reconstruction. No display.")
+                print("Strips removal was set to be done in the background. No display of results.")
+                return
         
         if self.nothing_to_display:
             return
@@ -414,7 +477,10 @@ class RemoveStrips:
         normalized_images_before = self.parent.before_normalized_images
         sinogram_before = self.calculate_sinogram(normalized_images_before)
 
-        normalized_images_after = self.parent.normalized_images_log
+        if test:
+            normalized_images_after = self.parent.test_normalized_images_log
+        else:
+            normalized_images_after = self.parent.normalized_images_log
         sinogram_after = self.calculate_sinogram(normalized_images_after)
 
         nbr_projections, height, _ = np.shape(normalized_images_after)

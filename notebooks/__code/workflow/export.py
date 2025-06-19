@@ -5,6 +5,8 @@ import shutil
 from IPython.display import display
 from IPython.core.display import HTML
 import numpy as np
+import subprocess
+import ipywidgets as widgets
 
 from __code.utilities.save import make_tiff
 from __code.utilities.json import save_json
@@ -69,11 +71,63 @@ class ExportExtra(Parent):
         config_json = configuration.model_dump_json()
         save_json(config_file_name, json_dictionary=config_json)
 
-        sh_file_name = create_sh_file(json_file_name=config_file_name, 
+        self.sh_file_name = create_sh_file(json_file_name=config_file_name, 
                                       output_folder=output_folder)
 
-        display(HTML(f"<font color='blue'>From this point you have two options:</font>"))
-        display(HTML(f"<font color='blue'> - reload the configuration file </font>(<font color='green'>{config_file_name}</font>) in the notebook <font color='green'> {STEP2_NOTEBOOK}</font>"))
-        display(HTML(f"<br>"))
-        display(HTML(f"<font color='blue'> - launch the following script from the command line"))
-        display(HTML(f"<font color='green'>{sh_file_name}</font>"))
+        display(HTML(f"<font color='blue'><b>Next step</b></font>"))
+
+        # 3 options are offered to the user
+        choices = widgets.RadioButtons(
+            options=[
+                f"Divide reconstruction into several jobs and run them in parallel",
+                f"Manually launch script outside notebook",
+                f"Launch the script directly from the notebook",
+            ],
+            value="Launch the script directly from the notebook",
+            description='',
+            layout=widgets.Layout(width='100%'),
+            disabled=False
+        )
+        display(choices)
+
+        self.instructions = widgets.Textarea(value="Reload the configuration file ({config_file_name}) in the notebook {STEP2_NOTEBOOK}",
+                                             layout=widgets.Layout(width='100%', height='80px'),
+                                             disabled=True)
+        display(self.instructions) 
+
+        self.run_script = widgets.Button(
+            description='Run script',
+            disabled=False,
+            button_style='success',
+            tooltip='Run the script directly from the notebook',
+            icon='play'
+        )
+        display(self.run_script)
+
+        choices.observe(self.on_choice_change, names='value')
+        self.run_script.on_click(self.on_run_script_click)
+
+    def on_choice_change(self, change):
+        if change['new'] == 'Launch the script directly from the notebook':
+            self.run_script.disabled = False
+        else:
+            self.run_script.disabled = True
+
+        if change['new'] == 'Divide reconstruction into several jobs and run them in parallel':
+            self.instructions.value = f"Reload the configuration file ({self.sh_file_name}) in the notebook {STEP2_NOTEBOOK}"
+        elif change['new'] == 'Manually launch script outside notebook':
+            self.instructions.value = f"Launch the following script from the command line: {self.sh_file_name}"
+        else:
+            self.instructions.value = f"click the button below to run the script directly from the notebook"
+
+    def on_run_script_click(self, b):
+        print("Running the script directly from the notebook...")
+        subprocess.run(["xterm", "-e", f"{self.sh_file_name}", "exec bash"], check=True)
+
+        # display(HTML(f"<font color='blue'>From this point you have 3 options:</font>"))
+        # display(HTML(f"<font color='blue'> 1. reload the configuration file </font>(<font color='green'>{config_file_name}</font>) in the notebook <font color='green'> {STEP2_NOTEBOOK}</font>"))
+        # display(HTML(f"<br>"))
+        # display(HTML(f"<font color='blue'> 2. launch the following script from the command line"))
+        # display(HTML(f"<font color='green'>{sh_file_name}</font>"))
+        # display(HTML(f"<br>"))
+   

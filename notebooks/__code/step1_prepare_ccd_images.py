@@ -400,12 +400,21 @@ class Step1PrepareCcdImages:
                                  title="Sinograms")
 
     # strips removal
-    def select_remove_strips_algorithms(self):
+    def select_range_of_data_to_test_stripes_removal(self):
+        """updates: list_of_images[DataType.sample]"""
         self.o_remove = RemoveStrips(parent=self)
+        self.o_remove.select_range_of_data_to_test_stripes_removal()
+
+    def select_remove_strips_algorithms(self):
         self.o_remove.select_algorithms()
 
     def define_settings(self):
         self.o_remove.define_settings()
+
+    def test_algorithms_on_selected_range_of_data(self):
+        """updates: strip_corrected_images"""
+        self.o_remove.perform_cleaning(test=True)
+        self.o_remove.display_cleaning(test=True)
 
     def when_to_remove_strips(self):
         """updates: normalized_images_log"""
