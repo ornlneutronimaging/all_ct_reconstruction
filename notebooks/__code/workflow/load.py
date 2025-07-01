@@ -5,6 +5,7 @@ import logging
 from tqdm import tqdm
 from IPython.display import display
 import ipywidgets as widgets
+from PIL import Image
 
 from __code import DataType, Run, OperatingMode
 from __code import DEBUG, debug_folder
@@ -99,6 +100,25 @@ class Load(Parent):
         list_tiff = self.parent.list_of_images[DataType.sample]
         nbr_images = int(new_value / 100 * len(list_tiff))
         self.number_of_images_to_use.value = f"{nbr_images} images will be used for the reconstruction"
+
+    def how_to_retrieve_angle_value(self):
+        self.how_to_retrieve_angle_value_widget = widgets.RadioButtons(
+            options=['Define naming convention', 'Use angle value from metadata file'],
+            description='How to retrieve angle value:',
+            disabled=False,
+            style={'description_width': 'initial'}
+        )
+        display(self.how_to_retrieve_angle_value_widget)
+
+    def retrieve_angle_value(self):
+        """Retrieve angle value from the images file name or metadata file"""
+        if self.how_to_retrieve_angle_value_widget.value == 'Define naming convention':
+            self.define_naming_convention()
+        elif self.how_to_retrieve_angle_value_widget.value == 'Use angle value from metadata file':
+            self.parent.retrieve_angle_value_from_metadata = True
+            display(widgets.HTML("<font color='green'><b>INFO</b>: Angle value will be retrieved from the metadata file.</font>"))
+        else:
+            raise ValueError("Invalid option selected for angle value retrieval.")
 
     def define_naming_convention(self):
         number_of_images = len(self.parent.list_of_images[DataType.sample])
@@ -201,7 +221,38 @@ class Load(Parent):
             self.parent.configuration.top_folder.ob = top_folder
 
     def save_list_of_angles(self, list_of_images):
+        if self.parent.retrieve_angle_value_from_metadata:
+            self.retrieve_angle_value_from_metadata_file(list_of_images)
+        else:
+            self.retrieve_angle_value_from_file_name(list_of_images)
 
+    @staticmethod
+    def retrieve_angle_value_from_tiff(file_name):
+        try:
+            _image = Image.open(file_name)
+            _metadata = dict(_image.tag_v2)
+            _full_string = _metadata[65039]
+            _angle_value = _full_string.split(":")[1]  # Extract the angle value before the space
+            return _angle_value
+        except Exception as e:
+            logging.error(f"Error retrieving angle value from TIFF file {file_name}: {e}")
+            raise ValueError(f"Could not retrieve angle value from TIFF file {file_name}. Ensure the file has the correct metadata.")
+
+    def retrieve_angle_value_from_metadata_file(self, list_of_images):
+        logging.info("Retrieving angle value from metadata file.")
+        list_of_angles = []
+        for _file in list_of_images:
+            angle = Load.retrieve_angle_value_from_tiff(_file)
+            list_of_angles.append(angle)
+
+        self.parent.final_list_of_angles = np.array(list_of_angles)
+        list_of_angles_rad = np.array([np.deg2rad(float(_angle)) for _angle in list_of_angles])
+        self.parent.final_list_of_angles_rad = list_of_angles_rad
+
+    def retrieve_angle_value_from_file_name(self, list_of_images):
+        """Retrieve angle value from the file name based on the selected checkboxes."""
+
+        logging.info("Retrieving angle value from file name.")
         list_checkboxes = self.list_checkboxes
         list_indices = []
         for _index, _checkbox in enumerate(list_checkboxes):

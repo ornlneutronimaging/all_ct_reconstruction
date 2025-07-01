@@ -32,7 +32,7 @@ NBR_TOF_RANGES = 3
 
 LOAD_DTYPE = np.uint16
 
-DEBUG = False
+DEBUG = True
 debug_folder = {OperatingMode.tof: {DataType.sample: "/SNS/VENUS/IPTS-33699/shared/autoreduce/mcp/September20_2024_PurpleCar_GoldenRatio_CT_5_0_C_Cd_inBeam_Resonance",
                                     DataType.ob: "/SNS/VENUS/IPTS-33699/shared/autoreduce/mcp/September26_2024_PurpleCar_OpenBean_5_0_C_Cd_inBeam_Resonance",
                                     DataType.cleaned_images: '/SNS/VENUS/IPTS-33699/shared/processed_data/jean_test',
@@ -67,24 +67,25 @@ debug_folder = {OperatingMode.tof: {DataType.sample: "/SNS/VENUS/IPTS-33699/shar
                 #                             DataType.extra: '/SNS/VENUS/IPTS-33531/shared/processed_data/jean_test',
                 #                             DataType.nexus: '/SNS/VENUs/IPTS-33531/nexus',
                 #                             },
-                 OperatingMode.white_beam: {DataType.sample: "/SNS/SNAP/IPTS-25265/shared/Jean/moon_rocks_combined_normalized_53_angles_renamed",
-                                            DataType.ob: "",
-                                            DataType.dc: "",
-                                            DataType.cleaned_images: '/SNS/SNAP/IPTS-25265/shared/processed_data/jean_test',
-                                            DataType.normalized: '/SNS/SNAP/IPTS-25265/shared/processed_data/jean_test',
-                                            DataType.reconstructed: '/SNS/SNAP/IPTS-25265/shared/processed_data/jean_test',
-                                            DataType.extra: '/SNS/SNAP/IPTS-25265/shared/processed_data/jean_test',
-                                            DataType.nexus: '/SNS/SNAP/IPTS-25265/nexus',
-                                            },
-                                            
-                # OperatingMode.white_beam: {DataType.sample: "/HFIR/CG1D/IPTS-25777/raw/ct_scans/iron_man",
-                #                             DataType.ob: "/HFIR/CG1D/IPTS-25777/raw/ob/Oct29_2019",
-                #                             DataType.dc: "/HFIR/CG1D/IPTS-25777/raw/dc/2023_05_24",
-                #                             DataType.cleaned_images: '/HFIR/CG1D/IPTS-25777/shared/processed_data/jean_test',
-                #                             DataType.normalized: '/HFIR/CG1D/IPTS-25777/shared/processed_data/jean_test',
-                #                             DataType.reconstructed: '/HFIR/CG1D/IPTS-25777/shared/processed_data/jean_test',
-                #                             DataType.extra: '/HFIR/CG1D/IPTS-25777/shared/processed_data/jean_test',
+                #  OperatingMode.white_beam: {DataType.sample: "/SNS/SNAP/IPTS-25265/shared/Jean/moon_rocks_combined_normalized_53_angles_renamed",
+                #                             DataType.ob: "",
+                #                             DataType.dc: "",
+                #                             DataType.cleaned_images: '/SNS/SNAP/IPTS-25265/shared/processed_data/jean_test',
+                #                             DataType.normalized: '/SNS/SNAP/IPTS-25265/shared/processed_data/jean_test',
+                #                             DataType.reconstructed: '/SNS/SNAP/IPTS-25265/shared/processed_data/jean_test',
+                #                             DataType.extra: '/SNS/SNAP/IPTS-25265/shared/processed_data/jean_test',
+                #                             DataType.nexus: '/SNS/SNAP/IPTS-25265/nexus',
                 #                             },
+                                            
+                OperatingMode.white_beam: {DataType.sample: "/HFIR/CG1D/IPTS-27829/raw/ct_scans/October15_2021",
+                                            DataType.ob: "/HFIR/CG1D/IPTS-27829/raw/ob/October15_2021",
+                                            DataType.dc: "",
+                                            DataType.cleaned_images: '/HFIR/CG1D/IPTS-27829/shared/processed_data/jean_test',
+                                            DataType.normalized: '/HFIR/CG1D/IPTS-27829/shared/processed_data/jean_test',
+                                            DataType.reconstructed: '/HFIR/CG1D/IPTS-27829/shared/processed_data/jean_test',
+                                            DataType.extra: '/HFIR/CG1D/IPTS-27829/shared/processed_data/jean_test',
+                                            DataType.nexus: '/HFIR/CG1D/IPTS-27829/nexus',
+                                            },
 }
 
 # roi = {OperatingMode.tof: {'left': 0,

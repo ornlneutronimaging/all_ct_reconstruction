@@ -145,6 +145,7 @@ class Step1PrepareCcdImages:
                            DataType.ob:[]}
     
     list_of_angles_to_use_sorted = None
+    retrieve_angle_value_from_metadata = False
 
     strip_corrected_images = None # Array 3D after strip correction
 
@@ -207,10 +208,17 @@ class Step1PrepareCcdImages:
         o_load = Load(parent=self)
         o_load.select_images(data_type=DataType.dc)
 
-    # define naming convention to easily extract angle value
-    def define_naming_schema(self):
+    def how_to_retrieve_angle_value(self):
         self.o_load = Load(parent=self)
-        self.o_load.define_naming_convention()
+        self.o_load.how_to_retrieve_angle_value()
+
+    def retrieve_angle_value(self):
+        self.o_load.retrieve_angle_value()
+
+    # # define naming convention to easily extract angle value
+    # def define_naming_schema(self):
+    #     self.o_load = Load(parent=self)
+    #     self.o_load.define_naming_convention()
 
     # pecentage of data to use
     def select_percentage_of_data_to_use(self):

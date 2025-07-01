@@ -1,7 +1,8 @@
 import os
 import logging
 from collections import OrderedDict
-
+from IPython.display import display
+from IPython.core.display import HTML
 
 from __code import DataType, OperatingMode, DEFAULT_OPERATING_MODE, DEBUG
 from __code.utilities.logging import setup_logging
@@ -73,6 +74,11 @@ class Step1PrepareTimePixImages:
                     DataType.ob: OrderedDict(),
                     }
     
+    list_of_images = {DataType.sample: OrderedDict(),
+                      DataType.ob: None,
+                      DataType.dc: None,
+                    }
+    
     list_of_runs_checking_data = {DataType.sample: {},
                                    DataType.ob: {},
                                   }
@@ -98,7 +104,7 @@ class Step1PrepareTimePixImages:
 
     normalized_images = None   # after normalization
     corrected_images = None  # after chips correction
-
+    before_rebinning = None
     instrument = "VENUS"
 
     selection_of_pc = None   # plot that allows the user to select the pc for sample and ob and threshold
@@ -116,6 +122,7 @@ class Step1PrepareTimePixImages:
 
     # center of rotation
     o_center_and_tilt = None
+    center_of_rotation = None  # center of rotation calculated by the user
     # remove strips
     o_remove = None
     # normalization
@@ -151,6 +158,7 @@ class Step1PrepareTimePixImages:
 
     # Selection of data
     def select_top_sample_folder(self):
+        """updates: """
         o_load = Load(parent=self)
         o_load.select_folder(data_type=DataType.sample)
 
@@ -283,6 +291,10 @@ class Step1PrepareTimePixImages:
     def visualize_rebinned_data(self, before_normalization=False):
         if before_normalization:
             data_after = self.master_3d_data_array[DataType.sample]
+            if self.before_rebinning is None:
+                display(HTML("No rebinning performed!"))
+                return
+            
             data_before = self.before_rebinning
            
             self.o_vizu.visualize(data_after=data_after,
@@ -355,12 +367,21 @@ class Step1PrepareTimePixImages:
                                   vmax_right=None,)
 
     # strips removal
-    def select_remove_strips_algorithms(self):
+    def select_range_of_data_to_test_stripes_removal(self):
+        """updates: list_of_images[DataType.sample]"""
         self.o_remove = RemoveStrips(parent=self)
+        self.o_remove.select_range_of_data_to_test_stripes_removal()
+
+    def select_remove_strips_algorithms(self):
         self.o_remove.select_algorithms()
 
     def define_settings(self):
         self.o_remove.define_settings()
+
+    def test_algorithms_on_selected_range_of_data(self):
+        """updates: strip_corrected_images"""
+        self.o_remove.perform_cleaning(test=True)
+        self.o_remove.display_cleaning(test=True)
 
     def when_to_remove_strips(self):
         """updates: normalized_images_log"""
@@ -372,6 +393,24 @@ class Step1PrepareTimePixImages:
 
     def display_removed_strips(self):
         self.o_remove.display_cleaning()
+
+    # def select_remove_strips_algorithms(self):
+    #     self.o_remove = RemoveStrips(parent=self)
+    #     self.o_remove.select_algorithms()
+
+    # def define_settings(self):
+    #     self.o_remove.define_settings()
+
+    # def when_to_remove_strips(self):
+    #     """updates: normalized_images_log"""
+    #     self.o_remove.when_to_remove_strips()
+
+    # def remove_strips(self):
+    #     """updates: normalized_images_log"""
+    #     self.o_remove.perform_cleaning()
+
+    # def display_removed_strips(self):
+    #     self.o_remove.display_cleaning()
 
     # calculate and apply tilt
     def select_sample_roi(self):
@@ -415,7 +454,6 @@ class Step1PrepareTimePixImages:
 
     # run svmbir
     def reconstruction_settings(self):
-        
         if ReconstructionAlgorithm.svmbir in self.configuration.reconstruction_algorithm:
             self.o_svmbir = SvmbirHandler(parent=self)
             self.o_svmbir.set_settings()

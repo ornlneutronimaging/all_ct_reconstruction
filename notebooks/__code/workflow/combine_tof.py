@@ -14,6 +14,7 @@ class CombineTof(Parent):
     def run(self):      
         self.update_list_of_runs_status()
         self.load_data()
+        # self.combine_tof_data_range(self.parent.master_3d_data_array)
 
     def update_list_of_runs_status(self):
 
@@ -78,6 +79,7 @@ class CombineTof(Parent):
         list_ob_data = []
 
         for _run in tqdm(list_of_runs[DataType.ob]):
+            logging.info(f"Working with run {_run}")
             use_it = list_of_runs[DataType.ob][_run][Run.use_it]
             if use_it:
                 logging.info(f"\twe keep that runs!")
@@ -96,6 +98,13 @@ class CombineTof(Parent):
         self.parent.final_list_of_angles = list_of_angles_of_runs_to_keep
         self.parent.final_list_of_angles_rad = [np.deg2rad(float(_angle)) for _angle in list_of_angles_of_runs_to_keep]
         self.parent.final_list_of_runs = final_list_of_runs
+        self.parent.list_of_images = final_list_of_runs
+
+        logging.info(f"{master_3d_data_array[DataType.sample].shape = }")
+        logging.info(f"{master_3d_data_array[DataType.ob].shape = }")
+        logging.info(f"{list_of_angles_of_runs_to_keep = }")
+        logging.info(f"{self.parent.final_list_of_angles_rad = }")
+        logging.info(f"{self.parent.list_of_images = }")
 
     def load_data_for_a_run(self, run=None, data_type=DataType.sample):
 
@@ -109,24 +118,37 @@ class CombineTof(Parent):
         data = load_data_using_multithreading(list_tif, combine_tof=True)
 
         return data
-
-
-def combine_tof_data_range(config_model, master_data):
     
-    operating_mode = config_model.operating_mode
-    if operating_mode == OperatingMode.white_beam:
-        logging.info(f"white mode, all TOF data have already been combined!")
-        return master_data
-       
-    # tof mode
-    print(f"combining data in TOF ...", end="")
-    [left_tof_index, right_tof_index] = config_model.range_of_tof_to_combine[0]
-    logging.info(f"combining TOF from index {left_tof_index} to index {right_tof_index}")
-    for _data_type in master_data.keys():
-        _new_master_data = []
-        for _data in master_data[_data_type]:
-            _new_master_data.append(np.mean(_data[left_tof_index: right_tof_index+1, :, :], axis=0))
-        master_data[_data_type] = _new_master_data
-    print(f"done!")
+    # def combine_tof_data_range(self, master_3d_data_array):
 
-    return master_data
+    #     # tof mode
+    #     logging.info(f"combining TOF ...")
+    #     for _data_type in master_3d_data_array.keys():
+    #         if _data_type not in [DataType.sample, DataType.ob]:
+    #             logging.info(f"skipping {_data_type} data type")
+    #             continue
+    #         logging.info(f"combining data for {_data_type} ...")
+    #         logging.info(f"\tdata shape before combining: {master_3d_data_array[_data_type].shape}")
+    #         master_3d_data_array[_data_type] = np.mean(master_3d_data_array[_data_type], axis=0)
+    #         logging.info(f"\tdata shape after combining: {master_3d_data_array[_data_type].shape}")
+    #     print(f"done!")
+
+# def combine_tof_data_range(config_model, master_data):
+    
+#     operating_mode = config_model.operating_mode
+#     if operating_mode == OperatingMode.white_beam:
+#         logging.info(f"white mode, all TOF data have already been combined!")
+#         return master_data
+       
+#     # tof mode
+#     print(f"combining data in TOF ...", end="")
+#     [left_tof_index, right_tof_index] = config_model.range_of_tof_to_combine[0]
+#     logging.info(f"combining TOF from index {left_tof_index} to index {right_tof_index}")
+#     for _data_type in master_data.keys():
+#         _new_master_data = []
+#         for _data in master_data[_data_type]:
+#             _new_master_data.append(np.mean(_data[left_tof_index: right_tof_index+1, :, :], axis=0))
+#         master_data[_data_type] = _new_master_data
+#     print(f"done!")
+
+#     return master_data

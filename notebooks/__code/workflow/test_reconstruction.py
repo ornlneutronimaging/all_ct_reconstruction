@@ -79,6 +79,7 @@ class TestReconstruction(Parent):
         logging.info(f"\t{np.shape(sinogram_normalized_images_log) = }")
         logging.info(f"\t{np.shape(self.parent.normalized_images_log) = }")
         logging.info(f"\t{np.shape(self.parent.final_list_of_angles_rad) = }")
+        self.parent.final_list_of_angles_rad = np.array(self.parent.final_list_of_angles_rad)
 
         if self.parent.configuration.center_of_rotation == -1:
             center_of_rotation = np.shape(sinogram_normalized_images_log)[2] // 2
