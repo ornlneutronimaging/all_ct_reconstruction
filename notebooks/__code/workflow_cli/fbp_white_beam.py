@@ -7,7 +7,7 @@ import tomopy
 from tomopy.prep import stripe
 
 # from imars3d.backend.reconstruction import recon
-from tomopy.recon.algorithm import recon as tomopy_recon
+from tomopy import recon as tomopy_recon
 import algotom.rec.reconstruction as rec
 
 from __code import WhenToRemoveStripes
@@ -80,14 +80,16 @@ class FbpCliHandler:
                                                             )
             reconstruction_array = np.swapaxes(reconstruction_array, 0, 1)
 
-            # reconstruction_array = tomopy_recon(tomo=_sino,
-            #                             # center=center_of_rotation,
-            #                             theta=list_of_angles_rad,
-            #                             sinogram_order=True,
-            #                             # apply_log=False,
-            #                             algorithm='fbp',
-            #                             filter_name='hann')
-            #                             # ncore=NUM_THREADS)
+        elif algorithm == ReconstructionAlgorithm.tomopy_fbp:
+
+            reconstruction_array = tomopy_recon(tomo=projections,
+                                                theta=list_of_angles_rad,
+                                                center=center_of_rotation,
+                                                sinogram_order=False,
+                                                # apply_log=False,
+                                                algorithm='fbp',
+                                                filter_name='hann',
+                                                ncore=max_workers)
 
         else:
             raise NotImplementedError(f"Algorithm {algorithm} is not implemented yet!")
@@ -162,11 +164,11 @@ class FbpCliHandler:
             make_or_reset_folder(output_data_folder)
 
             if (len(list_of_slices_to_reconstruct) == 1) and (list_of_slices_to_reconstruct[0][0] == 0) and \
-            (list_of_slices_to_reconstruct[0][1] == nbr_slices):
+            (list_of_slices_to_reconstruct[0][1] == -1):
                 list_of_slices_to_reconstruct = None
 
             list_of_output_folders = []
-            if list_of_slices_to_reconstruct:
+            if list_of_slices_to_reconstruct is not None:
 
                 for [index, [top_slice_index, bottom_slice_index]] in enumerate(list_of_slices_to_reconstruct):
                     print(f"working with set of slices #{index}: from {top_slice_index} to {bottom_slice_index-1}. ", end="") 
@@ -205,7 +207,7 @@ class FbpCliHandler:
 
                     logging.info(f"Cleaning up ...")
                     del reconstruction_array
-                    del _sino
+                    # del _sino
 
                 merge_reconstructed_slices(output_data_folder=output_data_folder, 
                                         top_slice=top_slice,
