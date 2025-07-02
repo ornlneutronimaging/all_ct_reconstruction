@@ -8,7 +8,7 @@ from __code import WhenToRemoveStripes
 from __code.workflow.export import Export
 from __code.utilities.logging import setup_logging
 from __code.utilities.files import make_or_reset_folder, remove_folder
-from __code.config import NUM_THREADS, SVMBIR_LIB_PATH, svmbir_parameters
+from __code.config import NUM_THREADS, SVMBIR_LIB_PATH, SVMBIR_LIB_PATH_BACKUP, svmbir_parameters
 from __code.utilities.json import load_json_string
 from __code.utilities.load import load_data_using_multithreading, load_list_of_tif
 from __code.utilities.time import get_current_time_in_special_file_name_format
@@ -72,7 +72,10 @@ class SvmbirCliHandler:
         positivity = config['svmbir_config']['positivity']
         max_iterations = config['svmbir_config']['max_iterations']
         verbose = config['svmbir_config']['verbose']
-        svmbir_lib_path = SVMBIR_LIB_PATH
+        if os.path.exists(SVMBIR_LIB_PATH):
+            svmbir_lib_path = SVMBIR_LIB_PATH
+        else:
+            svmbir_lib_path = SVMBIR_LIB_PATH_BACKUP
         max_resolutions = config['svmbir_config']['max_resolutions']
         list_of_slices_to_reconstruct = config['list_of_slices_to_reconstruct']
         top_slice = config['crop_region']['top']
@@ -105,8 +108,8 @@ class SvmbirCliHandler:
         if list_of_slices_to_reconstruct:
 
             for [index, [top_slice_index, bottom_slice_index]] in enumerate(list_of_slices_to_reconstruct):
-                print(f"working with set of slices #{index}: from {top_slice} to {bottom_slice_index-1}. ", end="") 
-                logging.info(f"working with set of slices #{index}: from {top_slice} to {bottom_slice_index-1}")
+                print(f"working with set of slices #{index}: from {top_slice_index} to {bottom_slice_index-1}. ", end="") 
+                logging.info(f"working with set of slices #{index}: from {top_slice_index} to {bottom_slice_index-1}")
                 print(f"launching svmbir #{index} ... ", end="")
                 logging.info(f"launching svmbir #{index} ...")
         

@@ -68,6 +68,7 @@ class ExportExtra(Parent):
         else:
             config_file_name = os.path.join(output_folder, f"{base_sample_folder}_{_time_ext}.json")
         
+        self.config_file_name = config_file_name
         config_json = configuration.model_dump_json()
         save_json(config_file_name, json_dictionary=config_json)
         self.config_json = config_json
@@ -91,7 +92,7 @@ class ExportExtra(Parent):
         )
         display(choices)
 
-        self.instructions = widgets.Textarea(value="Reload the configuration file ({config_file_name}) in the notebook {STEP2_NOTEBOOK}",
+        self.instructions = widgets.Textarea(value=f"Reload the configuration file ({self.config_file_name}) in the notebook {STEP2_NOTEBOOK}",
                                              layout=widgets.Layout(width='100%', height='80px'),
                                              disabled=True)
         display(self.instructions) 
@@ -115,7 +116,7 @@ class ExportExtra(Parent):
             self.run_script.disabled = True
 
         if change['new'] == 'Divide reconstruction into several jobs and run them in parallel':
-            self.instructions.value = f"Reload the configuration file ({self.config_json}) in the notebook {STEP2_NOTEBOOK}"
+            self.instructions.value = f"Reload the configuration file ({self.config_file_name}) in the notebook {STEP2_NOTEBOOK}"
         elif change['new'] == 'Manually launch script outside notebook':
             self.instructions.value = f"Launch the following script from the command line: {self.sh_file_name}"
         else:

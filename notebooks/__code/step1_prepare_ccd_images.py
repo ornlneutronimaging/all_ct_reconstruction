@@ -185,6 +185,9 @@ class Step1PrepareCcdImages:
         setup_logging(basename_of_log_file=LOG_BASENAME_FILENAME)        
         self.working_dir[DataType.ipts] = os.path.basename(top_sample_dir)
         self.working_dir[DataType.top] = os.path.join(top_sample_dir)
+        self.working_dir[DataType.sample] = os.path.join(top_sample_dir, "raw", "ct_scans")
+        self.working_dir[DataType.ob] = os.path.join(top_sample_dir, "raw", "ob")
+        self.working_dir[DataType.dc] = os.path.join(top_sample_dir, "raw", "dc")
         self.working_dir[DataType.nexus] = os.path.join(top_sample_dir, "nexus")
         self.working_dir[DataType.processed] = os.path.join(top_sample_dir, "shared", "processed_data")
         logging.info(f"working_dir: {self.working_dir}")
@@ -455,7 +458,7 @@ class Step1PrepareCcdImages:
         """uses: normalized_images_log"""
         self.o_tilt.run_center_of_rotation()
 
-    def record_center_of_rotation(self):
+    def determine_center_of_rotation(self):
         self.o_tilt.calculate_center_of_rotation()
 
     def display_center_of_rotation(self):

@@ -4,6 +4,7 @@ class DataType:
     sample = 'sample'
     ob = 'ob'
     dc = 'dc'
+    ct_scans = 'ct_scans'
     ipts = 'ipts'
     top = 'top'
     nexus = 'nexus'
@@ -161,3 +162,4 @@ class RemoveStripeAlgo:
 class WhenToRemoveStripes:
     in_notebook = "in notebook"
     out_notebook = "outside notebook"
+    never = "never"

@@ -28,7 +28,7 @@ class Load(Parent):
         if data_type in [DataType.reconstructed, DataType.extra]:
             working_dir = self.parent.working_dir[DataType.processed]
         else:
-            working_dir = self.parent.working_dir[DataType.top]
+            working_dir = self.parent.working_dir[data_type]
 
         if DEBUG:
             self.data_selected(debug_folder[self.parent.MODE][data_type])
@@ -52,10 +52,10 @@ class Load(Parent):
         if data_type in [DataType.reconstructed, DataType.extra]:
             working_dir = self.parent.working_dir[DataType.processed]
         else:
-            working_dir = self.parent.working_dir[DataType.top]
+            working_dir = self.parent.working_dir[data_type]
 
         if DEBUG:
-            working_dir = debug_folder[self.parent.MODE][data_type]
+            working_dir = debug_folder[self.parent.MODE][DataType.top]
             if not os.path.exists(working_dir):
                 return
             #list_images = glob.glob(os.path.join(working_dir, "*_0045_*.tif*"))
@@ -223,6 +223,17 @@ class Load(Parent):
     def save_list_of_angles(self, list_of_images):
         if self.parent.retrieve_angle_value_from_metadata:
             self.retrieve_angle_value_from_metadata_file(list_of_images)
+            
+            self.parent.final_list_of_angles = [float(angle) for angle in self.parent.final_list_of_angles]
+            # we need to sort the angles and then sort the list of images the same way
+            sorted_indices = sorted(range(len(self.parent.final_list_of_angles)), key=lambda i: self.parent.final_list_of_angles[i])
+            self.parent.final_list_of_angles = [self.parent.final_list_of_angles[i] for i in sorted_indices]
+            self.parent.final_list_of_angles_rad = np.deg2rad(self.parent.final_list_of_angles)
+            self.parent.list_of_images[DataType.sample] = [list_of_images[i] for i in sorted_indices]
+
+            logging.info(f"Angle values retrieved from metadata file and sorted: {self.parent.final_list_of_angles}")
+            logging.info(f"list of files sorted the same way: {self.parent.list_of_images[DataType.sample]}")
+
         else:
             self.retrieve_angle_value_from_file_name(list_of_images)
 

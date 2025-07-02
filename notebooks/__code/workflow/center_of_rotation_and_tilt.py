@@ -259,7 +259,7 @@ class CenterOfRotationAndTilt(Parent):
 
         image_0_degree = self.image_0_degree
         image_180_degree = self.image_180_degree
-        image_360_degree = self.image_360_degree
+        # image_360_degree = self.image_360_degree
 
         # logging.info(f"{image_0_degree.dtype = }")
         # logging.info(f"{np.shape(image_0_degree) = }")
@@ -272,12 +272,13 @@ class CenterOfRotationAndTilt(Parent):
         self.slide_value = int(height/2)
 
         display(widgets.HTML("Select the slice to use to calculate the center of rotation"))
-        max_value = np.max([image_0_degree, image_180_degree, image_360_degree])
+        # max_value = np.max([image_0_degree, image_180_degree, image_360_degree])
+        max_value = np.max([image_0_degree, image_180_degree])
         # max_value = 4 # DEBUG
 
         def plot_images(slice_value=int(height/2), vmin=0, vmax=max_value):
 
-            fig, axs = plt.subplots(nrows=1, ncols=3, figsize=(15,5))
+            fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(10,5))
             
             axs[0].imshow(image_0_degree, cmap='viridis', vmin=vmin, vmax=vmax)
             axs[0].set_title("0 / 0")
@@ -287,9 +288,9 @@ class CenterOfRotationAndTilt(Parent):
             axs[1].set_title(f"{self.parent.final_list_of_angles[self.index_180_degree]} / 180")
             axs[1].axhline(slice_value, color='blue', linestyle='--')
 
-            axs[2].imshow(image_360_degree, cmap='viridis', vmin=vmin, vmax=vmax)
-            axs[2].set_title(f"{self.parent.final_list_of_angles[self.index_360_degree]} / 360")
-            axs[2].axhline(slice_value, color='blue', linestyle='--')
+            # axs[2].imshow(image_360_degree, cmap='viridis', vmin=vmin, vmax=vmax)
+            # axs[2].set_title(f"{self.parent.final_list_of_angles[self.index_360_degree]} / 360")
+            # axs[2].axhline(slice_value, color='blue', linestyle='--')
 
             plt.tight_layout()
 
@@ -317,10 +318,10 @@ class CenterOfRotationAndTilt(Parent):
         display(widgets.HTML("Horizontal line shows the slide used to calculate the center of rotation"))
         display(widgets.HTML("<hr>"))
 
-        display(widgets.HTML("Do you want to use all the data from 0 to 180, or 0 to 360 degrees to calculate the center of rotation?"))
-        self.cor_selection = widgets.RadioButtons(options=["180 degree", "360 degree"],
-                                         descriptions="Select mode:")
-        display(self.cor_selection)
+        # display(widgets.HTML("Do you want to use all the data from 0 to 180, or 0 to 360 degrees to calculate the center of rotation?"))
+        # self.cor_selection = widgets.RadioButtons(options=["180 degree", "360 degree"],
+        #                                  descriptions="Select mode:")
+        # display(self.cor_selection)
 
     def calculate_center_of_rotation(self):
         self.calc_cor_with_algotom()
@@ -333,7 +334,6 @@ class CenterOfRotationAndTilt(Parent):
             return
         
         logging.info(f"calculate center of rotation using algotom (auto mode)")
-        logging.info(f"\tmode selected: {self.cor_selection.value}")
        
         logging.info(f"\tworking with sinogram in log mode!")
         sinogram_of_normalized_images_log = np.moveaxis(self.parent.normalized_images_log, 1, 0) # [slice, angle, width]
@@ -341,21 +341,21 @@ class CenterOfRotationAndTilt(Parent):
 
         slice_value = self.plot_slice_to_use.result
 
-        if self.cor_selection.value == "180 degree":
-            center_of_rotation = find_center_vo(sinogram_of_normalized_images_log[self.slide_value][0:slice_value],
-                                                ncore=NUM_THREADS)
-        else:
-            try:
-                center_of_rotation = find_center_360(sinogram_of_normalized_images_log[self.slide_value][:],
-                                                    win_width=800,
-                                                    ncore=NUM_THREADS)
-                if type(center_of_rotation) == list:
-                    center_of_rotation = center_of_rotation[0]
+        # if self.cor_selection.value == "180 degree":
+        center_of_rotation = find_center_vo(sinogram_of_normalized_images_log[self.slide_value][0:slice_value],
+                                            ncore=NUM_THREADS)
+        # else:
+        #     try:
+        #         center_of_rotation = find_center_360(sinogram_of_normalized_images_log[self.slide_value][:],
+        #                                             win_width=800,
+        #                                             ncore=NUM_THREADS)
+        #         if type(center_of_rotation) == list:
+        #             center_of_rotation = center_of_rotation[0]
 
-            except ValueError as e:
-                logging.error(f"Error: {e}")
-                logging.info(f"Error: {e}")
-                center_of_rotation = None
+        #     except ValueError as e:
+        #         logging.error(f"Error: {e}")
+        #         logging.info(f"Error: {e}")
+        #         center_of_rotation = None
        
         logging.info(f"center of rotation = {center_of_rotation}")
         self.parent.configuration.center_of_rotation = center_of_rotation

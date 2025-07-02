@@ -21,6 +21,7 @@ from __code.config import NUM_THREADS
 class RemoveStrips:
 
     sinogram = None
+    skip_remove_strips = True
 
     default_list_algo_to_use = [RemoveStripeAlgo.remove_all_stripe]
 
@@ -314,7 +315,7 @@ class RemoveStrips:
         label = widgets.Label(
             value="Do you want to remove stripes NOW or in the BACKGROUND when running the reconstruction?"
         )
-        options = [WhenToRemoveStripes.in_notebook, WhenToRemoveStripes.out_notebook]
+        options = [WhenToRemoveStripes.in_notebook, WhenToRemoveStripes.out_notebook, WhenToRemoveStripes.never]
         self.when_to_remove_widget = widgets.RadioButtons(
             value=WhenToRemoveStripes.out_notebook,  # default value
             options=options,
@@ -326,9 +327,15 @@ class RemoveStrips:
         if change['new'] == WhenToRemoveStripes.in_notebook:
             logging.info("Strips removal will be done in the next cell (in-notebook).")
             self.parent.configuration.when_to_remove_stripes = WhenToRemoveStripes.in_notebook
+            self.skip_remove_strips = False
         elif change['new'] == WhenToRemoveStripes.out_notebook:
             logging.info("Strips removal will be done in the background just before reconstruction.")
             self.parent.configuration.when_to_remove_stripes = WhenToRemoveStripes.out_notebook
+            self.skip_remove_strips = False
+        elif change['new'] == WhenToRemoveStripes.never:
+            self.parent.configuration.when_to_remove_stripes = WhenToRemoveStripes.never
+            logging.info("Strips removal will never be done.")
+            self.skip_remove_strips = True
         else:
             logging.error("Unexpected option selected for when to remove stripes.")
 
@@ -393,6 +400,11 @@ class RemoveStrips:
         setattr(self.parent.configuration, f"{algorithm_name}_options", my_instance)
 
     def perform_cleaning(self, test=False):
+
+        if self.parent.configuration.when_to_remove_stripes == WhenToRemoveStripes.never:
+            logging.info("Strips removal was skipped.")
+            print("Strips removal was skipped. No cleaning performed now.")
+            return
 
         if not test:
             if self.parent.configuration.when_to_remove_stripes == WhenToRemoveStripes.out_notebook:
@@ -465,6 +477,7 @@ class RemoveStrips:
 
     def display_cleaning(self, test=False):
 
+
         if not test:
             if self.parent.configuration.when_to_remove_stripes == WhenToRemoveStripes.out_notebook:
                 logging.info("Strips removal will be done in the background just before reconstruction. No display.")
@@ -473,7 +486,12 @@ class RemoveStrips:
         
         if self.nothing_to_display:
             return
-        
+
+        if self.parent.configuration.when_to_remove_stripes == WhenToRemoveStripes.never:
+            logging.info("Strips removal was set to never. No display of results.")
+            print("Strips removal was set to never. No display of results.")
+            return
+
         normalized_images_before = self.parent.before_normalized_images
         sinogram_before = self.calculate_sinogram(normalized_images_before)
 
