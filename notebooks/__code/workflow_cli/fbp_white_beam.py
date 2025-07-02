@@ -219,7 +219,7 @@ class FbpCliHandler:
                 print(f"launching reconstruction using {_algo} with all slices ... ", end="")
                 logging.info(f"launching reconstruction using {_algo} with all slices ...")
                 
-                reconstruction_array = FbpCliHandler._run_reconstruction(_sino=corrected_array_log,
+                reconstruction_array = FbpCliHandler._run_reconstruction(projections=corrected_array_log,
                                                                         center_of_rotation=center_of_rotation,
                                                                         list_of_angles_rad=list_of_angles_rad,
                                                                         algorithm=_algo,
