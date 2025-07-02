@@ -70,6 +70,7 @@ class ExportExtra(Parent):
         
         config_json = configuration.model_dump_json()
         save_json(config_file_name, json_dictionary=config_json)
+        self.config_json = config_json
 
         self.sh_file_name = create_sh_file(json_file_name=config_file_name, 
                                       output_folder=output_folder)
@@ -114,7 +115,7 @@ class ExportExtra(Parent):
             self.run_script.disabled = True
 
         if change['new'] == 'Divide reconstruction into several jobs and run them in parallel':
-            self.instructions.value = f"Reload the configuration file ({self.sh_file_name}) in the notebook {STEP2_NOTEBOOK}"
+            self.instructions.value = f"Reload the configuration file ({self.config_json}) in the notebook {STEP2_NOTEBOOK}"
         elif change['new'] == 'Manually launch script outside notebook':
             self.instructions.value = f"Launch the following script from the command line: {self.sh_file_name}"
         else:

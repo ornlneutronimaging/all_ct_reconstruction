@@ -213,4 +213,5 @@ class Step2SliceCcdOrTimePixImages:
         sh_file_name = create_sh_file(json_file_name=full_config_file_name,
                                       output_folder=working_dir)
         display(HTML(f"Next and final step. Launch the following script from the command line:"))
+        display(HTML(f"config file name: <font color='blue'>{config_file_name}</font>"))
         display(HTML(f"<font color='green'>{sh_file_name}</font>"))
