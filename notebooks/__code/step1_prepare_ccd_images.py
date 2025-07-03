@@ -515,7 +515,8 @@ class Step1PrepareCcdImages:
     # export extra files
     def select_export_extra_files(self):
         o_select = Load(parent=self)
-        o_select.select_folder(data_type=DataType.extra)
+        o_select.select_folder(data_type=DataType.extra,
+                               output_flag=True)
 
     def export_pre_reconstruction_data(self):
         # if self.o_svmbir is None:

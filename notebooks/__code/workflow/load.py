@@ -22,7 +22,7 @@ class Load(Parent):
                            DataType.ob: [],
     }
 
-    def select_folder(self, data_type=DataType.sample, multiple_flag=False):
+    def select_folder(self, data_type=DataType.sample, multiple_flag=False, output_flag=False):
         self.parent.current_data_type = data_type
         self.data_type = data_type
         if data_type in [DataType.reconstructed, DataType.extra]:
@@ -41,10 +41,16 @@ class Load(Parent):
         if not os.path.exists(working_dir):
             working_dir = os.path.abspath(os.path.expanduser("~"))
 
-        o_file_browser = FileFolderBrowser(working_dir=working_dir,
-                                           next_function=self.data_selected)
-        o_file_browser.select_input_folder(instruction=f"Select Top Folder of {data_type}",
-                                           multiple_flag=multiple_flag)
+        if output_flag:
+            o_file_browser = FileFolderBrowser(working_dir=working_dir,
+                                               ipts_folder=self.parent.working_dir[DataType.ipts],
+                                               next_function=self.data_selected)
+            o_file_browser.select_output_folder_with_new(instruction=f"Select Top Folder of {data_type}")
+        else:
+            o_file_browser = FileFolderBrowser(working_dir=working_dir,
+                                               next_function=self.data_selected)
+            o_file_browser.select_input_folder(instruction=f"Select Top Folder of {data_type}",
+                                               multiple_flag=multiple_flag)
 
     def select_images(self, data_type=DataType.ob):
         self.parent.current_data_type = data_type
