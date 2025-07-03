@@ -155,6 +155,9 @@ class FbpCliHandler:
         list_algorithm = config['reconstruction_algorithm']
         for _algo in list_algorithm: 
         
+            if _algo == ReconstructionAlgorithm.svmbir:
+                continue  # handled by SvmbirCliHandler
+
             logging.info(f"Reconstruction using {_algo} ...")
             print(f"Reconstruction using {_algo} ...")
             output_data_folder = os.path.join(base_output_folder, f"{_algo}_reconstructed_data_{get_current_time_in_special_file_name_format()}")

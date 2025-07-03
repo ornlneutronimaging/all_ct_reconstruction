@@ -92,7 +92,7 @@ class ExportExtra(Parent):
         )
         display(choices)
 
-        self.instructions = widgets.Textarea(value=f"Reload the configuration file ({self.config_file_name}) in the notebook {STEP2_NOTEBOOK}",
+        self.instructions = widgets.Textarea(value=f"Reload the configuration file {os.path.basename(self.config_file_name)} found in {os.path.dirname(self.config_file_name)} in the notebook {STEP2_NOTEBOOK}",
                                              layout=widgets.Layout(width='100%', height='80px'),
                                              disabled=True)
         display(self.instructions) 

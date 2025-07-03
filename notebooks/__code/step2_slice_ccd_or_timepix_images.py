@@ -109,7 +109,7 @@ class Step2SliceCcdOrTimePixImages:
                                           bottom_slice=widgets.IntSlider(min=0, max=height-1, 
                                                                          step=1, value=height-1,
                                                                          layout=widgets.Layout(width='50%')),
-                                          nbr=widgets.IntSlider(min=1, max=10, step=1, value=1,
+                                          nbr=widgets.IntSlider(min=1, max=30, step=1, value=1,
                                                                           layout=widgets.Layout(width='50%')))
         display(self.display_plot_images)
 
