@@ -527,6 +527,7 @@ class Step1PrepareCcdImages:
     def export_extra_files(self, prefix=""):
         self.export_pre_reconstruction_data()
         o_export = ExportExtra(parent=self)
+        o_export.update_configuration()
         o_export.run(base_log_file_name=LOG_BASENAME_FILENAME,
                      prefix=prefix)
         

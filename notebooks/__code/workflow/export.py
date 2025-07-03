@@ -10,6 +10,7 @@ import ipywidgets as widgets
 
 from __code.utilities.save import make_tiff
 from __code.utilities.json import save_json
+from __code.utilities.configuration_file import SvmbirConfig
 from __code.parent import Parent
 from __code.utilities.create_scripts import create_sh_file
 from __code import DataType, STEP2_NOTEBOOK
@@ -39,6 +40,36 @@ class Export:
 
 class ExportExtra(Parent):
   
+    def update_configuration(self):
+        # especially for all svmbir settings
+        if self.parent.o_svmbir is None:
+            return
+
+        sharpness = self.parent.o_svmbir.sharpness_ui.value
+        snr_db = self.parent.o_svmbir.snr_db_ui.value
+        positivity = self.parent.o_svmbir.positivity_ui.value
+        max_iterations = self.parent.o_svmbir.max_iterations_ui.value
+        max_resolutions = self.parent.o_svmbir.max_resolutions_ui.value
+        verbose = 1 if self.parent.o_svmbir.verbose_ui.value else 0
+
+        svmbir_config = SvmbirConfig()
+        svmbir_config.sharpness = sharpness
+        svmbir_config.snr_db = snr_db
+        svmbir_config.positivity = positivity
+        svmbir_config.max_iterations = max_iterations
+        svmbir_config.verbose = verbose
+        # svmbir_config.top_slice = top_slice
+        # svmbir_config.bottom_slice = bottom_slice
+        self.parent.configuration.svmbir_config = svmbir_config
+
+        logging.info(f"Updating svmbir configuration using ui data:")
+        logging.info(f"\t{sharpness = }")
+        logging.info(f"\t{snr_db = }")
+        logging.info(f"\t{positivity = }")
+        logging.info(f"\t{max_iterations = }")
+        logging.info(f"\t{max_resolutions = }")
+        logging.info(f"\t{verbose = }")
+
     def run(self, base_log_file_name=None, prefix=""):
         log_file_name = f"/SNS/VENUS/shared/log/{base_log_file_name}.log"
         output_folder = self.parent.working_dir[DataType.extra]
