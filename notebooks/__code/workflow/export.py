@@ -115,7 +115,7 @@ class ExportExtra(Parent):
         else:
             self.run_script.disabled = True
 
-        if change['new'] == 'Divide reconstruction into several jobs and run them in parallel':
+        if change['new'] == 'Divide reconstruction into several jobs and run them in the background':
             self.instructions.value = f"Reload the configuration file ({self.config_file_name}) in the notebook {STEP2_NOTEBOOK}"
         elif change['new'] == 'Manually launch script outside notebook':
             self.instructions.value = f"Launch the following script from the command line: {self.sh_file_name}"

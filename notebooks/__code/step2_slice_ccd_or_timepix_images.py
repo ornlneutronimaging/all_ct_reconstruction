@@ -13,7 +13,7 @@ from __code import DEBUG, debug_folder, OperatingMode, DataType, STEP3_SCRIPTS
 from __code.utilities.configuration_file import CropRegion
 from __code.utilities.configuration_file import select_file, loading_config_file_into_model
 from __code.utilities.logging import setup_logging
-from __code.utilities.files import retrieve_list_of_tif
+from __code.utilities.files import retrieve_list_of_tif, make_or_reset_folder
 from __code.utilities.create_scripts import create_sh_file
 from __code.utilities.load import load_data_using_multithreading, load_list_of_tif
 from __code.utilities.time import get_current_time_in_special_file_name_format
@@ -22,7 +22,15 @@ from __code.utilities.json import save_json
 BASENAME_FILENAME, _ = os.path.splitext(os.path.basename(__file__))
 
 
+class JsonTypeRequested:
+    single = '1 json for full reconstruction'
+    multi = 'multi jsons (1 per range of slices defined)'
+    undefined = 'undefined'
+
+
 class Step2SliceCcdOrTimePixImages:
+
+    json_type_requested = JsonTypeRequested.undefined
 
     def __init__(self, system=None):
 
@@ -177,7 +185,77 @@ class Step2SliceCcdOrTimePixImages:
                                         )
         display(self.display_roi)
   
+    def select_json_type_you_want_to_create(self):
+
+        _, _, nbr = self.display_plot_images.result
+
+        if nbr == 1:
+            display(HTML("1 single json (config file) will be created for the whole reconstruction"))
+            self.json_type_requested = JsonTypeRequested.single
+
+        else:
+
+            self.json_type = widgets.RadioButtons(
+                options=[JsonTypeRequested.single,
+                        JsonTypeRequested.multi],
+                value=JsonTypeRequested.single,
+                description='Json types:',
+                disabled=False,
+                style={'description_width': 'initial'},
+                layout=widgets.Layout(width='50%')
+            )
+            display(self.json_type)
+    
     def export_config_file(self):
+         if self.json_type_requested == JsonTypeRequested.undefined:
+            export_options = self.json_type.value
+            if export_options == JsonTypeRequested.single:
+                self.export_single_config_file()
+            else:
+                self.export_multi_config_file()
+
+    def export_multi_config_file(self):
+        top_slice, bottom_slice, nbr = self.display_plot_images.result
+        logging.info(f"Exporting config file:")
+        logging.info(f"\ttop_slice: {top_slice}")
+        logging.info(f"\tbottom_slice: {bottom_slice}")
+        logging.info(f"\tnbr_of_ranges: {nbr}")
+
+        range_size = int((np.abs(top_slice - bottom_slice)) / nbr)
+
+        left, right, top, bottom = self.display_roi.result
+        self.configuration.crop_region = CropRegion(left=left, right=right, top=top, bottom=bottom)
+
+        current_time = get_current_time_in_special_file_name_format()
+        working_dir = self.output_config_file
+        sub_folder_for_all_config_files = os.path.join(working_dir, f"all_config_files_{current_time}")
+        make_or_reset_folder(sub_folder_for_all_config_files)
+        
+        for _range_index in np.arange(nbr):
+
+            list_slices = []
+
+            _top_slice = top_slice + _range_index * range_size
+            if _top_slice > 0:
+                _top_slice -= 1  # to make sure we have a 2 pixels overlap between ranges of slices
+
+            _bottom_slice = top_slice + _range_index * range_size + range_size
+            if _bottom_slice < (self.data.shape[1] - 1):
+                _bottom_slice += 1 # to make sure we have a 2 pixels overlap between ranges of slices
+
+            list_slices.append((_top_slice, _bottom_slice))
+            self.configuration.list_of_slices_to_reconstruct = list_slices
+            
+            config_file_name = f"{BASENAME_FILENAME}_{current_time}_from_{_top_slice}_to_{_bottom_slice}.json"
+            full_config_file_name = os.path.join(sub_folder_for_all_config_files, config_file_name)
+            config_json = self.configuration.model_dump_json()
+            save_json(full_config_file_name, json_dictionary=config_json)
+            logging.info(f"config file saved: {full_config_file_name} for slice range {_top_slice} to {_bottom_slice}")
+
+        display(HTML(f"All config files created in <font color='blue'>{full_config_file_name}</font>"))
+
+    def export_single_config_file(self):
+ 
         top_slice, bottom_slice, nbr = self.display_plot_images.result
         logging.info(f"Exporting config file:")
         logging.info(f"\ttop_slice: {top_slice}")
@@ -198,7 +276,7 @@ class Step2SliceCcdOrTimePixImages:
 
             list_slices.append((_top_slice, _bottom_slice))
             self.configuration.list_of_slices_to_reconstruct = list_slices
-            
+
         left, right, top, bottom = self.display_roi.result
         self.configuration.crop_region = CropRegion(left=left, right=right, top=top, bottom=bottom)
 
