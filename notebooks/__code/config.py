@@ -1,6 +1,9 @@
 debugging = False
 verbose = True
 debugger_username = 'j35'
+
+imaging_team = ["j35", "gxt"]
+
 debugger_folder = ['/Users/j35/HFIR/CG1D/',
                    '/Volumes/JeanHardDrive/HFIR/CG1D/']
 debugger_instrument_folder = {'CG1D': ["/Users/j35/HFIR/CG1D",
@@ -20,6 +23,8 @@ DEFAULT_CROP_ROI = [0, 510, 103, 404]
 DEFAULT_BACKROUND_ROI = [5, 300, 5, 600]
 DEFAULT_TILT_SLICES_SELECTION = [103, 602]
 STEP_SIZE = 50  # for working with bucket of data at a time
+HSNT_FOLDER = '/data/'
+HSNT_SCRIPTS_FOLDER = '/data/scripts/'
 
 DEFAULT_NAMING_CONVENTION_INDICES = [10, 11]
 

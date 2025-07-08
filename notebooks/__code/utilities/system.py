@@ -58,3 +58,6 @@ def delete_array(object_array=None):
     object_array = None
     gc.collect()
     
+
+def get_user_name():
+    return os.getlogin()  # add user name to the log file name

@@ -8,13 +8,15 @@ import numpy as np
 import subprocess
 import ipywidgets as widgets
 
+from __code.utilities.system import get_user_name
 from __code.utilities.save import make_tiff
 from __code.utilities.json import save_json
 from __code.utilities.configuration_file import SvmbirConfig
 from __code.parent import Parent
-from __code.utilities.create_scripts import create_sh_file
+from __code.utilities.create_scripts import create_sh_file, create_sh_hsnt_file
 from __code import DataType, STEP2_NOTEBOOK
 from __code.utilities.time import get_current_time_in_special_file_name_format
+from __code.config import imaging_team
 
 
 class Export:
@@ -44,6 +46,11 @@ class ExportExtra(Parent):
         # especially for all svmbir settings
         if self.parent.o_svmbir is None:
             return
+
+        instrument = self.parent.instrument
+        ipts_number = self.parent.ipts_number
+        self.parent.configuration.instrument = instrument
+        self.parent.configuration.ipts_number = int(ipts_number)
 
         sharpness = self.parent.o_svmbir.sharpness_ui.value
         snr_db = self.parent.o_svmbir.snr_db_ui.value
@@ -100,22 +107,35 @@ class ExportExtra(Parent):
             config_file_name = os.path.join(output_folder, f"{base_sample_folder}_{_time_ext}.json")
         
         self.config_file_name = config_file_name
+
         config_json = configuration.model_dump_json()
         save_json(config_file_name, json_dictionary=config_json)
         self.config_json = config_json
 
-        self.sh_file_name = create_sh_file(json_file_name=config_file_name, 
-                                      output_folder=output_folder)
+        self.sh_file_name = create_sh_file(json_file_name=config_file_name,
+                                           output_folder=output_folder)
+
+        ipts_number = configuration.ipts_number
+        instrument = configuration.instrument
+        self.hsnt_output_json_folder = os.path.join("/data", instrument, f"IPTS-{ipts_number}", "all_config_files")
+        self.sh_hsnt_script_name = create_sh_hsnt_file(configuration=configuration,
+                                                       json_file_name=config_file_name, 
+                                                       hstn_output_json_folder=self.hsnt_output_json_folder)
 
         display(HTML(f"<font color='blue'><b>Next step</b></font>"))
 
-        # 3 options are offered to the user
-        choices = widgets.RadioButtons(
-            options=[
+        list_options = [
                 f"Divide reconstruction into several jobs and run them in parallel",
                 f"Manually launch script outside notebook",
                 f"Launch the script directly from the notebook",
-            ],
+        ]
+        ucams = get_user_name()
+        if ucams in imaging_team:
+            list_options.append(f"Create script to run from hsnt")
+
+        # 3 options are offered to the user
+        choices = widgets.RadioButtons(
+            options=list_options,
             value="Launch the script directly from the notebook",
             description='',
             layout=widgets.Layout(width='100%'),
@@ -150,6 +170,8 @@ class ExportExtra(Parent):
             self.instructions.value = f"Reload the configuration file ({self.config_file_name}) in the notebook {STEP2_NOTEBOOK}"
         elif change['new'] == 'Manually launch script outside notebook':
             self.instructions.value = f"Launch the following script from the command line: {self.sh_file_name}"
+        elif change['new'] == 'Create script to run from hsnt':
+            self.instructions.value = f"Connect to hsnt\nCopy the json file {self.config_file_name} into {self.hsnt_output_json_folder}\nRun the following script: {self.sh_hsnt_script_name}"
         else:
             self.instructions.value = f"click the button below to run the script directly from the notebook"
 

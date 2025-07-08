@@ -313,7 +313,7 @@ class SvmbirCliHandler:
 
             print(f"exporting reconstructed slices using {_nbr_projections} projections ... ", end="")
             logging.info(f"{np.shape(reconstruction_array) = }")
-            logging.info(f"exporting reconstructed data of iteratin {_iter} ...")
+            logging.info(f"exporting reconstructed data of iteration {_iter} ...")
 
             _output_data_folder = os.path.join(output_data_folder, f"set_with_{_nbr_projections}_projections")
             logging.info(f"making or resetting folder {_output_data_folder}")

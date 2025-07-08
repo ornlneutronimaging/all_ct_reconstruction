@@ -133,6 +133,7 @@ class Step1PrepareCcdImages:
     corrected_images = None  # after chips correction
 
     instrument = "VENUS"
+    ipts = None
 
     selection_of_pc = None   # plot that allows the user to select the pc for sample and ob and threshold
 
@@ -181,6 +182,7 @@ class Step1PrepareCcdImages:
 
         top_sample_dir = system.System.get_working_dir()
         self.instrument = system.System.get_instrument_selected()
+        self.ipts_number = system.System.get_ipts_number()
 
         setup_logging(basename_of_log_file=LOG_BASENAME_FILENAME)        
         self.working_dir[DataType.ipts] = os.path.basename(top_sample_dir)

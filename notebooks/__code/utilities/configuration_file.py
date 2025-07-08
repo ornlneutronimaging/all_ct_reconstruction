@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field
 from typing import List
 
 from __code.utilities.json import load_json_string
-from __code import CleaningAlgorithm, NormalizationSettings, OperatingMode, WhenToRemoveStripes
+from __code import CleaningAlgorithm, NormalizationSettings, OperatingMode, WhenToRemoveStripes, Instrument
 from __code.utilities.file_folder_browser import FileFolderBrowser
 from __code.config import SVMBIR_LIB_PATH
 
@@ -139,6 +139,9 @@ class ReconstructionAlgorithm:
 
 
 class Configuration(BaseModel):
+
+    instrument: str = Field(default=Instrument.mars, description="Instrument used for the reconstruction: mars, venus, snap.")
+    ipts_number: int = Field(default=27829, description="IPTS number for the experiment.")
 
     reconstruction_algorithm: list[str] = Field(default=[ReconstructionAlgorithm.algotom_gridrec])
 

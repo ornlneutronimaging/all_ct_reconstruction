@@ -12,28 +12,10 @@ from __code.utilities.folder import find_first_real_dir
 
 list_instrument_per_facility = {'SNS': ['VENUS', 'SNAP'],
 'HFIR': ['CG1D'],
-                                }
-
-
-
-
-# from __code import config
-# import getpass
-# import glob
-# import os
-# import platform
-# from ipywidgets import widgets
-# from IPython.core.display import display
-# from IPython.core.display import HTML
-
-# from __code._utilities.time import get_current_time_in_special_file_name_format
-# from __code import LOGGER_FILE
-# from __code._utilities.file import append_to_file
+                               }
 
 list_instrument_per_facility = {'HFIR': ['CG1D'],
                                 'SNS': ['SNAP', 'VENUS']}
-
-
 
 
 class System:
@@ -197,6 +179,11 @@ class System:
     @classmethod
     def get_instrument_selected(cls):
         return cls.instrument_ui.value
+
+    @classmethod
+    def get_ipts_number(cls):
+        ipts_number = cls.ipts_number.value
+        return ipts_number
 
     @classmethod
     def get_computer_name(cls):
