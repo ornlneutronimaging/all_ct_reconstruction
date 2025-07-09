@@ -30,6 +30,8 @@ def create_sh_hsnt_file(configuration=None, json_file_name=None, hstn_output_jso
     create the script to run on hsnt
     """
     output_folder = configuration.output_folder
+    instrument = configuration.instrument
+    ipts = f"IPTS-{configuration.ipts_number}"
 
     time_stamp = get_current_time_in_special_file_name_format()
     sh_file_name = os.path.join(output_folder, f"run_reconstruction_on_hsnt_{time_stamp}.sh")
@@ -44,13 +46,18 @@ def create_sh_hsnt_file(configuration=None, json_file_name=None, hstn_output_jso
                        "#SBATCH --mem=118G",
                        "#SBATCH --partition=cpu",
                        "#SBATCH --tmp=50G",
-                       "#SBATCH --output=/data/MARS/IPTS-27829/logs/%x_%j.out",
-                       "#SBATCH --error=/data/MARS/IPTS-27829/logs/%x_%j.err",
+                       f"#SBATCH --output=/data/MARS/{instrument}/{ipts}/logs/%x_%j.out",
+                       f"#SBATCH --error=/data/MARS/{instrument}/{ipts}/logs/%x_%j.err",
                 ]
 
     with open(sh_file_name, 'w') as sh_file:
         sh_file.write("#!/bin/bash\n")
-        sh_file.write(f"cp -rf {projections_pre_processing_folder} {HSNT_FOLDER}\n")
+
+        # make sure the output folder exists on hsnt
+        sh_file.write(f"mkdir -p {os.path.join(HSNT_FOLDER, instrument, ipts, 'pre_processed_data')}\n")
+
+        # copy pre-processed data to the output folder on hsnt
+        sh_file.write(f"cp -rf {projections_pre_processing_folder} {os.path.join(HSNT_FOLDER, instrument, ipts, 'pre_processed_data')}\n")
         sh_file.write("\n")
         for _com in sbatch_commands:
             sh_file.write(f"{_com}\n")
