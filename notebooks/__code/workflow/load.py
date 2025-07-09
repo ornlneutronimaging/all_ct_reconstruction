@@ -6,6 +6,7 @@ from tqdm import tqdm
 from IPython.display import display
 import ipywidgets as widgets
 from PIL import Image
+import random
 
 from __code import DataType, Run, OperatingMode
 from __code import DEBUG, debug_folder
@@ -238,7 +239,7 @@ class Load(Parent):
             self.parent.list_of_images[DataType.sample] = [list_of_images[i] for i in sorted_indices]
 
             logging.info(f"Angle values retrieved from metadata file and sorted: {self.parent.final_list_of_angles}")
-            logging.info(f"list of files sorted the same way: {self.parent.list_of_images[DataType.sample]}")
+            logging.info(f"list of files sorted the same way: {[os.path.basename(file) for file in self.parent.list_of_images[DataType.sample]]}")
 
         else:
             self.retrieve_angle_value_from_file_name(list_of_images)
@@ -310,10 +311,15 @@ class Load(Parent):
             nbr_images_to_use = int(self.percentage_to_use.value / 100 * len(list_of_images[_data_type]))
             if nbr_images_to_use == 0:
                 nbr_images_to_use = 1
-                
-            list_tiff_index_to_use = np.random.randint(0, len(list_of_images[_data_type]), nbr_images_to_use)
-            list_tiff_index_to_use.sort()
-            list_tiff = [list_tiff[_index] for _index in list_tiff_index_to_use]
+
+            logging.info(f"\t{nbr_images_to_use} images will be used for the reconstruction")    
+            list_tiff = random.sample(list_tiff, nbr_images_to_use)
+            logging.info(f"\t{len(set(list_tiff))} unique images will be used for the reconstruction")
+
+            # list_tiff_index_to_use = np.random.randint(0, len(list_of_images[_data_type]), nbr_images_to_use)
+            # list_tiff_index_to_use.sort()
+            # list_tiff = [list_tiff[_index] for _index in list_tiff_index_to_use]
+            
             self.parent.list_of_images[_data_type] = list_tiff
             list_of_images[_data_type] = list_tiff
 
