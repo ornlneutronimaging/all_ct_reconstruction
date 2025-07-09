@@ -1,6 +1,7 @@
 import argparse
 import logging
 import os
+import shutil
 
 from __code.utilities.logging import setup_logging
 from __code.workflow_cli.fbp_white_beam import  FbpCliHandler
@@ -15,7 +16,7 @@ from __code.utilities.configuration_file import ReconstructionAlgorithm
 # ----------------------------------------------------------
 
 file_name, ext = os.path.splitext(os.path.basename(__file__))
-setup_logging(file_name)
+full_log_file_name = setup_logging(file_name)
 
 
 if __name__ == "__main__":
@@ -43,4 +44,12 @@ if __name__ == "__main__":
         logging.info(f"Fbp reconstruction done!")
 
     logging.info(f"All reconstructions are done!")
+
+    logging.info(f"Copying the log file to the output folder")
+    output_folder = config['output_folder']
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+    shutil.copy(full_log_file_name, output_folder)
+    print(f"Reconstruction is done!")
+    print(f"Log file copied to {output_folder}")
     

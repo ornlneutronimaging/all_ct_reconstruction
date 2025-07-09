@@ -25,7 +25,10 @@ def create_sh_file(json_file_name, output_folder):
     return sh_file_name
 
 
-def create_sh_hsnt_file(configuration=None, json_file_name=None, hstn_output_json_folder=None):
+def create_sh_hsnt_file(configuration=None, 
+                        json_file_name=None, 
+                        hstn_output_json_folder=None, 
+                        prefix=None):
     """
     create the script to run on hsnt
     """
@@ -33,8 +36,15 @@ def create_sh_hsnt_file(configuration=None, json_file_name=None, hstn_output_jso
     instrument = configuration.instrument
     ipts = f"IPTS-{configuration.ipts_number}"
 
-    time_stamp = get_current_time_in_special_file_name_format()
-    sh_file_name = os.path.join(output_folder, f"run_reconstruction_on_hsnt_{time_stamp}.sh")
+    if prefix is None:
+        _prefix = get_current_time_in_special_file_name_format()
+    else:
+        _prefix = prefix
+        
+    scripts_folder = os.path.join(output_folder, "scripts")
+    if not os.path.exists(scripts_folder):
+        os.makedirs(scripts_folder)
+    sh_file_name = os.path.join(scripts_folder, f"run_reconstruction_on_hsnt_{_prefix}.sh")
 
     # copy the files to the local folder on hsnt
     projections_pre_processing_folder = configuration.projections_pre_processing_folder

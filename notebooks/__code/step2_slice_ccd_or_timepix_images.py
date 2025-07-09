@@ -14,7 +14,7 @@ from __code.utilities.configuration_file import CropRegion
 from __code.utilities.configuration_file import select_file, loading_config_file_into_model
 from __code.utilities.logging import setup_logging
 from __code.utilities.files import retrieve_list_of_tif, make_or_reset_folder
-from __code.utilities.create_scripts import create_sh_file
+from __code.utilities.create_scripts import create_sh_file, create_sh_hsnt_file
 from __code.utilities.load import load_data_using_multithreading, load_list_of_tif
 from __code.utilities.time import get_current_time_in_special_file_name_format
 from __code.utilities.json import save_json
@@ -23,8 +23,8 @@ BASENAME_FILENAME, _ = os.path.splitext(os.path.basename(__file__))
 
 
 class JsonTypeRequested:
-    single = '1 json for full reconstruction'
-    multi = 'multi jsons (1 per range of slices defined)'
+    single = '1 json (reconstruction will run in sequence)'
+    multi = 'multi jsons (to run reconstruction in parallel)'
     undefined = 'undefined'
 
 
@@ -230,7 +230,16 @@ class Step2SliceCcdOrTimePixImages:
         working_dir = self.output_config_file
         sub_folder_for_all_config_files = os.path.join(working_dir, f"all_config_files_{current_time}")
         make_or_reset_folder(sub_folder_for_all_config_files)
-        
+
+        ipts_number = self.configuration.ipts_number
+        instrument = self.configuration.instrument
+        hsnt_output_json_folder = os.path.join("/data", instrument, f"IPTS-{ipts_number}", "all_config_files")
+        hsnt_output_folder = os.path.join("/data", instrument, f"IPTS-{ipts_number}")
+
+        list_of_sh_hsnt_script_files = []
+        list_of_json_files = []
+        current_time = get_current_time_in_special_file_name_format()
+
         for _range_index in np.arange(nbr):
 
             list_slices = []
@@ -248,11 +257,29 @@ class Step2SliceCcdOrTimePixImages:
             
             config_file_name = f"{BASENAME_FILENAME}_{current_time}_from_{_top_slice}_to_{_bottom_slice}.json"
             full_config_file_name = os.path.join(sub_folder_for_all_config_files, config_file_name)
+            list_of_json_files.append(full_config_file_name)
             config_json = self.configuration.model_dump_json()
             save_json(full_config_file_name, json_dictionary=config_json)
             logging.info(f"config file saved: {full_config_file_name} for slice range {_top_slice} to {_bottom_slice}")
 
-        display(HTML(f"All config files created in <font color='blue'>{full_config_file_name}</font>"))
+            sh_hsnt_script_name = create_sh_hsnt_file(configuration=self.configuration,
+                                                      json_file_name=full_config_file_name, 
+                                                      hstn_output_json_folder=hsnt_output_json_folder,
+                                                      prefix=f"from_{_top_slice}_to_{_bottom_slice}_{current_time}")
+            list_of_sh_hsnt_script_files.append(sh_hsnt_script_name)
+
+        display(HTML(f"All config files created in <font color='blue'>{sub_folder_for_all_config_files}</font>"))
+        display(HTML(f"Instructions:"))
+        display(HTML(f"<b>1. Connect to hsnt</b>"))
+        display(HTML(f"<b>2. Copy all config files</b> > '<font color='blue'>\'cp {sub_folder_for_all_config_files}/* {hsnt_output_folder}\'</font>"))
+        display(HTML(f"<b>3. Copy scripts to run</b> > '<font color='blue'>\'cp {STEP3_SCRIPTS}/* {hsnt_output_folder}\'</font>"))
+
+
+
+
+
+
+
 
     def export_single_config_file(self):
  
