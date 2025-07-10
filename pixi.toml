@@ -1,0 +1,26 @@
+[workspace]
+authors = ["Jean Bilheux <bilheuxjm@ornl.gov>", "Chen Zhang <zhangc@ornl.gov>"]
+channels = ["conda-forge", "neutronimaging", "simpleitk", "astra-toolbox"]
+name = "all_ct_reconstruction"
+platforms = ["linux-64"]
+version = "1.0.0"
+
+[tasks]
+
+[dependencies]
+python = ">=3.13.5,<3.14"
+jupyterlab = ">=4.4.4,<5"
+imars3d = ">=1.2.0,<2"
+algotom = ">=1.6.0,<2"
+pydantic = ">=2.11.7,<3"
+jupyter = ">=1.1.1,<2"
+simpleitk = ">=2.5.2,<3"
+astra-toolbox = ">=2.2.0,<3"
+opencv = ">=4.12.0,<5"
+read-roi = ">=1.6.0,<2"
+svmbir = ">=0.4.0,<0.5"
+
+[pypi-dependencies]
+neutronbraggedge = ">=2.0.6, <3"
+neutompy = { git = "https://github.com/KedoKudo/NeuTomPy-toolbox.git", branch = "master" }
+mkl-fft = ">=2.0.0, <3"
