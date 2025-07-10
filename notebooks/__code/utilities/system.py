@@ -81,7 +81,7 @@ def get_instrument_generic_name(instrument):
     
     if instrument.startswith("cg1d"):
         return "MARS"
-    elif instrument.startswith("bl6"):
+    elif instrument.startswith("bl3"):
         return "SNAP"
     elif instrument.startswith("bl10"):
         return "VENUS"
