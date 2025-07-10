@@ -49,7 +49,12 @@ class FbpHandler(Parent):
         logging.info(f"\t{np.max(normalized_images_log) =}")
         logging.info(f"\t{np.mean(normalized_images_log) =}")
 
-        output_folder = self.parent.working_dir[DataType.extra]
+        try:
+            output_folder = self.parent.working_dir[DataType.extra]
+        except KeyError:
+            display(HTML("<h3 style='color: red;'>No output folder selected in the previous cell, please select one!</h3>"))
+            raise RuntimeError("No output folder selected in the previous cell, please select one!")           
+        
         _time_ext = get_current_time_in_special_file_name_format()
         base_sample_folder = os.path.basename(self.parent.working_dir[DataType.sample])
         pre_projections_export_folder = os.path.join(output_folder, f"{base_sample_folder}_projections_pre_data_{_time_ext}")
