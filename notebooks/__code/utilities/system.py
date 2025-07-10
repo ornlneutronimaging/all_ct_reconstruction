@@ -61,3 +61,30 @@ def delete_array(object_array=None):
 
 def get_user_name():
     return os.getlogin()  # add user name to the log file name
+
+
+def get_instrument_generic_name(instrument):
+    """
+    Get the generic name of the instrument.
+    
+    Parameters
+    ----------
+    instrument : str
+        The instrument name.
+        
+    Returns
+    -------
+    str
+        The generic name of the instrument.
+    """
+    instrument = instrument.lower()  
+    
+    if instrument.startswith("cg1d"):
+        return "MARS"
+    elif instrument.startswith("bl6"):
+        return "SNAP"
+    elif instrument.startswith("bl10"):
+        return "VENUS"
+    else:
+        return instrument  # Return as is if not recognized
+    

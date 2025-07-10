@@ -34,6 +34,13 @@ class Load(Parent):
             self.data_selected(debug_folder[self.parent.MODE][data_type])
             self.parent.working_dir[DataType.nexus] = debug_folder[self.parent.MODE][DataType.nexus]
             logging.info(f"DEBUG MODE: {data_type} folder selected: {debug_folder[self.parent.MODE][data_type]}")
+            _list_sep = self.parent.working_dir[DataType.sample].split(os.sep)
+            # facility = _list_sep[0]
+            instrument = _list_sep[2]
+            ipts_number = _list_sep[3]
+            _, ipts = ipts_number.split("-")
+            self.parent.instrument = instrument
+            self.parent.ipts_number = int(ipts)
             return
 
         print(f"{working_dir = }")

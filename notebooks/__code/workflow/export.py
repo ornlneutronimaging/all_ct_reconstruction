@@ -17,6 +17,7 @@ from __code.utilities.create_scripts import create_sh_file, create_sh_hsnt_file
 from __code import DataType, STEP2_NOTEBOOK
 from __code.utilities.time import get_current_time_in_special_file_name_format
 from __code.config import imaging_team
+from __code.utilities.system import get_instrument_generic_name
 
 
 class Export:
@@ -115,13 +116,14 @@ class ExportExtra(Parent):
         self.sh_file_name = create_sh_file(json_file_name=config_file_name,
                                            output_folder=output_folder)
 
-        ipts_number = configuration.ipts_number
-        instrument = configuration.instrument
-        self.hsnt_output_json_folder = os.path.join("/data", instrument, f"IPTS-{ipts_number}", "all_config_files")
-        self.hsnt_output_folder = os.path.join("/data", instrument, f"IPTS-{ipts_number}")
-        self.sh_hsnt_script_name = create_sh_hsnt_file(configuration=configuration,
-                                                       json_file_name=config_file_name, 
-                                                       hstn_output_json_folder=self.hsnt_output_json_folder)
+        # ipts_number = configuration.ipts_number
+        # instrument = configuration.instrument
+        # instrument = get_instrument_generic_name(instrument)
+        # self.hsnt_output_json_folder = os.path.join("/data", instrument, f"IPTS-{ipts_number}", "all_config_files")
+        # self.hsnt_output_folder = os.path.join("/data", instrument, f"IPTS-{ipts_number}")
+        # self.sh_hsnt_script_name = create_sh_hsnt_file(configuration=configuration,
+        #                                                json_file_name=config_file_name, 
+        #                                                hstn_output_json_folder=self.hsnt_output_json_folder)
 
         display(HTML(f"<font color='blue'><b>Next step</b></font>"))
 
@@ -130,9 +132,9 @@ class ExportExtra(Parent):
                 f"Manually launch script outside notebook",
                 f"Launch the script directly from the notebook",
         ]
-        ucams = get_user_name()
-        if ucams in imaging_team:
-            list_options.append(f"Create script to run from hsnt")
+        # ucams = get_user_name()
+        # if ucams in imaging_team:
+        #     list_options.append(f"Create script to run from hsnt")
 
         # 3 options are offered to the user
         choices = widgets.RadioButtons(
@@ -173,7 +175,7 @@ class ExportExtra(Parent):
             self.instructions.value = f"Launch the following script from the command line: {self.sh_file_name}"
         elif change['new'] == 'Create script to run from hsnt':
             self.instructions.value = f"1. Connect to hsnt\n" + \
-                f"2. Copy the pre-processed data\n" + \
+                f"2. Copy the pre-processed data: > 'cp {self.parent.configuration.projections_pre_processing_folder} {self.hsnt_output_folder}'\n" + \
                 f"3. Copy the config json file: > 'cp {self.config_file_name} {self.hsnt_output_json_folder}'\n" + \
                 f"4. Copy the script to run: > 'cp {self.sh_hsnt_script_name} {self.hsnt_output_folder}'\n" + \
                 f"5. Run the following script: > '{os.path.join(self.hsnt_output_folder,os.path.basename(self.sh_hsnt_script_name))}'"
