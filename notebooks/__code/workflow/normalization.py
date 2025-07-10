@@ -215,8 +215,6 @@ class Normalization(Parent):
                 ob_roi_counts = np.sum(ob_data_combined[top: bottom+1, left: right+1])
                 coeff *= ob_roi_counts / sample_roi_counts
 
-            # logging.info("coeff for normalization = {}".format(coeff))
-
             if not (dc_data_combined is None):
                 num = sample_data - dc_data_combined
                 den = ob_data_combined - dc_data_combined

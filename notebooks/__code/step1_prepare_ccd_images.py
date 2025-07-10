@@ -180,7 +180,7 @@ class Step1PrepareCcdImages:
         # o_init = Initialization(parent=self)
         # o_init.configuration()
 
-        top_sample_dir = system.System.get_working_dir()
+        top_sample_dir = os.path.join(system.System.get_working_dir())
         self.instrument = system.System.get_instrument_selected()
         self.ipts_number = system.System.get_ipts_number()
 

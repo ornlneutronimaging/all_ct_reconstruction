@@ -39,7 +39,11 @@ class Load(Parent):
         print(f"{working_dir = }")
 
         if not os.path.exists(working_dir):
-            working_dir = os.path.abspath(os.path.expanduser("~"))
+            while (not os.path.exists(working_dir)):
+                print(f"Working directory {working_dir} does not exist, trying to go up one level ...")
+                working_dir = os.path.dirname(working_dir)
+                
+            # working_dir = os.path.abspath(os.path.expanduser("~"))
 
         if output_flag:
             o_file_browser = FileFolderBrowser(working_dir=working_dir,
@@ -61,7 +65,7 @@ class Load(Parent):
             working_dir = self.parent.working_dir[data_type]
 
         if DEBUG:
-            working_dir = debug_folder[self.parent.MODE][DataType.top]
+            working_dir = debug_folder[self.parent.MODE][data_type]
             if not os.path.exists(working_dir):
                 return
             #list_images = glob.glob(os.path.join(working_dir, "*_0045_*.tif*"))
