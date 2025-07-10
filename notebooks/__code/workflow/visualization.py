@@ -1,6 +1,6 @@
 from IPython.display import display
 import ipywidgets as widgets
-from IPython.core.display import HTML
+from IPython.display import HTML
 import matplotlib.pyplot as plt
 from ipywidgets import interactive
 import numpy as np

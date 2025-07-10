@@ -7,7 +7,7 @@ from IPython.display import display
 import ipywidgets as widgets
 import numpy as np
 from matplotlib.patches import Rectangle
-from IPython.core.display import HTML
+from IPython.display import HTML
 
 from __code import DEBUG, debug_folder, OperatingMode, DataType, STEP3_SCRIPTS
 from __code.utilities.configuration_file import CropRegion

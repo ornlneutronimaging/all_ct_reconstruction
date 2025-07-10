@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import logging
 from ipywidgets import interactive
 from IPython.display import display
-from IPython.core.display import HTML
+from IPython.display import HTML
 import ipywidgets as widgets
 from scipy.ndimage import median_filter
 # from imars3d.backend.corrections.gamma_filter import gamma_filter

@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 from ipywidgets import interactive
 from IPython.display import display
-from IPython.core.display import HTML
+from IPython.display import HTML
 import ipywidgets as widgets
 from scipy.ndimage import median_filter
 import tomopy

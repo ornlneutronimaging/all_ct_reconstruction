@@ -4,7 +4,7 @@ import glob
 import os
 from ipywidgets import widgets
 from IPython.display import display
-from IPython.core.display import HTML
+from IPython.display import HTML
 from IPython.display import clear_output
 import subprocess
 

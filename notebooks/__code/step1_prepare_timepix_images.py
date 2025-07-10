@@ -2,7 +2,7 @@ import os
 import logging
 from collections import OrderedDict
 from IPython.display import display
-from IPython.core.display import HTML
+from IPython.display import HTML
 
 from __code import DataType, OperatingMode, DEFAULT_OPERATING_MODE, DEBUG
 from __code.utilities.logging import setup_logging

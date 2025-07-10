@@ -1,6 +1,6 @@
 from ipywidgets import interactive
 from IPython.display import display
-from IPython.core.display import HTML
+from IPython.display import HTML
 import ipywidgets as widgets
 import logging
 from skimage.measure import block_reduce
