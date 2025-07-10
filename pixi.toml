@@ -19,8 +19,11 @@ astra-toolbox = ">=2.2.0,<3"
 opencv = ">=4.12.0,<5"
 read-roi = ">=1.6.0,<2"
 svmbir = ">=0.4.0,<0.5"
+ipywidgets = ">=8.1.7,<9"
+ipython = ">=9.4.0,<10"
 
 [pypi-dependencies]
 neutronbraggedge = ">=2.0.6, <3"
 neutompy = { git = "https://github.com/KedoKudo/NeuTomPy-toolbox.git", branch = "master" }
 mkl-fft = ">=2.0.0, <3"
+all-ct-reconstruction-code = { path = "notebooks/__code", editable = true }
