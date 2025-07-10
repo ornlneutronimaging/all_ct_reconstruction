@@ -145,7 +145,7 @@ class ExportExtra(Parent):
         display(choices)
 
         self.instructions = widgets.Textarea(value=f"Reload the configuration file {os.path.basename(self.config_file_name)} found in {os.path.dirname(self.config_file_name)} in the notebook {STEP2_NOTEBOOK}",
-                                             layout=widgets.Layout(width='100%', height='120px'),
+                                             layout=widgets.Layout(width='100%', height='160px'),
                                              disabled=True)
         display(self.instructions) 
 
@@ -173,9 +173,10 @@ class ExportExtra(Parent):
             self.instructions.value = f"Launch the following script from the command line: {self.sh_file_name}"
         elif change['new'] == 'Create script to run from hsnt':
             self.instructions.value = f"1. Connect to hsnt\n" + \
-                f"2. Copy the config json file: > 'cp {self.config_file_name} {self.hsnt_output_json_folder}'\n" + \
-                f"3. Copy the script to run: > 'cp {self.sh_hsnt_script_name} {self.hsnt_output_folder}'\n" + \
-                f"4. Run the following script: > '{os.path.join(self.hsnt_output_folder,os.path.basename(self.sh_hsnt_script_name))}'"
+                f"2. Copy the pre-processed data\n" + \
+                f"3. Copy the config json file: > 'cp {self.config_file_name} {self.hsnt_output_json_folder}'\n" + \
+                f"4. Copy the script to run: > 'cp {self.sh_hsnt_script_name} {self.hsnt_output_folder}'\n" + \
+                f"5. Run the following script: > '{os.path.join(self.hsnt_output_folder,os.path.basename(self.sh_hsnt_script_name))}'"
         else:
             self.instructions.value = f"click the button below to run the script directly from the notebook"
 

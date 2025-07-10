@@ -9,7 +9,8 @@ import numpy as np
 from matplotlib.patches import Rectangle
 from IPython.core.display import HTML
 
-from __code import DEBUG, debug_folder, OperatingMode, DataType, STEP3_SCRIPTS
+from __code import OperatingMode, DataType, STEP3_SCRIPTS
+from __code.config import DEBUG, debug_folder
 from __code.utilities.configuration_file import CropRegion
 from __code.utilities.configuration_file import select_file, loading_config_file_into_model
 from __code.utilities.logging import setup_logging
@@ -272,14 +273,8 @@ class Step2SliceCcdOrTimePixImages:
         display(HTML(f"Instructions:"))
         display(HTML(f"<b>1. Connect to hsnt</b>"))
         display(HTML(f"<b>2. Copy all config files</b> > '<font color='blue'>\'cp {sub_folder_for_all_config_files}/* {hsnt_output_folder}\'</font>"))
-        display(HTML(f"<b>3. Copy scripts to run</b> > '<font color='blue'>\'cp {STEP3_SCRIPTS}/* {hsnt_output_folder}\'</font>"))
-
-
-
-
-
-
-
+        display(HTML(f"<b>3. Copy scripts to run</b> > '<font color='blue'>\'cp {os.path.join(os.path.dirname(sh_hsnt_script_name), '*.sh')}/* {hsnt_output_folder}\'</font>"))
+        display(HTML(f"<b>4. Run each of the .sh script</b> from hype.sns.gov</b>"))
 
     def export_single_config_file(self):
  

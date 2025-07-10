@@ -8,7 +8,8 @@ import ipywidgets as widgets
 from IPython.core.display import HTML, display
 
 from __code.parent import Parent
-from __code import DataType, Run, DEBUG
+from __code import DataType, Run
+from __code.config import DEBUG
 
 
 class RecapData(Parent):
