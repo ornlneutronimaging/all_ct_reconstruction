@@ -13,7 +13,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/_openmp_mutex-4.5-3_kmp_llvm.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/aiobotocore-2.23.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/aiohappyeyeballs-2.6.1-pyhd8ed1ab_0.conda
-      - conda: https://conda.anaconda.org/conda-forge/linux-64/aiohttp-3.12.13-py313h8060acc_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/aiohttp-3.12.14-py313h3dea7bd_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/aioitertools-0.12.0-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/aiosignal-1.4.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/algotom-1.6.0-pyhd8ed1ab_1.conda
@@ -112,7 +112,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/freeglut-3.2.2-ha6d2627_3.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/freetype-2.13.3-ha770c72_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/fribidi-1.0.10-h36c2ea0_0.tar.bz2
-      - conda: https://conda.anaconda.org/conda-forge/linux-64/frozenlist-1.6.0-py313h61b7b33_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/frozenlist-1.7.0-py313h6b9daa2_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/fsspec-2025.5.1-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/gast-0.4.0-pyh9f0ad1d_0.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/linux-64/gdk-pixbuf-2.42.12-hb9ae30d_0.conda
@@ -514,7 +514,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/cd/5c/019acaccf0038b8e05b0a54189439d0987891017a84ca43675589f7e460c/tbb-2022.2.0-py2.py3-none-manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/28/9d/97d81fa340b9f1a0e33d6260daeb8bd7bbc2ef5b686be193491de5c9880a/tcmlib-1.4.0-py2.py3-none-manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/b4/3a/63b40f833c7b27ba767e467fdf52cf972cdd149aab72d3d9761ec200fc9f/umf-0.11.0-py2.py3-none-manylinux_2_28_x86_64.whl
-      - pypi: ./notebooks/__code
+      - pypi: notebooks/__code
 packages:
 - conda: https://conda.anaconda.org/conda-forge/linux-64/_openmp_mutex-4.5-3_kmp_llvm.conda
   build_number: 3
@@ -556,16 +556,16 @@ packages:
   - pkg:pypi/aiohappyeyeballs?source=hash-mapping
   size: 19750
   timestamp: 1741775303303
-- conda: https://conda.anaconda.org/conda-forge/linux-64/aiohttp-3.12.13-py313h8060acc_0.conda
-  sha256: a1713b06928c59864206428c931e8b1042992128ae3491bbff00a8a707d3b5f0
-  md5: 5509be7947f1cf7c0335a45278fd09d5
+- conda: https://conda.anaconda.org/conda-forge/linux-64/aiohttp-3.12.14-py313h3dea7bd_0.conda
+  sha256: e4829f9acee8b5e99fc1d2c68c365449b47aba009d5d7756f96a73e602382844
+  md5: 860893cafaf1b7c06bac07c2ef10eed0
   depends:
   - __glibc >=2.17,<3.0.a0
   - aiohappyeyeballs >=2.5.0
-  - aiosignal >=1.1.2
+  - aiosignal >=1.4.0
   - attrs >=17.3.0
   - frozenlist >=1.1.1
-  - libgcc >=13
+  - libgcc >=14
   - multidict >=4.5,<7.0
   - propcache >=0.2.0
   - python >=3.13,<3.14.0a0
@@ -575,8 +575,8 @@ packages:
   license_family: Apache
   purls:
   - pkg:pypi/aiohttp?source=hash-mapping
-  size: 1010019
-  timestamp: 1749925691050
+  size: 1012655
+  timestamp: 1752162717040
 - conda: https://conda.anaconda.org/conda-forge/noarch/aioitertools-0.12.0-pyhd8ed1ab_1.conda
   sha256: 7d56e547a819a03c058dd8793ca9df6ff9825812da52c214192edb61a7de1c95
   md5: 3eb47adbffac44483f59e580f8600a1e
@@ -620,7 +620,7 @@ packages:
   - pkg:pypi/algotom?source=hash-mapping
   size: 88453
   timestamp: 1737252006656
-- pypi: ./notebooks/__code
+- pypi: notebooks/__code
   name: all-ct-reconstruction-code
   version: 0.1.0
   sha256: 10820536d9bbda8ef17590bada0b79b81965e109912bf56911210491a20e2d01
@@ -1995,21 +1995,20 @@ packages:
   purls: []
   size: 114383
   timestamp: 1604416621168
-- conda: https://conda.anaconda.org/conda-forge/linux-64/frozenlist-1.6.0-py313h61b7b33_0.conda
-  sha256: 25cc87c67246e67aca945467f6cc53699f91d4947a88fc0eba1f23dd75f6d3b6
-  md5: 5e028b3e9037cdba89b3914eba571bef
+- conda: https://conda.anaconda.org/conda-forge/linux-64/frozenlist-1.7.0-py313h6b9daa2_0.conda
+  sha256: 0742b58b7d685e67bf822f0b84a9e52473de071412d21453ad19ee187a4a6cf7
+  md5: 3a0be7abedcbc2aee92ea228efea8eba
   depends:
   - __glibc >=2.17,<3.0.a0
-  - libgcc >=13
-  - libstdcxx >=13
+  - libgcc >=14
+  - libstdcxx >=14
   - python >=3.13,<3.14.0a0
   - python_abi 3.13.* *_cp313
   license: Apache-2.0
-  license_family: APACHE
   purls:
   - pkg:pypi/frozenlist?source=hash-mapping
-  size: 112428
-  timestamp: 1746635568569
+  size: 54659
+  timestamp: 1752167252322
 - conda: https://conda.anaconda.org/conda-forge/noarch/fsspec-2025.5.1-pyhd8ed1ab_0.conda
   sha256: cd6ae92ae5aa91a7e58cf39f1442d4821279f43f1c9499d15f45558d4793d1e0
   md5: 2d2c9ef879a7e64e2dc657b09272c2b6
