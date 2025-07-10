@@ -6,6 +6,8 @@ platforms = ["linux-64"]
 version = "1.0.0"
 
 [tasks]
+lab = "jupyter lab --notebook-dir=notebooks"
+notebook = "jupyter notebook --notebook-dir=notebooks"
 
 [dependencies]
 python = ">=3.13.5,<3.14"
