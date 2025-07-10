@@ -22,6 +22,7 @@ class System:
 
     working_dir = ''
     start_path = ''
+    ipts_number = ''
 
     @classmethod
     def select_working_dir(cls, debugger_folder='', system_folder='',
@@ -46,6 +47,11 @@ class System:
                        }
                        </style>
                        """))
+
+            if ipts:
+                if ipts.startswith('IPTS-'):
+                    _, ipts_number = ipts.split('-')
+                    cls.ipts_number = ipts_number
 
             full_list_instruments = cls.get_full_list_instrument(instrument_to_exclude=instrument_to_exclude)
             full_list_instruments.sort()
@@ -183,6 +189,9 @@ class System:
     @classmethod
     def get_ipts_number(cls):
         ipts_number = cls.ipts_number.value
+        if ipts_number == '':
+            ipts_number = cls.ipts_number
+        
         return ipts_number
 
     @classmethod

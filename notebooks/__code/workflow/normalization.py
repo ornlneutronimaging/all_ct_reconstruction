@@ -12,14 +12,13 @@ import tomopy
 from copy import copy
 
 from __code.parent import Parent
-from __code import DEBUG, roi
 from __code import Run, DataType, NormalizationSettings
 from __code.workflow.load import Load
 from __code.workflow.export import Export
 from __code.utilities.files import make_or_reset_folder
 from __code.utilities.logging import logging_3d_array_infos
 from __code.workflow.final_projections_review import FinalProjectionsReview
-from __code.config import NUM_THREADS
+from __code.config import NUM_THREADS, DEBUG, roi
 
 
 # class RectangleSelector:
@@ -215,8 +214,6 @@ class Normalization(Parent):
                 sample_roi_counts = np.sum(sample_data[top: bottom+1, left: right+1])
                 ob_roi_counts = np.sum(ob_data_combined[top: bottom+1, left: right+1])
                 coeff *= ob_roi_counts / sample_roi_counts
-
-            # logging.info("coeff for normalization = {}".format(coeff))
 
             if not (dc_data_combined is None):
                 num = sample_data - dc_data_combined

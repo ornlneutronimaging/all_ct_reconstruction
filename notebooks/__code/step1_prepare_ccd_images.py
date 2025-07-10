@@ -180,12 +180,12 @@ class Step1PrepareCcdImages:
         # o_init = Initialization(parent=self)
         # o_init.configuration()
 
-        top_sample_dir = system.System.get_working_dir()
+        top_sample_dir = os.path.join(system.System.get_working_dir())
         self.instrument = system.System.get_instrument_selected()
         self.ipts_number = system.System.get_ipts_number()
 
         setup_logging(basename_of_log_file=LOG_BASENAME_FILENAME)        
-        self.working_dir[DataType.ipts] = os.path.basename(top_sample_dir)
+        self.working_dir[DataType.ipts] = top_sample_dir
         self.working_dir[DataType.top] = os.path.join(top_sample_dir)
         self.working_dir[DataType.sample] = os.path.join(top_sample_dir, "raw", "ct_scans")
         self.working_dir[DataType.ob] = os.path.join(top_sample_dir, "raw", "ob")

@@ -8,11 +8,11 @@ import matplotlib.pyplot as plt
 from ipywidgets import interactive
 import numpy as np
 
-from __code import DEBUG, debug_folder, OperatingMode, DataType
+from __code import OperatingMode, DataType
 from __code.utilities.logging import setup_logging
 from __code.utilities.file_folder_browser import FileFolderBrowser
 from __code.utilities.load import load_data_using_multithreading
-from __code.config import PERCENTAGE_OF_DATA_TO_USE_FOR_RECONSTRUCTION
+from __code.config import PERCENTAGE_OF_DATA_TO_USE_FOR_RECONSTRUCTION, DEBUG, debug_folder
 
 LOG_BASENAME_FILENAME, _ = os.path.splitext(os.path.basename(__file__))
 

@@ -2,6 +2,7 @@ from skimage.io import imread
 import numpy as np
 import multiprocessing as mp 
 import dxchange
+import logging
 
 # from NeuNorm.normalization import Normalization
 
@@ -35,11 +36,13 @@ def load_list_of_tif(list_of_tiff, dtype=None):
         dtype = np.uint16
 
     # init array
+    logging.info(f"loading first image to determine size of 3D array")
     first_image = dxchange.read_tiff(list_of_tiff[0])
     size_3d = [len(list_of_tiff), np.shape(first_image)[0], np.shape(first_image)[1]]
     data_3d_array = np.empty(size_3d, dtype=dtype)
 
     # load stack of tiff
+    logging.info(f"loading {len(list_of_tiff)} images into 3D array of shape {size_3d}")
     for _index, _file in enumerate(list_of_tiff):
         _array = dxchange.read_tiff(_file)
         data_3d_array[_index] = _array

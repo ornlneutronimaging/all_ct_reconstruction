@@ -9,12 +9,11 @@ from PIL import Image
 import random
 
 from __code import DataType, Run, OperatingMode
-from __code import DEBUG, debug_folder
 from __code.parent import Parent
 from __code.utilities.file_folder_browser import FileFolderBrowser
 from __code.utilities.load import load_data_using_multithreading, load_list_of_tif
 from __code.utilities.files import retrieve_list_of_tif
-from __code.config import DEFAULT_NAMING_CONVENTION_INDICES, PERCENTAGE_OF_DATA_TO_USE_FOR_RECONSTRUCTION
+from __code.config import DEBUG, DEFAULT_NAMING_CONVENTION_INDICES, PERCENTAGE_OF_DATA_TO_USE_FOR_RECONSTRUCTION, debug_folder
 
 
 class Load(Parent):
@@ -35,12 +34,23 @@ class Load(Parent):
             self.data_selected(debug_folder[self.parent.MODE][data_type])
             self.parent.working_dir[DataType.nexus] = debug_folder[self.parent.MODE][DataType.nexus]
             logging.info(f"DEBUG MODE: {data_type} folder selected: {debug_folder[self.parent.MODE][data_type]}")
+            _list_sep = self.parent.working_dir[DataType.sample].split(os.sep)
+            # facility = _list_sep[0]
+            instrument = _list_sep[2]
+            ipts_number = _list_sep[3]
+            _, ipts = ipts_number.split("-")
+            self.parent.instrument = instrument
+            self.parent.ipts_number = int(ipts)
             return
 
         print(f"{working_dir = }")
 
         if not os.path.exists(working_dir):
-            working_dir = os.path.abspath(os.path.expanduser("~"))
+            while (not os.path.exists(working_dir)):
+                print(f"Working directory {working_dir} does not exist, trying to go up one level ...")
+                working_dir = os.path.dirname(working_dir)
+                
+            # working_dir = os.path.abspath(os.path.expanduser("~"))
 
         if output_flag:
             o_file_browser = FileFolderBrowser(working_dir=working_dir,
@@ -62,7 +72,7 @@ class Load(Parent):
             working_dir = self.parent.working_dir[data_type]
 
         if DEBUG:
-            working_dir = debug_folder[self.parent.MODE][DataType.top]
+            working_dir = debug_folder[self.parent.MODE][data_type]
             if not os.path.exists(working_dir):
                 return
             #list_images = glob.glob(os.path.join(working_dir, "*_0045_*.tif*"))
@@ -293,6 +303,8 @@ class Load(Parent):
         self.parent.final_list_of_angles = np.array(list_of_angles)
         list_of_angles_rad = np.array([np.deg2rad(float(_angle)) for _angle in list_of_angles])
         self.parent.final_list_of_angles_rad = list_of_angles_rad
+        for _file_name, _angle, _angle_rad in zip(base_list_of_images, list_of_angles, list_of_angles_rad):
+            logging.info(f"\t{_file_name} : {_angle} degrees, {_angle_rad} radians")
 
     def load_white_beam_data(self):
         """ from white beam notebook """
@@ -315,6 +327,8 @@ class Load(Parent):
             logging.info(f"\t{nbr_images_to_use} images will be used for the reconstruction")    
             list_tiff = random.sample(list_tiff, nbr_images_to_use)
             logging.info(f"\t{len(set(list_tiff))} unique images will be used for the reconstruction")
+
+            list_tiff.sort()
 
             # list_tiff_index_to_use = np.random.randint(0, len(list_of_images[_data_type]), nbr_images_to_use)
             # list_tiff_index_to_use.sort()

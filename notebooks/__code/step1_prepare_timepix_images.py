@@ -4,9 +4,10 @@ from collections import OrderedDict
 from IPython.display import display
 from IPython.display import HTML
 
-from __code import DataType, OperatingMode, DEFAULT_OPERATING_MODE, DEBUG
+from __code import DataType, OperatingMode, DEFAULT_OPERATING_MODE
 from __code.utilities.logging import setup_logging
 from __code.utilities.configuration_file import Configuration
+from __code.config import DEBUG
 
 from __code.workflow.load import Load
 from __code.workflow.checking_data import CheckingData

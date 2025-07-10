@@ -8,9 +8,9 @@ import ipywidgets as widgets
 from matplotlib.patches import Rectangle
 
 from __code.parent import Parent
-from __code import DEBUG
+from __code.config import DEBUG
 from __code.utilities.configuration_file import CropRegion
-from __code import crop_roi as default_roi
+from __code.config import crop_roi as default_roi
 from __code import OperatingMode
 from __code import DataType
 

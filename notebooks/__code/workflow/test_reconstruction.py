@@ -1,3 +1,4 @@
+import os
 import matplotlib.pyplot as plt
 import ipywidgets as widgets
 from IPython.display import HTML
@@ -10,7 +11,8 @@ import svmbir
 
 from __code.parent import Parent
 from __code.config import svmbir_parameters
-from __code.config import NUM_THREADS, SVMBIR_LIB_PATH
+from __code.config import NUM_THREADS, SVMBIR_LIB_PATH, SVMBIR_LIB_PATH_BACKUP
+from __code.utilities.folder import check_folder_write_permission
 
 
 class TestReconstruction(Parent):
@@ -89,6 +91,8 @@ class TestReconstruction(Parent):
         nbr_angles, height, width = np.shape(self.parent.normalized_images_log)  # width of the image
         center_offset = -(width / 2 - center_of_rotation)  # it's Shimin's formula
 
+        svmbir_lib_path = SVMBIR_LIB_PATH if check_folder_write_permission(SVMBIR_LIB_PATH) else SVMBIR_LIB_PATH_BACKUP
+
         # reconstructed_slices = []
         for _slice in [slice_1, slice_2]:
 
@@ -157,7 +161,7 @@ class TestReconstruction(Parent):
                                            num_threads = NUM_THREADS,
                                            verbose=0,
                                         #    roi_radius=1000,
-                                           svmbir_lib_path = SVMBIR_LIB_PATH,
+                                           svmbir_lib_path = svmbir_lib_path,
                                            )
             logging.info(f"\tslice: {_slice}")
             logging.info(f"\tusing rec.svmbir_reconstruction ... done!")

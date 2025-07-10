@@ -1,4 +1,5 @@
 from pathlib import Path
+import os
 
 
 def find_first_real_dir(start_dir="./"):
@@ -15,3 +16,16 @@ def find_first_real_dir(start_dir="./"):
         dir = Path(dir).parent
 
     return dir
+
+
+def check_folder_write_permission(folder_path):
+    """
+    Checks if the current user has write permission to the specified folder.
+
+    Args:
+        folder_path (str): The path to the folder.
+
+    Returns:
+        bool: True if write permission is granted, False otherwise.
+    """
+    return os.access(folder_path, os.W_OK)

@@ -1,7 +1,11 @@
-debugging = False
+from __code import OperatingMode, DataType
+from __code.utilities.system import get_user_name
+
+
+debugging = True
+
 verbose = True
 debugger_username = 'j35'
-
 imaging_team = ["j35", "gxt"]
 
 debugger_folder = ['/Users/j35/HFIR/CG1D/',
@@ -75,3 +79,94 @@ svmbir_parameters = {'sharpness': 0,
                      'max_iterations': 20,
                      'verbose': True,
                     }
+
+debug_folder = {OperatingMode.tof: {DataType.sample: "/SNS/VENUS/IPTS-33699/shared/autoreduce/mcp/September20_2024_PurpleCar_GoldenRatio_CT_5_0_C_Cd_inBeam_Resonance",
+                                    DataType.ob: "/SNS/VENUS/IPTS-33699/shared/autoreduce/mcp/September26_2024_PurpleCar_OpenBean_5_0_C_Cd_inBeam_Resonance",
+                                    DataType.cleaned_images: '/SNS/VENUS/IPTS-33699/shared/processed_data/jean_test',
+                                    DataType.normalized: '/SNS/VENUS/IPTS-33699/shared/processed_data/jean_test',
+                                    DataType.reconstructed: '/SNS/VENUS/IPTS-33699/shared/processed_data/jean_test',
+                                    DataType.extra: '/SNS/VENUS/IPTS-33699/shared/processed_data/jean_test',
+                                    DataType.nexus: '/SNS/VENUS/IPTS-33699/nexus/'
+                                    },
+                # OperatingMode.white_beam: {DataType.sample: "/SNS/VENUS/IPTS-33531/shared/processed_data/November8_2024_PlantE/",
+                #                             DataType.ob: "/SNS/VENUS/IPTS-33531/shared/processed_data/ob_PlantE/",
+                #                             DataType.dc: "/SNS/VENUS/IPTS-33531/shared/processed_data/dc/45s/",
+                #                             DataType.cleaned_images: '/SNS/VENUS/IPTS-33531/shared/processed_data/jean_test',
+                #                             DataType.normalized: '/SNS/VENUS/IPTS-33531/shared/processed_data/jean_test',
+                #                             DataType.reconstructed: '/SNS/VENUS/IPTS-33531/shared/processed_data/jean_test',
+                #                             DataType.extra: '/SNS/VENUS/IPTS-33531/shared/processed_data/jean_test',
+                #                             DataType.nexus: '/SNS/VENUS/IPTS-33531/nexus/',
+                #                             },
+                # OperatingMode.white_beam: {DataType.sample: "/SNS/VENUS/IPTS-33531/shared/processed_data/November9_2024_Soil_microplastics_1/",
+                #                             DataType.ob: "/SNS/VENUS/IPTS-33531/shared/processed_data/ob_PlantE/",
+                #                             DataType.dc: "",
+                #                             DataType.cleaned_images: '/SNS/VENUS/IPTS-33531/shared/processed_data/jean_test',
+                #                             DataType.normalized: '/SNS/VENUS/IPTS-33531/shared/processed_data/jean_test',
+                #                             DataType.reconstructed: '/SNS/VENUS/IPTS-33531/shared/processed_data/jean_test',
+                #                             DataType.extra: '/SNS/VENUS/IPTS-33531/shared/processed_data/jean_test',
+                #                             },
+                # OperatingMode.white_beam: {DataType.sample: "/SNS/VENUS/IPTS-33531/shared/processed_data/truck_CT_data/",
+                #                             DataType.ob: "/SNS/VENUS/IPTS-33531/shared/processed_data/ob/",
+                #                             DataType.dc: "/SNS/VENUS/IPTS-33531/shared/processed_data/dc/45s/",
+                #                             DataType.cleaned_images: '/SNS/VENUS/IPTS-33531/shared/processed_data/jean_test',
+                #                             DataType.normalized: '/SNS/VENUS/IPTS-33531/shared/processed_data/jean_test',
+                #                             DataType.reconstructed: '/SNS/VENUS/IPTS-33531/shared/processed_data/jean_test',
+                #                             DataType.extra: '/SNS/VENUS/IPTS-33531/shared/processed_data/jean_test',
+                #                             DataType.nexus: '/SNS/VENUs/IPTS-33531/nexus',
+                #                             },
+                # OperatingMode.white_beam: {DataType.sample: "/SNS/SNAP/IPTS-25265/shared/Jean/moon_rocks_combined_normalized_53_angles_renamed",
+                #                             DataType.ob: "",
+                #                             DataType.dc: "",
+                #                             DataType.cleaned_images: '/SNS/SNAP/IPTS-25265/shared/processed_data/jean_test',
+                #                             DataType.normalized: '/SNS/SNAP/IPTS-25265/shared/processed_data/jean_test',
+                #                             DataType.reconstructed: '/SNS/SNAP/IPTS-25265/shared/processed_data/jean_test',
+                #                             DataType.extra: '/SNS/SNAP/IPTS-25265/shared/processed_data/jean_test',
+                #                             DataType.nexus: '/SNS/SNAP/IPTS-25265/nexus',
+                #                             },
+                                            
+                OperatingMode.white_beam: {DataType.sample: "/HFIR/CG1D/IPTS-27829/raw/ct_scans/October15_2021",
+                                            DataType.ob: "/HFIR/CG1D/IPTS-27829/raw/ob/October15_2021",
+                                            DataType.dc: "",
+                                            DataType.cleaned_images: '/HFIR/CG1D/IPTS-27829/shared/processed_data/jean_test',
+                                            DataType.normalized: '/HFIR/CG1D/IPTS-27829/shared/processed_data/jean_test',
+                                            DataType.reconstructed: '/HFIR/CG1D/IPTS-27829/shared/processed_data/jean_test',
+                                            DataType.extra: '/HFIR/CG1D/IPTS-27829/shared/processed_data/jean_test',
+                                            DataType.nexus: '/HFIR/CG1D/IPTS-27829/nexus',
+                                            DataType.top: '/HFIR/CG1D/IPTS-27829/raw/ct_scans/',
+                                            },
+}
+
+# roi = {OperatingMode.tof: {'left': 0,
+#                             'right': 74,
+#                             'top': 0,
+#                             'bottom': 49},
+#         OperatingMode.white_beam: {'left': 0,
+#                                    'right': 549,
+#                                    'top': 131,
+#                                    'bottom': 8177},
+#                                    }
+
+# plant
+roi = {OperatingMode.tof: {'left': 0,
+                            'right': 74,
+                            'top': 0,
+                            'bottom': 49},
+        OperatingMode.white_beam: {'left': 155,
+                                   'right': 8989,
+                                   'top': 200,
+                                   'bottom': 464},
+                                   }
+
+crop_roi = {OperatingMode.tof: {'left': 0,
+                            'right': 74,
+                            'top': 0,
+                            'bottom': 49},
+        OperatingMode.white_beam: {'left': 5,
+                                   'right': -200,
+                                   'top': 5,
+                                   'bottom': -5},
+                                   }
+
+DEBUG = False
+if get_user_name() == debugger_username:
+    DEBUG = debugging
