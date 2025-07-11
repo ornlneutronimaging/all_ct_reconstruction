@@ -509,12 +509,12 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/46/7b/f5b1b84eb0a2a6e145fc31b4e6b1c59690dcb088734197da8f299caf7c67/mkl-2025.2.0-py2.py3-none-manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/87/a7/35296a6baddd1fc460e39f825eeb298d5357771f382630acd24e13fc6bb2/mkl_fft-2.0.0-23-cp313-cp313-manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/57/89/3f309d445b6ef6a98e3caa232a86fd771669ed8fea51d1f4b0e7747e4431/mkl_service-2.5.2-0-cp313-cp313-manylinux_2_28_x86_64.whl
-      - pypi: git+https://github.com/KedoKudo/NeuTomPy-toolbox.git?branch=master#1581a2943ebe7e6ba6ee420660f8eb988d2a5295
+      - pypi: git+https://github.com/ornlneutronimaging/NeuTomPy-toolbox.git?branch=main#b7e745193838b5b631aa492ba5d51abd14c470fe
       - pypi: https://files.pythonhosted.org/packages/48/1b/86cddfc25214090fa0c07f0c1716bcd201c40dbfaf79bc9a184a238206d9/neutronbraggedge-2.0.6-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/cd/5c/019acaccf0038b8e05b0a54189439d0987891017a84ca43675589f7e460c/tbb-2022.2.0-py2.py3-none-manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/28/9d/97d81fa340b9f1a0e33d6260daeb8bd7bbc2ef5b686be193491de5c9880a/tcmlib-1.4.0-py2.py3-none-manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/b4/3a/63b40f833c7b27ba767e467fdf52cf972cdd149aab72d3d9761ec200fc9f/umf-0.11.0-py2.py3-none-manylinux_2_28_x86_64.whl
-      - pypi: notebooks/__code
+      - pypi: ./notebooks/__code
 packages:
 - conda: https://conda.anaconda.org/conda-forge/linux-64/_openmp_mutex-4.5-3_kmp_llvm.conda
   build_number: 3
@@ -620,7 +620,7 @@ packages:
   - pkg:pypi/algotom?source=hash-mapping
   size: 88453
   timestamp: 1737252006656
-- pypi: notebooks/__code
+- pypi: ./notebooks/__code
   name: all-ct-reconstruction-code
   version: 0.1.0
   sha256: 10820536d9bbda8ef17590bada0b79b81965e109912bf56911210491a20e2d01
@@ -5188,7 +5188,7 @@ packages:
   - pkg:pypi/networkx?source=hash-mapping
   size: 1564462
   timestamp: 1749078300258
-- pypi: git+https://github.com/KedoKudo/NeuTomPy-toolbox.git?branch=master#1581a2943ebe7e6ba6ee420660f8eb988d2a5295
+- pypi: git+https://github.com/ornlneutronimaging/NeuTomPy-toolbox.git?branch=main#b7e745193838b5b631aa492ba5d51abd14c470fe
   name: neutompy
   version: 1.0.10
 - pypi: https://files.pythonhosted.org/packages/48/1b/86cddfc25214090fa0c07f0c1716bcd201c40dbfaf79bc9a184a238206d9/neutronbraggedge-2.0.6-py2.py3-none-any.whl

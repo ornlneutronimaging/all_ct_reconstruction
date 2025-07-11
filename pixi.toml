@@ -26,6 +26,6 @@ ipython = ">=9.4.0,<10"
 
 [pypi-dependencies]
 neutronbraggedge = ">=2.0.6, <3"
-neutompy = { git = "https://github.com/KedoKudo/NeuTomPy-toolbox.git", branch = "master" }
+neutompy = { git = "https://github.com/ornlneutronimaging/NeuTomPy-toolbox.git", branch = "main" }
 mkl-fft = ">=2.0.0, <3"
 all-ct-reconstruction-code = { path = "notebooks/__code", editable = true }
