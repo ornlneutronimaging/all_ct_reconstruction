@@ -2,8 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from IPython.display import display
 import ipywidgets as widgets
-from IPython.display import display
-from IPython.core.display import HTML
+from IPython.display import HTML
 from ipywidgets import interactive
 
 from __code.parent import Parent

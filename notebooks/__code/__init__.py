@@ -1,4 +1,23 @@
 import numpy as np
+import tomopy
+
+# Patch as_ndarray
+def patched_as_ndarray(arr, dtype=None, copy=False):
+    if not isinstance(arr, np.ndarray):
+        arr = np.asarray(arr, dtype=dtype)
+    return arr
+
+# Patch as_dtype
+def patched_as_dtype(arr, dtype, copy=False):
+    arr = patched_as_ndarray(arr)  # ensure it's a NumPy array first
+    if arr.dtype != dtype:
+        arr = np.asarray(arr, dtype=dtype)  # safer than np.array(..., copy=...)
+    return arr
+
+# Apply both patches
+tomopy.util.dtype.as_ndarray = patched_as_ndarray
+tomopy.util.dtype.as_dtype = patched_as_dtype
+
 
 # from __code.utilities.system import get_user_name
 # from __code.config import debugging, debugger_username

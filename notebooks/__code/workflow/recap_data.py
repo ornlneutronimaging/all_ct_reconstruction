@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from ipywidgets import interactive
 from IPython.display import display
 import ipywidgets as widgets
-from IPython.core.display import HTML, display
+from IPython.display import HTML, display
 
 from __code.parent import Parent
 from __code import DataType, Run

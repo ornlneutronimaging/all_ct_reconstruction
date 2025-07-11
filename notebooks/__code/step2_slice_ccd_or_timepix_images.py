@@ -7,7 +7,7 @@ from IPython.display import display
 import ipywidgets as widgets
 import numpy as np
 from matplotlib.patches import Rectangle
-from IPython.core.display import HTML
+from IPython.display import HTML
 
 from __code import OperatingMode, DataType, STEP3_SCRIPTS
 from __code.config import DEBUG, debug_folder

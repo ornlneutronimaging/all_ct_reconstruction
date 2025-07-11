@@ -4,7 +4,7 @@ from neutompy.preproc.preproc import correction_COR, find_COR
 import matplotlib.pyplot as plt
 from ipywidgets import interactive
 from IPython.display import display
-from IPython.core.display import HTML
+from IPython.display import HTML
 import ipywidgets as widgets
 from skimage.transform import rotate
 from algotom.prep.calculation import find_center_vo, find_center_360

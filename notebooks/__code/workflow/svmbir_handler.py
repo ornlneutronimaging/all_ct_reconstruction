@@ -2,7 +2,7 @@ import numpy as np
 import os
 from IPython.display import display
 import ipywidgets as widgets
-from IPython.core.display import HTML
+from IPython.display import HTML
 import matplotlib.pyplot as plt
 from ipywidgets import interactive
 import logging

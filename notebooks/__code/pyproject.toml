@@ -1,0 +1,15 @@
+[project]
+name = "all-ct-reconstruction-code"
+version = "0.1.0"
+description = "Local code for all_ct_reconstruction notebooks."
+
+[tool.setuptools]
+packages = ["workflow"]
+py-modules = [
+    "file_folder_browser",
+    "file_handler",
+    "log_handler",
+    "reconstruction_launcher",
+    "session_handler",
+    "utilities",
+]

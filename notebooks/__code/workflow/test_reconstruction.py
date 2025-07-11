@@ -1,7 +1,7 @@
 import os
 import matplotlib.pyplot as plt
 import ipywidgets as widgets
-from IPython.core.display import HTML
+from IPython.display import HTML
 from ipywidgets import interactive
 from IPython.display import display
 import algotom.rec.reconstruction as rec
