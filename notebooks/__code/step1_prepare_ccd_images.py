@@ -228,14 +228,7 @@ class Step1PrepareCcdImages:
     # pecentage of data to use
     def select_percentage_of_data_to_use(self):
         self.o_load.select_percentage_of_data_to_use()
-
-    def determine_projections_angles_to_use(self):
-        self.o_load.determine_projections_angles_to_use()
-
-    def visualize_angles_selected(self):
-        """uses: final_list_of_angles"""
-        self.o_load.visualize_angles_selected()
-
+  
     # load data
     def load_data(self):
         """creates: master_3d_data_array

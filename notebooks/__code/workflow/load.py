@@ -104,18 +104,14 @@ class Load(Parent):
     def select_percentage_of_data_to_use(self):
         
         def display_data_to_use(slider_index):
-            list_of_tiff = self.parent.list_of_images[DataType.sample]
-            percentage = slider_index
-            nbr_images = int(percentage / 100 * len(list_of_tiff))
-            display(HTML(f"{nbr_images} images will be used for the reconstruction"))
-
             self.determine_projections_angles_to_use(slider_index)
+            display(HTML(f"{self.parent.temp_nbr_of_images_will_be_used} images will be used for the reconstruction"))
 
             logging.info("Visualizing angles selected for the projections.")
             full_list_of_angles_rad = self.parent.full_list_of_angles_rad
             logging.info(f"\tFull list of angles (radians): {full_list_of_angles_rad}")
             logging.info(f"\tSelected angles (radians): {self.parent.temp_final_list_of_angles_rad}")
-            fig, ax = plt.subplots(figsize=(8, 8), subplot_kw={'projection': 'polar'})
+            fig, ax = plt.subplots(figsize=(5, 5), subplot_kw={'projection': 'polar'})
             ax.plot(full_list_of_angles_rad, np.ones(len(full_list_of_angles_rad))*2, marker='o', linestyle='None', color='blue', markersize=5, label='All Angles')
             ax.set_rmax(2)
             ax.set_rticks([0.5, 1, 1.5])
@@ -126,21 +122,12 @@ class Load(Parent):
         
         self.percentage_of_data_to_use_widget = interactive(display_data_to_use,
                                                               slider_index=widgets.IntSlider(value=PERCENTAGE_OF_DATA_TO_USE_FOR_RECONSTRUCTION,
-                                                                                           min=1,
+                                                                                           min=5,
                                                                                            max=100,
                                                                                            step=1,
                                                                                            layout=widgets.Layout(width='100%')))
 
         display(self.percentage_of_data_to_use_widget)
-
-        # self.percentage_to_use = widgets.IntSlider(value=PERCENTAGE_OF_DATA_TO_USE_FOR_RECONSTRUCTION,
-        #                             min=1,
-        #                             max=100,
-        #                             step=1,
-        #                             layout=widgets.Layout(width='100%'))
-        # display(self.percentage_to_use)
-
-        # self.percentage_to_use.observe(self.on_percentage_to_use_change, names='value') 
 
     def on_percentage_to_use_change(self, change):
         new_value = change['new']
@@ -345,7 +332,7 @@ class Load(Parent):
         for _file_name, _angle, _angle_rad in zip(base_list_of_images, list_of_angles, list_of_angles_rad):
             logging.info(f"\t{_file_name} : {_angle} degrees, {_angle_rad} radians")
 
-    def determine_projections_angles_to_use(self, percentage_to_use=None):
+    def determine_projections_angles_to_use(self, percentage_to_use=50):
         """Retrieve list of TIFF files from the selected folder."""
         logging.info(f"Determine list of projections to use according to percentage selected ...")
         list_of_tiff = self.parent.list_of_images[DataType.sample]
@@ -353,21 +340,32 @@ class Load(Parent):
         _dict = self.retrieve_list_of_files_and_angles()
         list_of_tiff = _dict['list_of_images']
         list_of_angles_deg = _dict['list_of_angles_deg']
-        list_of_angles_rad = _dict['list_of_angles_rad']
+        # list_of_angles_rad = _dict['list_of_angles_rad']
 
         nbr_images_to_use = int(percentage_to_use / 100 * len(list_of_tiff))
-        if nbr_images_to_use == 0:
-            nbr_images_to_use = 1
+        if nbr_images_to_use < 5:
+            nbr_images_to_use = 5
         logging.info(f"\tNumber of projections to use: {nbr_images_to_use}")
         list_of_angles_deg = [float(_value) for _value in self.parent.final_list_of_angles]
         self.parent.full_list_of_angles_rad = self.parent.final_list_of_angles_rad
         selected_angles = farthest_point_sampling(list_of_angles_deg, nbr_images_to_use)
+
+        logging.info(f"Making sure 0 and 180 degrees are included in the selected angles.")
+        if not list_of_angles_deg[0] in selected_angles:
+            logging.info(f"\tAdding 0 degrees to the selected angles.")
+            selected_angles.insert(0, np.float64(list_of_angles_deg[0]))
+
+        if not list_of_angles_deg[-1] in selected_angles:
+            logging.info(f"\tAdding 180 degrees to the selected angles.")
+            selected_angles.append(np.float64(list_of_angles_deg[-1]))
+
         logging.info(f"\tSelected angles: {selected_angles}")
         selected_indices = [np.where(list_of_angles_deg == angle)[0][0] for angle in selected_angles]
         logging.info(f"\tSelected indices: {selected_indices}")
         self.parent.temp_final_list_of_angles = selected_angles
         self.parent.temp_final_list_of_angles_rad = np.deg2rad(selected_angles)
         self.parent.temp_list_of_images = [list_of_tiff[i] for i in selected_indices]
+        self.parent.temp_nbr_of_images_will_be_used = len(selected_angles)
         logging.info(f"\tList of images to use: {[os.path.basename(file) for file in self.parent.temp_list_of_images]}")
 
     def visualize_angles_selected(self):
