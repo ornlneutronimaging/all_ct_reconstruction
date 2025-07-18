@@ -116,8 +116,8 @@ class Load(Parent):
             ax.set_rmax(2)
             ax.set_rticks([0.5, 1, 1.5])
             selected_list_of_angles_rad = self.parent.temp_final_list_of_angles_rad
-            ax.plot(selected_list_of_angles_rad, np.ones(len(selected_list_of_angles_rad))*2, marker='o', linestyle='None', color='red', markersize=10, label='Selected Angles')
-                
+            ax.plot(selected_list_of_angles_rad, np.ones(len(selected_list_of_angles_rad))*2, marker='o', linestyle='None', color='green', markersize=10, label='Selected Angles')
+            ax.legend()
             return slider_index
         
         self.percentage_of_data_to_use_widget = interactive(display_data_to_use,
