@@ -2,6 +2,7 @@ import os
 import logging
 from collections import OrderedDict
 import numpy as np
+from IPython.display import display, HTML
 
 from __code import DataType, OperatingMode, DEFAULT_OPERATING_MODE
 from __code.utilities.logging import setup_logging
@@ -31,6 +32,7 @@ from __code.workflow.crop import Crop
 from __code.workflow.test_reconstruction import TestReconstruction
 from __code.utilities.configuration_file import ReconstructionAlgorithm
 from __code.utilities.logging import logging_3d_array_infos
+from __code.utilities.exceptions import MetadataError
 
 LOG_BASENAME_FILENAME, _ = os.path.splitext(os.path.basename(__file__))
 
@@ -227,7 +229,11 @@ class Step1PrepareCcdImages:
 
     # pecentage of data to use
     def select_percentage_of_data_to_use(self):
-        self.o_load.select_percentage_of_data_to_use()
+        try:
+            self.o_load.select_percentage_of_data_to_use()
+        except MetadataError as e:
+            logging.error(f"MetadataError: {e.message}")
+            display(widgets.HTML(f"<font color='red'><b>ERROR</b>: {e.message}</font>"))
   
     # load data
     def load_data(self):

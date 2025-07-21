@@ -18,6 +18,7 @@ from __code.utilities.load import load_data_using_multithreading, load_list_of_t
 from __code.utilities.files import retrieve_list_of_tif
 from __code.utilities.math import farthest_point_sampling
 from __code.config import DEBUG, DEFAULT_NAMING_CONVENTION_INDICES, PERCENTAGE_OF_DATA_TO_USE_FOR_RECONSTRUCTION, debug_folder
+from __code.utilities.exceptions import MetadataError
 
 
 class Load(Parent):
@@ -102,8 +103,9 @@ class Load(Parent):
         self.parent.list_of_images[self.data_type] = list_images
 
     def select_percentage_of_data_to_use(self):
-        
+       
         def display_data_to_use(slider_index):
+        
             self.determine_projections_angles_to_use(slider_index)
             display(HTML(f"{self.parent.temp_nbr_of_images_will_be_used} images will be used for the reconstruction"))
 
@@ -149,6 +151,7 @@ class Load(Parent):
     def retrieve_angle_value(self):
         """Retrieve angle value from the images file name or metadata file"""
         if self.how_to_retrieve_angle_value_widget.value == 'Define naming convention':
+            self.parent.retrieve_angle_value_from_metadata = False
             self.define_naming_convention()
         elif self.how_to_retrieve_angle_value_widget.value == 'Use angle value from metadata file':
             self.parent.retrieve_angle_value_from_metadata = True
@@ -290,13 +293,19 @@ class Load(Parent):
             return _angle_value
         except Exception as e:
             logging.error(f"Error retrieving angle value from TIFF file {file_name}: {e}")
-            raise ValueError(f"Could not retrieve angle value from TIFF file {file_name}. Ensure the file has the correct metadata.")
+            display(widgets.HTML(f"<font color='red'><b>ERROR</b>: Could not retrieve angle value from TIFF file {file_name}. Ensure the file has the correct metadata.</font>"))
+            raise MetadataError(f"Could not retrieve angle value from TIFF file {file_name}. Ensure the file has the correct metadata.") from e
 
     def retrieve_angle_value_from_metadata_file(self, list_of_images):
         logging.info("Retrieving angle value from metadata file.")
         list_of_angles = []
         for _file in list_of_images:
-            angle = Load.retrieve_angle_value_from_tiff(_file)
+            try:
+                angle = Load.retrieve_angle_value_from_tiff(_file)
+            except ValueError as e:
+                logging.error(f"Error retrieving angle value from file {_file} using metadata: {e}")
+                return
+            
             list_of_angles.append(angle)
 
         self.parent.final_list_of_angles = np.array(list_of_angles)

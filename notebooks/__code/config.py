@@ -2,7 +2,7 @@ from __code import OperatingMode, DataType
 from __code.utilities.system import get_user_name
 
 
-debugging = False
+debugging = True
 
 verbose = True
 debugger_username = 'j35'

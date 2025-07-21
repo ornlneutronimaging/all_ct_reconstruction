@@ -23,7 +23,7 @@ class RemoveStrips:
     sinogram = None
     skip_remove_strips = True
 
-    default_list_algo_to_use = [RemoveStripeAlgo.remove_all_stripe]
+    default_list_algo_to_use = [RemoveStripeAlgo.remove_large_stripe]
 
     list_algo = {RemoveStripeAlgo.remove_stripe_fw: {'help': 'Remove horizontal stripes from sinogram using the Fourier-Wavelet (FW) based method',
                                              'function': stripe.remove_stripe_fw,
@@ -117,20 +117,20 @@ class RemoveStrips:
                                                                              description='norm'),
                                                         ]),
                 },
-                RemoveStripeAlgo.remove_all_stripe: {'help': "Remove all types of stripe artifacts from sinogram using Nghia Vo's approach [B24] (combination of algorithm 3,4,5, and 6).",
-                                              'function': stripe.remove_all_stripe,
-                                              'settings': widgets.VBox([
-                                                            widgets.FloatText(value=3,
-                                                                            description="snr"),
-                                                            widgets.IntText(value=61,
-                                                                            description="la_size"),
-                                                            widgets.IntText(value=21,
-                                                                            description="sm_size"),
-                                                            widgets.Dropdown(options=[1, 2],
-                                                                            value=1,
-                                                                            description='dim')
-                                                        ]),
-                 },
+                # RemoveStripeAlgo.remove_all_stripe: {'help': "Remove all types of stripe artifacts from sinogram using Nghia Vo's approach [B24] (combination of algorithm 3,4,5, and 6).",
+                #                               'function': stripe.remove_all_stripe,
+                #                               'settings': widgets.VBox([
+                #                                             widgets.FloatText(value=3,
+                #                                                             description="snr"),
+                #                                             widgets.IntText(value=61,
+                #                                                             description="la_size"),
+                #                                             widgets.IntText(value=21,
+                #                                                             description="sm_size"),
+                #                                             widgets.Dropdown(options=[1, 2],
+                #                                                             value=1,
+                #                                                             description='dim')
+                #                                         ]),
+                #  },
                  RemoveStripeAlgo.remove_stripe_based_interpolation: {'help': "Remove most types of stripe artifacts from sinograms based on interpolation.",
                                                               'function': stripe.remove_stripe_based_interpolation,
                                                                 'settings': widgets.VBox([
