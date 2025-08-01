@@ -8,6 +8,9 @@ import algotom.rec.reconstruction as rec
 import numpy as np
 import logging
 import svmbir
+import jax.numpy as jnp
+import mbirjax as mj
+import time
 
 from __code.parent import Parent
 from __code.config import svmbir_parameters
@@ -98,7 +101,9 @@ class TestReconstruction(Parent):
 
             logging.info(f"\tworking with slice: {_slice}")
 
-            logging.info(f"\tusing rec.gridrec_reconstruction")
+            # gridrec
+            logging.info(f"\tusing rec.gridrec_reconstruction ...")
+            time_start_gridrec = time.time()
             _rec_img_gridrec = rec.gridrec_reconstruction(sinogram_normalized_images_log[_slice],
                                                           center_of_rotation,
                                                           angles=self.parent.final_list_of_angles_rad,
@@ -107,10 +112,13 @@ class TestReconstruction(Parent):
                                                           filter_name='shepp',
                                                           pad=100,
                                                           ncore=NUM_THREADS)    
+            time_end_gridrec = time.time()
             logging.info(f"\t{np.shape(_rec_img_gridrec) =}")
-            logging.info(f"\tusing rec.gridrec_reconstruction ... done!")
-            
-            logging.info(f"\tusing rec.astra_reconstruction")
+            logging.info(f"\tusing rec.gridrec_reconstruction ... done in {time_end_gridrec - time_start_gridrec:.2f} seconds!")
+
+            # astra
+            logging.info(f"\tusing rec.astra_reconstruction ...")
+            time_start_astra = time.time()
             _rec_img_astra = rec.astra_reconstruction(sinogram_normalized_images_log[_slice],
                                                       center_of_rotation,
                                                       angles=self.parent.final_list_of_angles_rad,
@@ -121,10 +129,12 @@ class TestReconstruction(Parent):
                                                       num_iter=300,
                                                       method='SIRT_CUDA',
                                                       ncore=NUM_THREADS)
+            time_end_astra = time.time()
             logging.info(f"\t{np.shape(_rec_img_astra) =}")
-            logging.info(f"\tusing rec.astra_reconstruction ... done!")
+            logging.info(f"\tusing rec.astra_reconstruction ... done in {time_end_astra - time_start_astra:.2f} seconds!")
 
-            logging.info(f"\tusing rec.svmbir_reconstruction")
+            # svmbir
+            logging.info(f"\tusing rec.svmbir_reconstruction ...")
             projections_normalized_images_log = self.parent.normalized_images_log[:, _slice:_slice+1, :]
             logging.info(f"\t{np.shape(projections_normalized_images_log) = }")
             logging.info(f"\t{np.shape(self.parent.final_list_of_angles_rad) =}")
@@ -145,6 +155,7 @@ class TestReconstruction(Parent):
                 logging.info("Warning: Inf values found in projections. Replacing with 0.")
                 projections_normalized_images_log = np.nan_to_num(projections_normalized_images_log, posinf=0.0, neginf=0.0)
 
+            time_start_svmbir = time.time()
             _rec_img_svmbir = svmbir.recon(projections_normalized_images_log,
                                            angles=self.parent.final_list_of_angles_rad,
                                            num_rows = width,  
@@ -163,38 +174,70 @@ class TestReconstruction(Parent):
                                         #    roi_radius=1000,
                                            svmbir_lib_path = svmbir_lib_path,
                                            )
+            time_end_svmbir = time.time()
             logging.info(f"\tslice: {_slice}")
-            logging.info(f"\tusing rec.svmbir_reconstruction ... done!")
+            logging.info(f"\tusing rec.svmbir_reconstruction ... done in {time_end_svmbir - time_start_svmbir:.2f} seconds!")
+
+            # mbirjax
+            logging.info(f"\tusing mbirjax ...")
+            sinogram_shape  = projections_normalized_images_log.shape  # (nbr_angles, height, width)
+            logging.info(f"\t\t{sinogram_shape = }")
+            logging.info(f"\t\t{projections_normalized_images_log.shape = }")
+            time_start_mbirjax = time.time()
+            ct_model_for_recon = mj.ParallelBeamModel(sinogram_shape,
+                                                      self.parent.final_list_of_angles_rad,)
+            _rec_img_mbirjax, recon_dict = ct_model_for_recon.recon(projections_normalized_images_log,
+                                                                    print_logs=False,
+                                                                    #
+                                                                    #
+                                                                    #
+                                                                    weights=None)
+            time_end_mbirjax = time.time()
+            logging.info(f"\t{np.shape(_rec_img_mbirjax) = }")
+            logging.info(f"\t{recon_dict = }")
+            logging.info(f"\tusing mbirjax ... done in {time_end_mbirjax - time_start_mbirjax:.2f} seconds!")
 
             self.display_reconstructed_slice(gridrec=_rec_img_gridrec, 
                                              astra=_rec_img_astra, 
-                                             svmbir=_rec_img_svmbir[0], 
+                                             svmbir=_rec_img_svmbir[0].T, 
+                                             mbirjax=_rec_img_mbirjax.squeeze(),
                                              slice=_slice)
 
         logging.info(f"\tdone!")
       
-    def display_reconstructed_slice(self, gridrec=None, astra=None, svmbir=None, slice=None):
+    def display_reconstructed_slice(self, gridrec=None, astra=None, svmbir=None, mbirjax=None, slice=None):
 
-        fig, axs = plt.subplots(nrows=1, ncols=3, figsize=(15, 5))
+        fig, axs = plt.subplots(nrows=2, ncols=2, figsize=(10, 10))
 
-        im0 = axs[0].imshow(gridrec, cmap='viridis', vmin=0)
-        plt.colorbar(im0, ax=axs[0], shrink=0.5)
-        axs[0].set_title(f"Slice: {slice} with Gridrec")
-        axs[0].axis('off')
+        im0 = axs[0][0].imshow(gridrec, cmap='viridis', vmin=0)
+        plt.colorbar(im0, ax=axs[0][0], shrink=0.5)
+        axs[0][0].set_title(f"Slice: {slice} with Gridrec")
+        axs[0][0].axis('off')
 
-        im1 = axs[1].imshow(astra, cmap='viridis', vmin=0)
-        plt.colorbar(im1, ax=axs[1], shrink=0.5)
-        axs[1].set_title(f"Slice: {slice} ASTRA")
-        axs[1].axis('off')
+        im1 = axs[0][1].imshow(astra, cmap='viridis', vmin=0)
+        plt.colorbar(im1, ax=axs[0][1], shrink=0.5)
+        axs[0][1].set_title(f"Slice: {slice} ASTRA")
+        axs[0][1].axis('off')
 
         if svmbir is None:
             logging.warning("SVMBIR reconstruction is None, skipping display.")
-            axs[2].set_visible(False)
-    
+            axs[1][0].set_visible(False)
+
         else:
-            im2 = axs[2].imshow(svmbir, cmap='viridis', vmin=0)
-            plt.colorbar(im2, ax=axs[2], shrink=0.5)
-            axs[2].set_title(f"Slice: {slice} SVMBIR")
-            axs[2].axis('off')
+            im2 = axs[1][0].imshow(svmbir, cmap='viridis', vmin=0)
+            plt.colorbar(im2, ax=axs[1][0], shrink=0.5)
+            axs[1][0].set_title(f"Slice: {slice} SVMBIR")
+            axs[1][0].axis('off')
+
+        if mbirjax is None:
+            logging.warning("MBIRJAX reconstruction is None, skipping display.")
+            axs[1][1].set_visible(False)
+
+        else:
+            im3 = axs[1][1].imshow(mbirjax, cmap='viridis', vmin=0)
+            plt.colorbar(im3, ax=axs[1][1], shrink=0.5)
+            axs[1][1].set_title(f"Slice: {slice} MBIRJAX")
+            axs[1][1].axis('off')
+
         plt.tight_layout()
         plt.show()
