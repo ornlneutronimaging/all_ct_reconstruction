@@ -128,7 +128,7 @@ class SvmbirCliHandler:
                 if mbirjax:
                     sinogram_shape = _sino.shape
 
-                    ct_model_for_recon = mj.ParalelBeamModel(sinogram_shape,
+                    ct_model_for_recon = mj.ParallelBeamModel(sinogram_shape,
                                                              list_of_angles_rad)
                     ct_model_for_recon.set_params(sharpness=sharpness,
                                                   verbose=verbose,
@@ -183,7 +183,7 @@ class SvmbirCliHandler:
             if mbirjax:
                 sinogram_shape = corrected_array_log.shape
 
-                ct_model_for_recon = mj.ParalelBeamModel(sinogram_shape,
+                ct_model_for_recon = mj.ParallelBeamModel(sinogram_shape,
                                                             list_of_angles_rad)
                 ct_model_for_recon.set_params(sharpness=sharpness,
                                                 verbose=verbose,
