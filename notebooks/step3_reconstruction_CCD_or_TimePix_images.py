@@ -37,6 +37,13 @@ if __name__ == "__main__":
         list_reconstruction_algorithm.remove(ReconstructionAlgorithm.svmbir)
         logging.info(f"Svmbir reconstruction done!")
     
+    if ReconstructionAlgorithm.mbirjax in list_reconstruction_algorithm:
+        logging.info(f"about to call MbirjaxCliHandler.run_reconstruction_from_pre_data_mode:")
+        logging.info(f"\t{config_json_file = }")
+        MbirjaxCliHandler.run_reconstruction_from_pre_data_mode(config_json_file=config_json_file)
+        list_reconstruction_algorithm.remove(ReconstructionAlgorithm.mbirjax)
+        logging.info(f"Mbirjax reconstruction done!")
+
     if len(list_reconstruction_algorithm) > 0:
         logging.info(f"about to call FbpCliHandler.run_reconstruction_from_pre_data_mode:")
         logging.info(f"\t{config_json_file = }")

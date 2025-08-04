@@ -29,4 +29,4 @@ neutronbraggedge = ">=2.0.6, <3"
 neutompy = { git = "https://github.com/ornlneutronimaging/NeuTomPy-toolbox.git", branch = "main" }
 mkl-fft = ">=2.0.0, <3"
 all-ct-reconstruction-code = { path = "notebooks/__code", editable = true }
-mbirjax = ">=0.6.7, <0.7"
+mbirjax = { version = ">=0.6.7, <0.7", extras = ["cuda12"] }

@@ -186,11 +186,13 @@ class TestReconstruction(Parent):
             time_start_mbirjax = time.time()
             ct_model_for_recon = mj.ParallelBeamModel(sinogram_shape,
                                                       self.parent.final_list_of_angles_rad,)
+            ct_model_for_recon.set_params(sharpness=svmbir_parameters['sharpness'],
+                                          verbose=False,
+                                          use_gpu="full",
+                                          det_channel_offset=center_offset,
+                                          snr_db=svmbir_parameters['snr_db'],)
             _rec_img_mbirjax, recon_dict = ct_model_for_recon.recon(projections_normalized_images_log,
                                                                     print_logs=False,
-                                                                    #
-                                                                    #
-                                                                    #
                                                                     weights=None)
             time_end_mbirjax = time.time()
             logging.info(f"\t{np.shape(_rec_img_mbirjax) = }")

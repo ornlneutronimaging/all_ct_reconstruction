@@ -3,6 +3,8 @@ import os
 import glob
 import logging
 import svmbir
+import jax.numpy as jnp
+import mbirjax as mj
 
 from __code import WhenToRemoveStripes
 from __code.workflow.export import Export
@@ -19,21 +21,22 @@ from __code.workflow_cli.stripes_removal import StripesRemovalHandler
 class SvmbirCliHandler:
 
     @staticmethod
-    def run_reconstruction_from_pre_data_mode(config_json_file):
+    def run_reconstruction_from_pre_data_mode(config_json_file, mbirjax=False):
 
-        logging.info(f"clearing {SVMBIR_LIB_PATH}/sysmatrix folder")
-        # removing all the files in the sysmatrix folder the owner owns
-        # this is needed to avoid the error "PermissionError: [Errno 13] Permission denied: '/fastdata/sysmatrix/...' when running svmbir
-        if os.path.exists(os.path.join(SVMBIR_LIB_PATH, 'sysmatrix')):
-           list_files = glob.glob(os.path.join(SVMBIR_LIB_PATH, 'sysmatrix', '*'))
-           for _file in list_files:
-               if os.path.isfile(_file):
-                   try:
-                       os.remove(_file)
-                   except PermissionError as e:
-                       logging.error(f"PermissionError: {e} for file {_file}")
-               else:
-                   logging.info(f"skipping {_file} as it is not a file") 
+        if not mbirjax:
+            logging.info(f"clearing {SVMBIR_LIB_PATH}/sysmatrix folder")
+            # removing all the files in the sysmatrix folder the owner owns
+            # this is needed to avoid the error "PermissionError: [Errno 13] Permission denied: '/fastdata/sysmatrix/...' when running svmbir
+            if os.path.exists(os.path.join(SVMBIR_LIB_PATH, 'sysmatrix')):
+                list_files = glob.glob(os.path.join(SVMBIR_LIB_PATH, 'sysmatrix', '*'))
+                for _file in list_files:
+                    if os.path.isfile(_file):
+                        try:
+                            os.remove(_file)
+                        except PermissionError as e:
+                            logging.error(f"PermissionError: {e} for file {_file}")
+                    else:
+                        logging.info(f"skipping {_file} as it is not a file") 
 
         config = load_json_string(config_json_file)
         logging.info(f"config = {config}")
@@ -84,8 +87,6 @@ class SvmbirCliHandler:
         logging.info(f"{np.shape(corrected_array_log) = }")
 
         logging.info(f"{list_of_angles_rad = }")
-        # logging.info(f"{height = }")
-        # logging.info(f"{width = }")
         logging.info(f"{center_offset = }")
         logging.info(f"{sharpness = }")
         logging.info(f"{snr_db = }")
@@ -98,7 +99,10 @@ class SvmbirCliHandler:
         logging.info(f"{base_output_folder = }")
         logging.info(f"{list_of_slices_to_reconstruct = }")
         
-        output_data_folder = os.path.join(base_output_folder, f"svmbir_reconstructed_data_{get_current_time_in_special_file_name_format()}")
+        if mbirjax:
+            output_data_folder = os.path.join(base_output_folder, f"mbirjax_reconstructed_data_{get_current_time_in_special_file_name_format()}")
+        else:
+            output_data_folder = os.path.join(base_output_folder, f"svmbir_reconstructed_data_{get_current_time_in_special_file_name_format()}")
         logging.info(f"{output_data_folder = }")
 
         # make_or_reset_folder(output_data_folder)
@@ -110,27 +114,49 @@ class SvmbirCliHandler:
             for [index, [top_slice_index, bottom_slice_index]] in enumerate(list_of_slices_to_reconstruct):
                 print(f"working with set of slices #{index}: from {top_slice_index} to {bottom_slice_index-1}. ", end="") 
                 logging.info(f"working with set of slices #{index}: from {top_slice_index} to {bottom_slice_index-1}")
-                print(f"launching svmbir #{index} ... ", end="")
-                logging.info(f"launching svmbir #{index} ...")
+                
+                if mbirjax:
+                    print(f"launching mbirjax #{index} ... ", end="")
+                    logging.info(f"launching mbirjax #{index} ...")
+                else:
+                    print(f"launching svmbir #{index} ... ", end="")
+                    logging.info(f"launching svmbir #{index} ...")
         
                 _sino = corrected_array_log[:, top_slice_index:bottom_slice_index, :]
-        
-                logging.info(f"\t{np.shape(_sino) = }")
-                reconstruction_array = svmbir.recon(sino=_sino,
-                                                    angles=list_of_angles_rad,
-                                                    num_rows = _sino.shape[2],  # height,
-                                                    num_cols = _sino.shape[2],  # width,
-                                                    center_offset = center_offset,
-                                                    max_resolutions = max_resolutions,
-                                                    sharpness = sharpness,
-                                                    snr_db = snr_db,
-                                                    positivity = positivity,
-                                                    max_iterations = max_iterations,
-                                                    num_threads = NUM_THREADS,
-                                                    verbose = verbose,
-                                                    roi_radius=3000,
-                                                    svmbir_lib_path = svmbir_lib_path,
-                                                    )
+                logging.info(f"\t{_sino.shape = }")
+                    
+                if mbirjax:
+                    sinogram_shape = _sino.shape
+
+                    ct_model_for_recon = mj.ParalelBeamModel(sinogram_shape,
+                                                             list_of_angles_rad)
+                    ct_model_for_recon.set_params(sharpness=sharpness,
+                                                  verbose=verbose,
+                                                  delta_det_channel=center_offset,
+                                                  snr_db=snr_db,
+                    )
+                    reconstruction_array = ct_model_for_recon.recon(_sino,
+                                                                    print_logs=False,
+                                                                    weights=None,
+                                                                    )
+
+                else:
+
+                    reconstruction_array = svmbir.recon(sino=_sino,
+                                                        angles=list_of_angles_rad,
+                                                        num_rows = _sino.shape[2],  # height,
+                                                        num_cols = _sino.shape[2],  # width,
+                                                        center_offset = center_offset,
+                                                        max_resolutions = max_resolutions,
+                                                        sharpness = sharpness,
+                                                        snr_db = snr_db,
+                                                        positivity = positivity,
+                                                        max_iterations = max_iterations,
+                                                        num_threads = NUM_THREADS,
+                                                        verbose = verbose,
+                                                        roi_radius=3000,
+                                                        svmbir_lib_path = svmbir_lib_path,
+                                                        )
                 print(f"done with #{index}!")
                 logging.info(f"done with #{index}!")
                 _index = f"{index:03d}"
@@ -154,24 +180,41 @@ class SvmbirCliHandler:
 
         else:
 
-            print(f"launching svmbir with all slices ... ", end="")
-            logging.info(f"launching svmbir with all slices ...")
+            if mbirjax:
+                sinogram_shape = corrected_array_log.shape
 
-            reconstruction_array = svmbir.recon(sino=corrected_array_log,
-                                                angles=list_of_angles_rad,
-                                                num_rows = _sino.shape[2],  # height,
-                                                num_cols = _sino.shape[2],  # width,
-                                                center_offset = center_offset,
-                                                max_resolutions = max_resolutions,
-                                                sharpness = sharpness,
-                                                snr_db = snr_db,
-                                                positivity = positivity,
-                                                max_iterations = max_iterations,
-                                                num_threads = NUM_THREADS,
-                                                verbose = verbose,
-                                                roi_radius=3000,
-                                                svmbir_lib_path = svmbir_lib_path,
-                                                )
+                ct_model_for_recon = mj.ParalelBeamModel(sinogram_shape,
+                                                            list_of_angles_rad)
+                ct_model_for_recon.set_params(sharpness=sharpness,
+                                                verbose=verbose,
+                                                det_channel_offset=center_offset,
+                                                snr_db=snr_db,
+                )
+                reconstruction_array = ct_model_for_recon.recon(corrected_array_log,
+                                                                print_logs=False,
+                                                                weights=None,
+                                                                )
+
+            else:
+
+                print(f"launching svmbir with all slices ... ", end="")
+                logging.info(f"launching svmbir with all slices ...")
+
+                reconstruction_array = svmbir.recon(sino=corrected_array_log,
+                                                    angles=list_of_angles_rad,
+                                                    num_rows = _sino.shape[2],  # height,
+                                                    num_cols = _sino.shape[2],  # width,
+                                                    center_offset = center_offset,
+                                                    max_resolutions = max_resolutions,
+                                                    sharpness = sharpness,
+                                                    snr_db = snr_db,
+                                                    positivity = positivity,
+                                                    max_iterations = max_iterations,
+                                                    num_threads = NUM_THREADS,
+                                                    verbose = verbose,
+                                                    roi_radius=3000,
+                                                    svmbir_lib_path = svmbir_lib_path,
+                                                    )
 
             print(f"done! ")
             logging.info(f"done with!")

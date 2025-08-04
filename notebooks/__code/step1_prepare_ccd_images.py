@@ -491,10 +491,11 @@ class Step1PrepareCcdImages:
         # if self.corrected_images is None:
         #     self.corrected_images = self.normalized_images_log
         
-        if ReconstructionAlgorithm.svmbir in self.configuration.reconstruction_algorithm:
+        if (ReconstructionAlgorithm.svmbir in self.configuration.reconstruction_algorithm) or \
+           (ReconstructionAlgorithm.mbirjax in self.configuration.reconstruction_algorithm):
             self.o_svmbir = SvmbirHandler(parent=self)
             self.o_svmbir.set_settings()
-        
+         
     # takes for ever !
     # def svmbir_display_sinograms(self):
     #     self.o_svmbir.display_sinograms()
