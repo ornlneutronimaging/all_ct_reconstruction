@@ -11,6 +11,8 @@ import svmbir
 import jax.numpy as jnp
 import mbirjax as mj
 import time
+from typing import Tuple, Optional, Union
+from numpy.typing import NDArray
 
 from __code.parent import Parent
 from __code.config import svmbir_parameters
@@ -19,14 +21,49 @@ from __code.utilities.folder import check_folder_write_permission
 
 
 class TestReconstruction(Parent):
+    """
+    A class for testing CT reconstruction algorithms on selected image slices.
     
-    def select_slices(self):
+    This class provides functionality to select slices from normalized CT images 
+    and perform reconstruction using multiple algorithms (Gridrec, ASTRA, SVMBIR, 
+    and MBIRJAX) for comparison purposes.
+    
+    Inherits from Parent class which provides access to the CT data pipeline.
+    """
+    
+    def select_slices(self) -> None:
+        """
+        Display an interactive widget for selecting image slices and visualization parameters.
+        
+        Creates an interactive plot with sliders to:
+        - Select an image index from the normalized image stack
+        - Choose two slice positions for reconstruction
+        - Adjust visualization parameters (vmin, vmax)
+        
+        The selected slice positions are stored in self.display_plot.result for later use
+        in reconstruction.
+        """
 
-        normalized_images_log = self.parent.normalized_images_log
+        normalized_images_log: NDArray[np.floating] = self.parent.normalized_images_log
+        height: int
+        width: int
         height, width = normalized_images_log[0].shape
-        max_value = 4
+        max_value: float = 4
 
-        def plot_images(image_index, slice_1, slice_2, vmin, vmax):
+        def plot_images(image_index: int, slice_1: int, slice_2: int, vmin: float, vmax: float) -> Tuple[int, int]:
+            """
+            Inner function to plot selected image with slice indicators.
+            
+            Args:
+                image_index: Index of the image to display from the stack
+                slice_1: First slice position (red line)
+                slice_2: Second slice position (red line)
+                vmin: Minimum value for colormap
+                vmax: Maximum value for colormap
+                
+            Returns:
+                Tuple of (slice_1, slice_2) positions
+            """
 
             fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(7, 7))
 
@@ -75,26 +112,50 @@ class TestReconstruction(Parent):
                                    
         display(self.display_plot)
 
-    def run_reconstruction(self):
+    def run_reconstruction(self) -> None:
+        """
+        Run CT reconstruction using multiple algorithms on the selected slices.
+        
+        Performs reconstruction using four different algorithms:
+        1. Gridrec - Fast filtered back-projection
+        2. ASTRA - GPU-accelerated iterative reconstruction (SIRT_CUDA)
+        3. SVMBIR - Model-based iterative reconstruction
+        4. MBIRJAX - JAX-based model-based iterative reconstruction
+        
+        The method:
+        - Extracts slice positions from the interactive widget
+        - Prepares sinogram data and calculates reconstruction parameters
+        - Runs each reconstruction algorithm with timing
+        - Displays results for comparison
+        
+        Raises:
+            AttributeError: If display_plot.result is not available (run select_slices first)
+        """
         
         logging.info(f"Running reconstruction on 2 selected slices:")
+        slice_1: int
+        slice_2: int
         slice_1, slice_2 = self.display_plot.result
 
-        sinogram_normalized_images_log = np.moveaxis(self.parent.normalized_images_log, 0, 1)
+        sinogram_normalized_images_log: NDArray[np.floating] = np.moveaxis(self.parent.normalized_images_log, 0, 1)
         logging.info(f"\t{np.shape(sinogram_normalized_images_log) = }")
         logging.info(f"\t{np.shape(self.parent.normalized_images_log) = }")
         logging.info(f"\t{np.shape(self.parent.final_list_of_angles_rad) = }")
         self.parent.final_list_of_angles_rad = np.array(self.parent.final_list_of_angles_rad)
 
+        center_of_rotation: float
         if self.parent.configuration.center_of_rotation == -1:
             center_of_rotation = np.shape(sinogram_normalized_images_log)[2] // 2
         else:
             center_of_rotation = self.parent.configuration.center_of_rotation
 
+        nbr_angles: int
+        height: int
+        width: int
         nbr_angles, height, width = np.shape(self.parent.normalized_images_log)  # width of the image
-        center_offset = -(width / 2 - center_of_rotation)  # it's Shimin's formula
+        center_offset: float = -(width / 2 - center_of_rotation)  # it's Shimin's formula
 
-        svmbir_lib_path = SVMBIR_LIB_PATH if check_folder_write_permission(SVMBIR_LIB_PATH) else SVMBIR_LIB_PATH_BACKUP
+        svmbir_lib_path: str = SVMBIR_LIB_PATH if check_folder_write_permission(SVMBIR_LIB_PATH) else SVMBIR_LIB_PATH_BACKUP
 
         # reconstructed_slices = []
         for _slice in [slice_1, slice_2]:
@@ -103,8 +164,8 @@ class TestReconstruction(Parent):
 
             # gridrec
             logging.info(f"\tusing rec.gridrec_reconstruction ...")
-            time_start_gridrec = time.time()
-            _rec_img_gridrec = rec.gridrec_reconstruction(sinogram_normalized_images_log[_slice],
+            time_start_gridrec: float = time.time()
+            _rec_img_gridrec: NDArray[np.floating] = rec.gridrec_reconstruction(sinogram_normalized_images_log[_slice],
                                                           center_of_rotation,
                                                           angles=self.parent.final_list_of_angles_rad,
                                                           apply_log=False,
@@ -112,14 +173,14 @@ class TestReconstruction(Parent):
                                                           filter_name='shepp',
                                                           pad=100,
                                                           ncore=NUM_THREADS)    
-            time_end_gridrec = time.time()
+            time_end_gridrec: float = time.time()
             logging.info(f"\t{np.shape(_rec_img_gridrec) =}")
             logging.info(f"\tusing rec.gridrec_reconstruction ... done in {time_end_gridrec - time_start_gridrec:.2f} seconds!")
 
             # astra
             logging.info(f"\tusing rec.astra_reconstruction ...")
-            time_start_astra = time.time()
-            _rec_img_astra = rec.astra_reconstruction(sinogram_normalized_images_log[_slice],
+            time_start_astra: float = time.time()
+            _rec_img_astra: NDArray[np.floating] = rec.astra_reconstruction(sinogram_normalized_images_log[_slice],
                                                       center_of_rotation,
                                                       angles=self.parent.final_list_of_angles_rad,
                                                       apply_log=False,
@@ -129,13 +190,13 @@ class TestReconstruction(Parent):
                                                       num_iter=300,
                                                       method='SIRT_CUDA',
                                                       ncore=NUM_THREADS)
-            time_end_astra = time.time()
+            time_end_astra: float = time.time()
             logging.info(f"\t{np.shape(_rec_img_astra) =}")
             logging.info(f"\tusing rec.astra_reconstruction ... done in {time_end_astra - time_start_astra:.2f} seconds!")
 
             # svmbir
             logging.info(f"\tusing rec.svmbir_reconstruction ...")
-            projections_normalized_images_log = self.parent.normalized_images_log[:, _slice:_slice+1, :]
+            projections_normalized_images_log: NDArray[np.floating] = self.parent.normalized_images_log[:, _slice:_slice+1, :]
             logging.info(f"\t{np.shape(projections_normalized_images_log) = }")
             logging.info(f"\t{np.shape(self.parent.final_list_of_angles_rad) =}")
             logging.info(f"\t{height = }")
@@ -155,8 +216,8 @@ class TestReconstruction(Parent):
                 logging.info("Warning: Inf values found in projections. Replacing with 0.")
                 projections_normalized_images_log = np.nan_to_num(projections_normalized_images_log, posinf=0.0, neginf=0.0)
 
-            time_start_svmbir = time.time()
-            _rec_img_svmbir = svmbir.recon(projections_normalized_images_log,
+            time_start_svmbir: float = time.time()
+            _rec_img_svmbir: NDArray[np.floating] = svmbir.recon(projections_normalized_images_log,
                                            angles=self.parent.final_list_of_angles_rad,
                                            num_rows = width,  
                                            num_cols = width,  # width,
@@ -174,27 +235,29 @@ class TestReconstruction(Parent):
                                         #    roi_radius=1000,
                                            svmbir_lib_path = svmbir_lib_path,
                                            )
-            time_end_svmbir = time.time()
+            time_end_svmbir: float = time.time()
             logging.info(f"\tslice: {_slice}")
             logging.info(f"\tusing rec.svmbir_reconstruction ... done in {time_end_svmbir - time_start_svmbir:.2f} seconds!")
 
             # mbirjax
             logging.info(f"\tusing mbirjax ...")
-            sinogram_shape  = projections_normalized_images_log.shape  # (nbr_angles, height, width)
+            sinogram_shape: Tuple[int, ...] = projections_normalized_images_log.shape  # (nbr_angles, height, width)
             logging.info(f"\t\t{sinogram_shape = }")
             logging.info(f"\t\t{projections_normalized_images_log.shape = }")
-            time_start_mbirjax = time.time()
-            ct_model_for_recon = mj.ParallelBeamModel(sinogram_shape,
+            time_start_mbirjax: float = time.time()
+            ct_model_for_recon: mj.ParallelBeamModel = mj.ParallelBeamModel(sinogram_shape,
                                                       self.parent.final_list_of_angles_rad,)
             ct_model_for_recon.set_params(sharpness=svmbir_parameters['sharpness'],
                                           verbose=False,
                                           use_gpu="full",
                                           det_channel_offset=center_offset,
                                           snr_db=svmbir_parameters['snr_db'],)
+            _rec_img_mbirjax: jnp.ndarray
+            recon_dict: dict
             _rec_img_mbirjax, recon_dict = ct_model_for_recon.recon(projections_normalized_images_log,
                                                                     print_logs=False,
                                                                     weights=None)
-            time_end_mbirjax = time.time()
+            time_end_mbirjax: float = time.time()
             logging.info(f"\t{np.shape(_rec_img_mbirjax) = }")
             logging.info(f"\t{recon_dict = }")
             logging.info(f"\tusing mbirjax ... done in {time_end_mbirjax - time_start_mbirjax:.2f} seconds!")
@@ -207,7 +270,26 @@ class TestReconstruction(Parent):
 
         logging.info(f"\tdone!")
       
-    def display_reconstructed_slice(self, gridrec=None, astra=None, svmbir=None, mbirjax=None, slice=None):
+    def display_reconstructed_slice(self, 
+                                   gridrec: Optional[NDArray[np.floating]] = None, 
+                                   astra: Optional[NDArray[np.floating]] = None, 
+                                   svmbir: Optional[NDArray[np.floating]] = None, 
+                                   mbirjax: Optional[Union[NDArray[np.floating], jnp.ndarray]] = None, 
+                                   slice: Optional[int] = None) -> None:
+        """
+        Display reconstruction results from different algorithms in a 2x2 subplot grid.
+        
+        Args:
+            gridrec: Reconstruction result from Gridrec algorithm
+            astra: Reconstruction result from ASTRA algorithm  
+            svmbir: Reconstruction result from SVMBIR algorithm
+            mbirjax: Reconstruction result from MBIRJAX algorithm
+            slice: Slice number for labeling the plots
+            
+        Note:
+            If any reconstruction result is None, that subplot will be hidden.
+            All images are displayed with 'viridis' colormap and vmin=0.
+        """
 
         fig, axs = plt.subplots(nrows=2, ncols=2, figsize=(10, 10))
 
