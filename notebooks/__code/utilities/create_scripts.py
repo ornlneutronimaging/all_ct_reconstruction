@@ -1,19 +1,43 @@
+"""
+Script generation utilities for CT reconstruction pipeline.
+
+This module provides functions to create shell scripts for running CT reconstruction
+jobs both locally and on High Performance Computing (HPC) systems like HSNT.
+The generated scripts handle environment setup, file copying, and job submission.
+"""
+
 import os
 import shutil
+from typing import Optional, Any
 
 from __code import STEP3_SCRIPTS
 from __code.utilities.time import get_current_time_in_special_file_name_format
 from __code.config import HSNT_SCRIPTS_FOLDER, HSNT_FOLDER
 
 
-def create_sh_file(json_file_name, output_folder):
+def create_sh_file(json_file_name: str, output_folder: str) -> str:
     """
-    Create a shell script to run the reconstruction with the given configuration file.
+    Create a shell script to run CT reconstruction with the given configuration file.
+    
+    This function generates a bash script that sets up the environment and runs
+    the reconstruction pipeline using pixi. The script includes proper path handling
+    for filenames with spaces.
+    
+    Args:
+        json_file_name: Path to the JSON configuration file
+        output_folder: Directory where the shell script will be created
+        
+    Returns:
+        Full path to the created shell script file
+        
+    Note:
+        The generated script uses pixi for environment management and makes
+        the script executable (chmod 755).
     """
-    time_stamp = get_current_time_in_special_file_name_format()
-    sh_file_name = os.path.join(output_folder, f"run_reconstruction_{time_stamp}.sh")
+    time_stamp: str = get_current_time_in_special_file_name_format()
+    sh_file_name: str = os.path.join(output_folder, f"run_reconstruction_{time_stamp}.sh")
 
-    json_file_name_on_linux = json_file_name.replace(" ", "\ ")
+    json_file_name_on_linux: str = json_file_name.replace(" ", "\ ")
 
     with open(sh_file_name, 'w') as sh_file:
         sh_file.write("#!/bin/bash\n")
@@ -26,31 +50,52 @@ def create_sh_file(json_file_name, output_folder):
     return sh_file_name
 
 
-def create_sh_hsnt_file(configuration=None, 
-                        json_file_name=None, 
-                        hstn_output_json_folder=None, 
-                        prefix=None):
+def create_sh_hsnt_file(configuration: Optional[Any] = None, 
+                        json_file_name: Optional[str] = None, 
+                        hstn_output_json_folder: Optional[str] = None, 
+                        prefix: Optional[str] = None) -> str:
     """
-    create the script to run on hsnt
+    Create a shell script for running CT reconstruction on HSNT HPC system.
+    
+    This function generates a comprehensive bash script for HSNT that includes:
+    - SLURM job submission parameters
+    - File copying operations
+    - Environment setup
+    - Job timing and logging
+    - Error handling
+    
+    Args:
+        configuration: Configuration object containing job parameters
+        json_file_name: Path to the JSON configuration file
+        hstn_output_json_folder: Destination folder on HSNT for config files
+        prefix: Optional prefix for the script filename
+        
+    Returns:
+        Full path to the created HSNT shell script
+        
+    Note:
+        The script is designed for SLURM job submission on HSNT with specific
+        resource requirements (118G memory, exclusive node access).
     """
-    output_folder = configuration.output_folder
-    instrument = configuration.instrument
-    ipts = f"IPTS-{configuration.ipts_number}"
+    output_folder: str = configuration.output_folder
+    instrument: str = configuration.instrument
+    ipts: str = f"IPTS-{configuration.ipts_number}"
 
+    _prefix: str
     if prefix is None:
         _prefix = get_current_time_in_special_file_name_format()
     else:
         _prefix = prefix
         
-    scripts_folder = os.path.join(output_folder, "scripts")
+    scripts_folder: str = os.path.join(output_folder, "scripts")
     if not os.path.exists(scripts_folder):
         os.makedirs(scripts_folder)
-    sh_file_name = os.path.join(scripts_folder, f"run_reconstruction_on_hsnt_{_prefix}.sh")
+    sh_file_name: str = os.path.join(scripts_folder, f"run_reconstruction_on_hsnt_{_prefix}.sh")
 
     # copy the files to the local folder on hsnt
-    projections_pre_processing_folder = configuration.projections_pre_processing_folder
+    projections_pre_processing_folder: str = configuration.projections_pre_processing_folder
 
-    hsnt_json_full_name = os.path.join(hstn_output_json_folder, os.path.basename(json_file_name))
+    hsnt_json_full_name: str = os.path.join(hstn_output_json_folder, os.path.basename(json_file_name))
 
     sbatch_commands = ["#SBATCH --job-name=recon1",
                        "#SBATCH --nodes=1 --exclusive",
