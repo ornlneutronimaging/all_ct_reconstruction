@@ -1,3 +1,18 @@
+"""
+System configuration and working directory management for CT reconstruction pipeline.
+
+This module provides the System class which handles:
+- Working directory selection and validation
+- Instrument and facility configuration
+- IPTS (Integrated Proposal Tracking System) number management
+- File system path resolution
+- User interface for directory browsing
+
+The System class maintains global state for the current working environment
+and provides methods for configuring the reconstruction pipeline.
+"""
+
+from typing import Optional, List, Dict, ClassVar
 from __code import config
 import getpass
 import glob
@@ -10,27 +25,61 @@ import subprocess
 
 from __code.utilities.folder import find_first_real_dir
 
-list_instrument_per_facility = {'SNS': ['VENUS', 'SNAP'],
-'HFIR': ['CG1D'],
-                               }
-
-list_instrument_per_facility = {'HFIR': ['CG1D'],
-                                'SNS': ['SNAP', 'VENUS']}
+# Instrument configuration by facility
+list_instrument_per_facility: Dict[str, List[str]] = {
+    'HFIR': ['CG1D'],
+    'SNS': ['SNAP', 'VENUS']
+}
 
 
 class System:
+    """
+    System configuration manager for CT reconstruction pipeline.
+    
+    This class provides centralized management of system configuration including
+    working directories, instrument settings, and IPTS numbers. It maintains
+    global state across the reconstruction workflow and provides methods for
+    directory selection and validation.
+    
+    Class Attributes:
+        working_dir: Current working directory path
+        start_path: Starting path for directory navigation
+        ipts_number: Current IPTS number
+    """
 
-    working_dir = ''
-    start_path = ''
-    ipts_number = ''
+    working_dir: ClassVar[str] = ''
+    start_path: ClassVar[str] = ''
+    ipts_number: ClassVar[str] = ''
 
     @classmethod
-    def select_working_dir(cls, debugger_folder='', system_folder='',
-                           facility='HFIR',
-                           instrument='CG1D',
-                           ipts=None,
-                           instrument_to_exclude=None,
-                           notebook="N/A"):
+    def select_working_dir(cls, 
+                          debugger_folder: str = '', 
+                          system_folder: str = '',
+                          facility: str = 'HFIR',
+                          instrument: str = 'CG1D',
+                          ipts: Optional[str] = None,
+                          instrument_to_exclude: Optional[List[str]] = None,
+                          notebook: str = "N/A") -> None:
+        """
+        Display interface for selecting working directory and configuring system.
+        
+        This method provides an interactive interface for users to select their
+        working directory, instrument, and IPTS number. It handles both debugging
+        mode and production mode configurations.
+        
+        Args:
+            debugger_folder: Folder to use in debugging mode
+            system_folder: System folder path
+            facility: Facility name ('SNS' or 'HFIR') 
+            instrument: Instrument name ('VENUS', 'SNAP', 'CG1D')
+            ipts: IPTS number string
+            instrument_to_exclude: List of instruments to exclude from selection
+            notebook: Name of the calling notebook for reference
+            
+        Note:
+            In debugging mode, predefined paths from config are used.
+            In production mode, an interactive file browser is displayed.
+        """
 
         try:
 
