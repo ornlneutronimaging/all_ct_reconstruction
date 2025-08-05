@@ -1,10 +1,46 @@
+"""
+Filtered Back Projection (FBP) Reconstruction Module for CLI-Based CT Workflow.
+
+This module provides command-line interface compatible functions for performing
+FBP reconstruction on white beam CT data. It supports multiple reconstruction
+algorithms and handles the complete workflow from data preparation to final
+slice export.
+
+Key Classes:
+    - FbpCliHandler: Main handler class for FBP reconstruction operations
+
+Key Features:
+    - Multiple FBP algorithms (TomoPy, Algotom, SVMBIR)
+    - White beam mode reconstruction
+    - Stripe removal integration
+    - Multi-threading support for performance
+    - Automatic slice merging and export
+    - Comprehensive logging and progress tracking
+
+Supported Algorithms:
+    1. TomoPy FBP: Standard filtered back projection
+    2. Algotom FBP: Advanced FBP with enhanced filters
+    3. SVMBIR: Model-based iterative reconstruction
+
+Dependencies:
+    - tomopy: Core tomographic reconstruction library
+    - algotom: Advanced tomographic algorithms
+    - svmbir: Sparse-view model-based iterative reconstruction
+    - numpy: Numerical computing and array operations
+
+Author: CT Reconstruction Pipeline Team
+Created: Part of CLI-based CT reconstruction workflow
+"""
+
 import numpy as np
 import os
 import glob
 import logging
+from typing import List, Dict, Any, Tuple, Optional
 import svmbir
 import tomopy
 from tomopy.prep import stripe
+from numpy.typing import NDArray
 
 # from imars3d.backend.reconstruction import recon
 from tomopy import recon as tomopy_recon
@@ -26,9 +62,42 @@ from __code.workflow_cli.stripes_removal import StripesRemovalHandler
 
 
 class FbpCliHandler:
+    """
+    Handler class for FBP reconstruction operations in CLI workflow.
+    
+    This class provides static methods for performing filtered back projection
+    reconstruction using various algorithms. It handles data preparation,
+    reconstruction execution, and result processing for white beam CT data.
+    """
 
     @staticmethod
-    def _run_reconstruction(projections, center_of_rotation, list_of_angles_rad, algorithm, max_workers):
+    def _run_reconstruction(projections: NDArray[np.floating], 
+                           center_of_rotation: float, 
+                           list_of_angles_rad: NDArray[np.floating], 
+                           algorithm: ReconstructionAlgorithm, 
+                           max_workers: int) -> NDArray[np.floating]:
+        """
+        Execute FBP reconstruction using the specified algorithm.
+        
+        This method performs the actual reconstruction computation using one
+        of the supported FBP algorithms. It handles algorithm-specific parameter
+        configuration and execution.
+        
+        Args:
+            projections: 3D projection data array (angles x height x width)
+            center_of_rotation: Center of rotation value in pixels
+            list_of_angles_rad: Array of projection angles in radians
+            algorithm: Reconstruction algorithm to use
+            max_workers: Number of threads for parallel processing
+            
+        Returns:
+            3D reconstructed volume array (slices x height x width)
+            
+        Supported Algorithms:
+            - algotom_fbp: Algotom filtered back projection
+            - tomopy_fbp: TomoPy filtered back projection  
+            - svmbir: Model-based iterative reconstruction
+        """
         
         logging.info(f"\t -> {np.shape(projections) = }")
         logging.info(f"\t -> {center_of_rotation = }")

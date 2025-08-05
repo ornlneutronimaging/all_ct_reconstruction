@@ -1,10 +1,40 @@
+"""
+Center of Rotation and Tilt Correction for CT Reconstruction.
+
+This module provides comprehensive functionality for determining and correcting
+the center of rotation (COR) and tilt angles in computed tomography reconstruction.
+It includes automatic detection algorithms, manual adjustment interfaces, and
+correction methods for various imaging modes.
+
+Key Classes:
+    - ImageAngles: Constants for image angle classifications
+    - CenterOfRotationAndTilt: Main class for COR and tilt correction workflow
+
+Key Features:
+    - Automatic COR detection using multiple algorithms (Vo, 360-degree methods)
+    - Manual COR adjustment with interactive visualization
+    - Tilt angle correction using 0° and 180° projection pairs
+    - Support for 180° and 360° reconstruction modes
+    - Interactive widgets for parameter fine-tuning
+
+Dependencies:
+    - neutompy: Neutron tomography preprocessing functions
+    - algotom: Advanced tomographic algorithms
+    - matplotlib: Visualization and interactive plotting
+    - scikit-image: Image transformation utilities
+
+Author: CT Reconstruction Pipeline Team
+Created: Part of CT reconstruction development workflow
+"""
+
+from typing import Optional, Union, Tuple, Any, Dict, List
 import numpy as np
+from numpy.typing import NDArray
 import logging
 from neutompy.preproc.preproc import correction_COR, find_COR
 import matplotlib.pyplot as plt
 from ipywidgets import interactive
-from IPython.display import display
-from IPython.display import HTML
+from IPython.display import display, HTML
 import ipywidgets as widgets
 from skimage.transform import rotate
 from algotom.prep.calculation import find_center_vo, find_center_360
@@ -18,36 +48,114 @@ from __code.utilities.logging import logging_3d_array_infos
 
 
 class ImageAngles:
+    """
+    Constants for tomographic projection angle classifications.
     
-    degree_0 = '0 degree'
-    degree_180 = '180 degree'
-    degree_360 = '360 degree'
+    Defines standard angle designations used in CT reconstruction
+    for different projection positions and acquisition modes.
+    
+    Attributes
+    ----------
+    degree_0 : str
+        Label for 0-degree projection images
+    degree_180 : str  
+        Label for 180-degree projection images
+    degree_360 : str
+        Label for 360-degree projection images
+        
+    Notes
+    -----
+    Used for organizing and identifying projection images based
+    on their angular position in the acquisition sequence.
+    """
+    
+    degree_0: str = '0 degree'
+    degree_180: str = '180 degree'
+    degree_360: str = '360 degree'
 
 
 class CenterOfRotationAndTilt(Parent):
+    """
+    Center of rotation and tilt correction for CT reconstruction workflow.
+    
+    This class provides comprehensive functionality for determining and correcting
+    the center of rotation (COR) and tilt angles in computed tomography. It supports
+    both automatic detection algorithms and manual adjustment through interactive
+    interfaces.
+    
+    Inherits from Parent class which provides access to reconstruction pipeline
+    state, working directories, and configuration parameters.
+    
+    Key Features:
+        - Automatic COR detection using Vo and 360-degree algorithms
+        - Manual COR adjustment with real-time visualization
+        - Tilt angle calculation from 0° and 180° projections  
+        - Interactive parameter tuning widgets
+        - Support for white beam and TOF reconstruction modes
+    
+    Attributes
+    ----------
+    image_0_degree : NDArray[np.floating], optional
+        Projection image at 0-degree angle
+    image_180_degree : NDArray[np.floating], optional
+        Projection image at 180-degree angle
+    image_360_degree : NDArray[np.floating], optional
+        Projection image at 360-degree angle
+    index_0_degree : int
+        Index of 0-degree projection in dataset
+    index_180_degree : int
+        Index of 180-degree projection in dataset  
+    index_360_degree : int
+        Index of 360-degree projection in dataset
+    manual_center_selection : float, optional
+        Manually selected center of rotation value
+    is_manual_mode : bool
+        Flag indicating manual vs automatic mode selection
+    height : int, optional
+        Image height for processing
+    display_plot : matplotlib.figure.Figure, optional
+        Figure object for interactive plotting
+    
+    Examples
+    --------
+    >>> cor_handler = CenterOfRotationAndTilt(parent=parent_instance)
+    >>> cor_handler.isolate_0_and_180_degrees_images()
+    >>> cor_handler.automatic_center_of_rotation_finding()
+    >>> center = cor_handler.get_center_of_rotation()
+    """
 
-    image_0_degree = None
-    image_180_degree = None
-    image_360_degree = None
+    image_0_degree: Optional[NDArray[np.floating]] = None
+    image_180_degree: Optional[NDArray[np.floating]] = None
+    image_360_degree: Optional[NDArray[np.floating]] = None
 
-    index_0_degree = 0
-    index_180_degree = 0
-    index_360_degree = 0
+    index_0_degree: int = 0
+    index_180_degree: int = 0
+    index_360_degree: int = 0
 
-    manual_center_selection = None
+    manual_center_selection: Optional[float] = None
 
-    is_manual_mode = False
+    is_manual_mode: bool = False
 
-    height = None
+    height: Optional[int] = None
 
-    display_plot = None
+    display_plot: Optional[Any] = None
 
-    def _isolate_0_and_180_degrees_images_white_beam_mode(self):
+    def _isolate_0_and_180_degrees_images_white_beam_mode(self) -> None:
+        """
+        Isolate 0 and 180 degree projection images for white beam mode.
+        
+        Extracts the specific projection angles needed for center of rotation
+        calculation in white beam reconstruction mode.
+        
+        Notes
+        -----
+        Uses final_list_of_angles from parent to identify angular positions.
+        """
         logging.info(f"\tisolating 0 and 180 degres: ")
-        list_of_angles = self.parent.final_list_of_angles
+        list_of_angles: List[float] = self.parent.final_list_of_angles
         self._saving_0_and_180(list_of_angles)
 
-    def _saving_0_and_180(self, list_of_angles):
+    def _saving_0_and_180(self, list_of_angles: List[float]) -> None:
         angles_minus_180 = [float(_value) - 180 for _value in list_of_angles]
         abs_angles_minus_180 = np.abs(angles_minus_180)
         minimum_value = np.min(abs_angles_minus_180)

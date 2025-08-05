@@ -1,11 +1,43 @@
+"""
+Normalization Workflow for CT Reconstruction Pipeline.
+
+This module provides comprehensive normalization functionality for computed tomography
+data processing. It handles the critical step of normalizing sample projections using
+open beam and dark current measurements to produce calibrated transmission data.
+
+Key Classes:
+    - Normalization: Main class for CT data normalization workflow
+
+Key Features:
+    - Standard normalization using open beam and dark current corrections
+    - Interactive ROI selection for normalization parameters
+    - Quality control and validation of normalized data
+    - Support for various normalization algorithms
+    - Progress tracking and logging for large datasets
+    - Export functionality for normalized projections
+
+Normalization Formula:
+    normalized = (sample - dark) / (open_beam - dark)
+
+Dependencies:
+    - tomopy: Core tomographic processing functions
+    - scipy: Scientific computing and filtering
+    - matplotlib: Interactive plotting and visualization
+    - IPython: Jupyter notebook widget integration
+
+Author: CT Reconstruction Pipeline Team
+Created: Part of CT reconstruction development workflow
+"""
+
+from typing import Optional, Tuple, Any, List, Union
 import logging
 import numpy as np
+from numpy.typing import NDArray
 import os
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 from ipywidgets import interactive
-from IPython.display import display
-from IPython.display import HTML
+from IPython.display import display, HTML
 import ipywidgets as widgets
 from scipy.ndimage import median_filter
 import tomopy

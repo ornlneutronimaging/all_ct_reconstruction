@@ -1,29 +1,62 @@
+"""
+Legacy Chip Alignment Correction Module (TO BE REMOVED).
+
+This module contains deprecated functionality for correcting alignment between
+detector chips in multi-chip detector systems. This file is marked for removal
+and has been replaced by improved chip correction algorithms in chips_correction.py.
+
+Legacy Functions:
+    - correct_alignment: Old chip alignment correction algorithm
+
+Warning:
+    This module is deprecated and scheduled for removal. Use chips_correction.py
+    for current chip alignment and correction functionality.
+
+Author: CT Reconstruction Pipeline Team
+Status: DEPRECATED - TO BE REMOVED
+"""
+
 import numpy as np
 import warnings
+from typing import List, Optional, Tuple
+from numpy.typing import NDArray
 
-def correct_alignment(unaligned_image, offsets, center=None, fill_gap=True, num_pix_unused=1, num_pix_neighbor=1):
-    """Function to correct alignment of the 4 segments in each image caused by the mismatch between the 4 chips.
+
+def correct_alignment(unaligned_image: NDArray[np.floating], 
+                     offsets: List[float], 
+                     center: Optional[List[float]] = None, 
+                     fill_gap: bool = True, 
+                     num_pix_unused: int = 1, 
+                     num_pix_neighbor: int = 1) -> NDArray[np.floating]:
+    """
+    Function to correct alignment of the 4 segments in each image caused by the mismatch between the 4 chips.
+    
+    Note:
+        This function is deprecated. Use chips_correction.py for current chip alignment functionality.
     
     Args:
-        unaligned_image(ndarray): 3D projection data (height x width x wavelengths)
-        offsets(list): a list of offset values along X and Y axis, respectively (X offset, Y offset)
-        center(list,optional): X and Y coordinate of the center that is connected to all 4 chips
-        fill_gap(bool,optional): true/false, the function will fill the gap after moving the chips according to the
+        unaligned_image: 3D projection data (height x width x wavelengths)
+        offsets: A list of offset values along X and Y axis, respectively (X offset, Y offset)
+        center: X and Y coordinate of the center that is connected to all 4 chips
+        fill_gap: True/False, the function will fill the gap after moving the chips according to the
             offsets if set to true
-        num_pix_unused(int,optional): number of pixels along the border not to be used while filling the gap
-        num_pix_neighbor(int,optional): number of neighboring pixels used for filling the gap
+        num_pix_unused: Number of pixels along the border not to be used while filling the gap
+        num_pix_neighbor: Number of neighboring pixels used for filling the gap
         
     Returns:
-        ndarray: aligned projection data (height' x width' x wavelengths)
-        """
+        Aligned projection data (height' x width' x wavelengths)
+    
+    Warning:
+        This function is deprecated and will be removed in future versions.
+    """
     # Get the offsets
-    x_offset = offsets[0]
-    y_offset = offsets[1]
+    x_offset: float = offsets[0]
+    y_offset: float = offsets[1]
 
     # Get the center
     if center is not None:
-        center_x = center[0]
-        center_y = center[1]
+        center_x: float = center[0]
+        center_y: float = center[1]
 
         # Check if the unaligned image contains the alignment center along both axes
         if (center_x < 0) or (center_x > unaligned_image.shape[1]):

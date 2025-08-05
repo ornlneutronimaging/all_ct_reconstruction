@@ -1,10 +1,45 @@
+"""
+SVMBIR White Beam Reconstruction Module for CLI-Based CT Workflow.
+
+This module provides command-line interface compatible functions for performing
+Sparse-View Model-Based Iterative Reconstruction (SVMBIR) on white beam CT data.
+It supports both traditional SVMBIR and JAX-accelerated mbirjax implementations
+for high-performance reconstruction.
+
+Key Classes:
+    - SvmbirCliHandler: Main handler class for SVMBIR reconstruction operations
+
+Key Features:
+    - SVMBIR and mbirjax reconstruction algorithms
+    - White beam mode reconstruction
+    - Stripe removal integration
+    - System matrix management and cleanup
+    - Parallel reconstruction with slice merging
+    - Comprehensive parameter configuration
+
+Algorithms:
+    1. SVMBIR: Traditional sparse-view model-based iterative reconstruction
+    2. mbirjax: JAX-accelerated implementation for GPU/TPU acceleration
+
+Dependencies:
+    - svmbir: Core SVMBIR reconstruction library
+    - mbirjax: JAX-accelerated model-based iterative reconstruction
+    - jax: Just-in-time compilation and GPU acceleration
+    - numpy: Numerical computing and array operations
+
+Author: CT Reconstruction Pipeline Team
+Created: Part of CLI-based CT reconstruction workflow
+"""
+
 import numpy as np
 import os
 import glob
 import logging
+from typing import List, Dict, Any, Tuple, Optional, Union
 import svmbir
 import jax.numpy as jnp
 import mbirjax as mj
+from numpy.typing import NDArray
 
 from __code import WhenToRemoveStripes
 from __code.workflow.export import Export
@@ -19,9 +54,31 @@ from __code.workflow_cli.stripes_removal import StripesRemovalHandler
 
 
 class SvmbirCliHandler:
+    """
+    Handler class for SVMBIR reconstruction operations in CLI workflow.
+    
+    This class provides static methods for performing model-based iterative
+    reconstruction using SVMBIR and mbirjax algorithms. It handles system
+    matrix management, reconstruction execution, and result processing.
+    """
 
     @staticmethod
-    def run_reconstruction_from_pre_data_mode(config_json_file, mbirjax=False):
+    def run_reconstruction_from_pre_data_mode(config_json_file: str, mbirjax: bool = False) -> None:
+        """
+        Execute SVMBIR reconstruction from preprocessed data configuration.
+        
+        This method performs SVMBIR reconstruction using configuration data
+        loaded from a JSON file. It supports both traditional SVMBIR and
+        JAX-accelerated mbirjax implementations.
+        
+        Args:
+            config_json_file: Path to JSON configuration file containing reconstruction parameters
+            mbirjax: Whether to use JAX-accelerated implementation (default: False)
+            
+        Note:
+            When using traditional SVMBIR, the system matrix folder is cleared
+            to prevent permission errors and ensure clean reconstruction state.
+        """
 
         if not mbirjax:
             logging.info(f"clearing {SVMBIR_LIB_PATH}/sysmatrix folder")

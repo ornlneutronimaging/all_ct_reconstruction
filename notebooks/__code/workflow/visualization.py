@@ -1,9 +1,39 @@
-from IPython.display import display
+"""
+Visualization Utilities for CT Reconstruction Pipeline.
+
+This module provides comprehensive visualization functionality for computed tomography
+data analysis and quality control. It includes interactive plotting tools, statistical
+analysis displays, and data cleaning visualization for various stages of the
+reconstruction pipeline.
+
+Key Classes:
+    - Visualization: Main class for CT data visualization and analysis
+
+Key Features:
+    - Interactive data visualization with customizable display modes
+    - Statistical analysis and outlier detection visualization
+    - Raw and cleaned data comparison displays
+    - Progress tracking for large dataset visualization
+    - Integration with TomoPy outlier removal algorithms
+    - Customizable plotting parameters and gamma correction
+
+Dependencies:
+    - matplotlib: Core plotting and visualization functionality
+    - IPython: Jupyter notebook widget integration
+    - tomopy: Outlier detection and data cleaning algorithms
+    - numpy: Numerical operations for data analysis
+
+Author: CT Reconstruction Pipeline Team
+Created: Part of CT reconstruction development workflow
+"""
+
+from typing import Optional, Union, List, Dict, Any
+from IPython.display import display, HTML
 import ipywidgets as widgets
-from IPython.display import HTML
 import matplotlib.pyplot as plt
 from ipywidgets import interactive
 import numpy as np
+from numpy.typing import NDArray
 from tomopy.misc.corr import remove_outlier
 
 from __code.parent import Parent
@@ -12,16 +42,87 @@ from __code.workflow.final_projections_review import FinalProjectionsReview
 from __code.config import clean_paras, GAMMA_DIFF, NUM_THREADS
 
 class Visualization(Parent):
+    """
+    Visualization and analysis tools for CT reconstruction data.
+    
+    This class provides comprehensive visualization capabilities for CT data
+    analysis including interactive plotting, statistical analysis, and data
+    quality assessment. It supports both raw and processed data visualization
+    with customizable display parameters.
+    
+    Inherits from Parent class which provides access to reconstruction pipeline
+    state, working directories, and data arrays.
+    
+    Key Features:
+        - Interactive data visualization with widget controls
+        - Statistical analysis and outlier detection displays
+        - Raw vs cleaned data comparison visualization
+        - Customizable gamma correction and display parameters
+        - Integration with TomoPy data cleaning algorithms
+        - Progress tracking for large dataset analysis
+    
+    Attributes
+    ----------
+    mode : str
+        Current visualization mode ('raw' or 'cleaned')
+    what_to_visualize_ui : ipywidgets.ToggleButtons
+        Widget for selecting visualization type
+    
+    Examples
+    --------
+    >>> viz = Visualization(parent=parent_instance)
+    >>> viz.how_to_visualize(DataType.raw)
+    >>> viz.visualize_according_to_selection(mode='cleaned')
+    """
 
-    mode = 'raw'  # 'cleaned'
+    mode: str = 'raw'  # 'cleaned'
 
-    def how_to_visualize(self, data_type=DataType.raw):
+    def how_to_visualize(self, data_type: DataType = DataType.raw) -> None:
+        """
+        Display visualization mode selection interface.
+        
+        Provides interactive widget for selecting how to visualize CT data,
+        offering options between comprehensive image display and statistical
+        analysis modes.
+        
+        Parameters
+        ----------
+        data_type : DataType, default=DataType.raw
+            Type of data to visualize (raw, normalized, etc.)
+            
+        Notes
+        -----
+        - Creates toggle button widget for mode selection
+        - Displays section header with data type information
+        - Sets up UI for subsequent visualization calls
+        
+        Side Effects
+        ------------
+        Creates and displays what_to_visualize_ui widget
+        """
         display(HTML(f"<hr><h2>How to visualize the {data_type} data?</h2>"))
         self.what_to_visualize_ui = widgets.ToggleButtons(options=['All images', 'Statistics'],
                                                           value='Statistics')
         display(self.what_to_visualize_ui)
 
-    def visualize_according_to_selection(self, mode='cleaned'):
+    def visualize_according_to_selection(self, mode: str = 'cleaned') -> None:
+        """
+        Execute visualization based on user selection and mode.
+        
+        Dispatches to appropriate visualization method based on the
+        selected visualization type and data processing mode.
+        
+        Parameters
+        ----------
+        mode : str, default='cleaned'
+            Data processing mode ('raw' or 'cleaned')
+            
+        Notes
+        -----
+        - Routes to visualize_all_images_at_once() or visualize_statistics()
+        - Based on what_to_visualize_ui widget selection
+        - Sets internal mode for subsequent processing
+        """
         # for QHY data
         self.mode = mode
         if self.what_to_visualize_ui.value == 'All images':

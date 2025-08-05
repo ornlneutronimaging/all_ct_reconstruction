@@ -1,3 +1,50 @@
+"""
+Stripe Artifact Removal for CT Reconstruction Pipeline.
+
+This module provides comprehensive functionality for detecting and removing stripe
+artifacts in CT sinograms. Stripe artifacts are horizontal bands in sinograms that
+appear as ring artifacts in reconstructed images, typically caused by detector
+non-uniformities, dead pixels, or calibration issues.
+
+Key Classes:
+    - RemoveStrips: Main class for stripe artifact removal operations
+
+Key Features:
+    - Multiple stripe removal algorithms from TomoPy library
+    - Interactive parameter tuning with real-time preview
+    - Support for different stripe types (small, large, combined)
+    - Fourier-Wavelet, Titarenko, and Vo methods
+    - Sinogram visualization and quality assessment
+    - Algorithm comparison and validation tools
+
+Stripe Removal Algorithms:
+    1. Fourier-Wavelet (FW): Advanced wavelet-based decomposition
+    2. Titarenko: Statistical approach using ring artifact detection
+    3. Vo: Robust method for various stripe patterns
+    4. Combined approaches for optimal results
+
+Mathematical Background:
+    Stripe artifacts manifest as:
+    - Horizontal bands in sinograms (projection space)
+    - Ring artifacts in reconstructed slices (image space)
+    - Frequency domain signatures that can be filtered
+    
+    Removal methods use various mathematical approaches:
+    - Fourier domain filtering
+    - Wavelet decomposition and reconstruction
+    - Statistical outlier detection and correction
+
+Dependencies:
+    - tomopy: Core stripe removal algorithms
+    - numpy: Numerical array operations
+    - matplotlib: Sinogram visualization
+    - ipywidgets: Interactive parameter controls
+    - logging: Progress tracking and validation
+
+Author: CT Reconstruction Pipeline Team
+Created: Part of CT reconstruction development workflow
+"""
+
 import numpy as np
 from IPython.display import display
 import ipywidgets as widgets
@@ -11,6 +58,8 @@ import matplotlib.pyplot as plt
 from ipywidgets import interactive
 import webbrowser
 from matplotlib.patches import Rectangle
+from typing import Optional, List, Dict, Any, Union
+from numpy.typing import NDArray
 
 from __code import DataType, RemoveStripeAlgo, OperatingMode, WhenToRemoveStripes
 from __code.utilities import configuration_file
@@ -19,13 +68,44 @@ from __code.config import NUM_THREADS
 
 
 class RemoveStrips:
+    """
+    Handles removal of stripe artifacts from CT sinograms.
+    
+    This class provides comprehensive functionality for detecting and removing
+    horizontal stripe artifacts in sinograms that appear as ring artifacts in
+    reconstructed CT images. It supports multiple algorithms with interactive
+    parameter tuning and validation tools.
+    
+    Key Features:
+        - Multiple TomoPy-based stripe removal algorithms
+        - Interactive parameter configuration with real-time preview
+        - Support for different stripe patterns and intensities
+        - Algorithm comparison and validation
+        - Sinogram visualization and quality assessment
+        
+    Attributes:
+        sinogram: Current sinogram data for processing
+        skip_remove_strips: Flag to bypass stripe removal
+        default_list_algo_to_use: Default algorithms for automatic processing
+        list_algo: Dictionary of available algorithms with configurations
+        
+    Methods:
+        Various stripe removal methods using different algorithms
+        Interactive parameter tuning interfaces
+        Validation and comparison tools
+        
+    Stripe Types Addressed:
+        - Small stripes: Narrow detector artifacts
+        - Large stripes: Wide non-uniformity patterns  
+        - Mixed patterns: Combination of different stripe types
+    """
 
-    sinogram = None
-    skip_remove_strips = True
+    sinogram: Optional[NDArray[np.floating]] = None
+    skip_remove_strips: bool = True
 
-    default_list_algo_to_use = [RemoveStripeAlgo.remove_large_stripe]
+    default_list_algo_to_use: List[RemoveStripeAlgo] = [RemoveStripeAlgo.remove_large_stripe]
 
-    list_algo = {RemoveStripeAlgo.remove_stripe_fw: {'help': 'Remove horizontal stripes from sinogram using the Fourier-Wavelet (FW) based method',
+    list_algo: Dict[RemoveStripeAlgo, Dict[str, Any]] = {RemoveStripeAlgo.remove_stripe_fw: {'help': 'Remove horizontal stripes from sinogram using the Fourier-Wavelet (FW) based method',
                                              'function': stripe.remove_stripe_fw,
                                              'settings': widgets.VBox([
                                                             widgets.Text(value="None",

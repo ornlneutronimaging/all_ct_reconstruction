@@ -1,3 +1,46 @@
+"""
+Image Cleaning and Outlier Removal for CT Reconstruction Pipeline.
+
+This module provides comprehensive functionality for detecting and correcting outlier
+pixels in CT projection images. Outlier pixels can arise from detector defects,
+cosmic rays, electronic noise, or other artifacts that can severely impact
+reconstruction quality if not properly addressed.
+
+Key Classes:
+    - ImagesCleaner: Main class for image cleaning and outlier removal
+
+Key Features:
+    - Multiple outlier detection algorithms (TomoPy, median filter, gamma filter)
+    - Support for both CPU and GPU-accelerated processing
+    - Interactive parameter tuning with real-time preview
+    - Configurable threshold and window size parameters
+    - Progress tracking for large datasets
+    - Quality control and validation tools
+
+Cleaning Algorithms:
+    1. TomoPy Outlier Removal: Statistical outlier detection with configurable thresholds
+    2. Median Filter: Local median-based outlier replacement
+    3. Gamma Filter: Advanced outlier detection for neutron imaging
+    4. Custom threshold-based cleaning
+
+Mathematical Background:
+    Outlier detection typically uses statistical measures:
+    - Z-score: outlier if |pixel - mean| > threshold * std
+    - Median absolute deviation for robust statistics
+    - Local neighborhood analysis for spatial consistency
+
+Dependencies:
+    - numpy: Numerical array operations
+    - tomopy: Advanced outlier removal algorithms
+    - scipy: Signal processing and filtering
+    - matplotlib: Visualization and quality control
+    - ipywidgets: Interactive parameter controls
+    - tqdm: Progress tracking
+
+Author: CT Reconstruction Pipeline Team
+Created: Part of CT reconstruction development workflow
+"""
+
 import numpy as np
 from tqdm import tqdm
 import os
@@ -8,6 +51,8 @@ from IPython.display import display
 from IPython.display import HTML
 import ipywidgets as widgets
 from scipy.ndimage import median_filter
+from typing import Optional, List, Tuple, Union, Dict, Any
+from numpy.typing import NDArray
 # from imars3d.backend.corrections.gamma_filter import gamma_filter
 from tomopy.misc.corr import remove_outlier
 from tomopy.misc.corr import remove_outlier_cuda
@@ -24,6 +69,36 @@ from __code.workflow.data_handler import remove_negative_values
 
 
 class ImagesCleaner(Parent): 
+    """
+    Comprehensive image cleaning and outlier removal for CT reconstruction.
+    
+    This class provides multiple algorithms for detecting and correcting outlier
+    pixels in CT projection images. It supports various cleaning methods from
+    simple threshold-based approaches to advanced statistical outlier detection.
+    
+    Key Features:
+        - Multiple cleaning algorithms (TomoPy, median filter, custom)
+        - Interactive parameter tuning with real-time preview
+        - Support for both CPU and GPU acceleration
+        - Batch processing with progress tracking
+        - Quality control and validation tools
+        
+    Attributes:
+        Various cleaning parameters set through interactive widgets
+        
+    Methods:
+        select_cleaning_algorithm(): Choose and configure cleaning method
+        clean_images(): Execute the cleaning process
+        visualize_cleaning_results(): Compare before/after images
+        export_cleaned_data(): Save cleaned projection data
+        
+    Cleaning Pipeline:
+        1. Load and validate input projection data
+        2. Configure cleaning parameters interactively
+        3. Apply selected cleaning algorithm
+        4. Validate results and quality control
+        5. Export cleaned data for reconstruction
+    """
 
     """
     PixelCleaner Class: find the abnormal pixels (extremely low/high) and replaced by median value of the neighor matrix

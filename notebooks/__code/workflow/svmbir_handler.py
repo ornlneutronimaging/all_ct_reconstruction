@@ -1,3 +1,45 @@
+"""
+SVMBIR Handler for Advanced CT Reconstruction.
+
+This module provides comprehensive functionality for Super-Voxel Model-Based Iterative
+Reconstruction (SVMBIR) in computed tomography workflows. SVMBIR is an advanced
+reconstruction algorithm that provides superior image quality compared to traditional
+filtered back projection, especially for limited-angle or sparse data scenarios.
+
+Key Classes:
+    - SvmbirHandler: Main class for SVMBIR reconstruction workflow
+
+Key Features:
+    - Interactive reconstruction parameter configuration
+    - Support for both time-of-flight (TOF) and white beam modes
+    - Advanced regularization and prior model settings
+    - Multi-threading support for performance optimization
+    - Progress tracking and quality control
+    - Automatic data validation and preprocessing
+    - Export functionality for reconstructed volumes
+
+SVMBIR Algorithm:
+    SVMBIR uses iterative optimization to solve the reconstruction problem:
+    minimize ||Ax - b||² + β*R(x)
+    where:
+    - A: system matrix (forward projection operator)
+    - x: reconstructed volume
+    - b: measured projection data
+    - β: regularization parameter
+    - R(x): regularization function (e.g., total variation)
+
+Dependencies:
+    - svmbir: Core SVMBIR reconstruction library
+    - tomopy: Preprocessing and utilities
+    - numpy: Numerical computing
+    - ipywidgets: Interactive controls
+    - matplotlib: Visualization
+    - logging: Progress tracking
+
+Author: CT Reconstruction Pipeline Team
+Created: Part of advanced CT reconstruction development workflow
+"""
+
 import numpy as np
 import os
 from IPython.display import display
@@ -9,6 +51,8 @@ import logging
 from tqdm import tqdm
 import tomopy
 import glob
+from typing import Optional, Dict, List, Tuple, Any
+from numpy.typing import NDArray
 
 import svmbir
 
@@ -26,8 +70,43 @@ from __code.utilities.load import load_data_using_multithreading
 
 
 class SvmbirHandler(Parent):
+    """
+    Handles Super-Voxel Model-Based Iterative Reconstruction (SVMBIR) operations.
+    
+    This class provides comprehensive functionality for advanced CT reconstruction
+    using the SVMBIR algorithm. It handles parameter configuration, data preprocessing,
+    reconstruction execution, and results validation for both time-of-flight and
+    white beam imaging modes.
+    
+    Key Features:
+        - Interactive parameter configuration interface
+        - Support for multiple reconstruction algorithms (SVMBIR, FBP comparison)
+        - Advanced regularization and prior model settings
+        - Multi-threading optimization for performance
+        - Quality control and validation tools
+        - Export functionality for reconstructed volumes
+        
+    Attributes:
+        Various reconstruction parameters set through interactive widgets
+        
+    Methods:
+        set_settings(): Configure reconstruction parameters
+        run_reconstruction(): Execute SVMBIR reconstruction
+        export_results(): Save reconstructed data
+        validate_reconstruction(): Quality control checks
+    """
 
-    def set_settings(self):
+    def set_settings(self) -> None:
+        """
+        Initialize interactive settings interface for SVMBIR reconstruction.
+        
+        Creates and displays interactive widgets for configuring reconstruction
+        parameters including regularization, prior models, iteration settings,
+        and computational parameters.
+        
+        Returns:
+            None: Creates interactive widget interface
+        """
 
         # corrected_array = self.parent.corrected_images
         # nbr_images = len(corrected_array)

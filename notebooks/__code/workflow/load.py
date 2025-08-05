@@ -1,15 +1,45 @@
+"""
+Data Loading Utilities for CT Reconstruction Pipeline.
+
+This module provides comprehensive data loading functionality for computed tomography
+reconstruction workflows. It handles loading sample, open beam, and dark current data
+from various file formats with multi-threading support for performance optimization.
+
+Key Classes:
+    - Load: Main class for CT data loading and organization
+
+Key Features:
+    - Multi-threaded TIFF file loading for performance
+    - Support for sample, open beam, and dark current data types
+    - Interactive folder selection with file browser widgets
+    - Automatic file format detection and validation
+    - Run-based data organization and filtering
+    - Progress tracking with visual feedback
+    - Memory-efficient data handling for large datasets
+
+Dependencies:
+    - PIL: Image file reading and processing
+    - tqdm: Progress bar visualization
+    - matplotlib: Data visualization and plotting
+    - IPython: Jupyter notebook widget integration
+
+Author: CT Reconstruction Pipeline Team
+Created: Part of CT reconstruction development workflow
+"""
+
+from typing import Optional, List, Dict, Any, Union, Tuple
 import glob
 import os
 import numpy as np
+from numpy.typing import NDArray
 import logging
 from tqdm import tqdm
-from IPython.display import display
+from IPython.display import display, HTML
 import ipywidgets as widgets
 from PIL import Image
 import random
 import matplotlib.pyplot as plt
 from ipywidgets import interactive
-from IPython.display import HTML
 
 from __code import DataType, Run, OperatingMode
 from __code.parent import Parent
@@ -22,12 +52,68 @@ from __code.utilities.exceptions import MetadataError
 
 
 class Load(Parent):
+    """
+    Data loading and organization for CT reconstruction pipeline.
+    
+    This class provides comprehensive functionality for loading and organizing
+    computed tomography data including sample projections, open beam images,
+    and dark current measurements. It supports multi-threaded loading for
+    performance and provides interactive interfaces for data selection.
+    
+    Inherits from Parent class which provides access to reconstruction pipeline
+    state, working directories, and configuration parameters.
+    
+    Key Features:
+        - Multi-threaded TIFF file loading with progress tracking
+        - Interactive folder selection with file browser widgets
+        - Run-based data organization and filtering
+        - Automatic file format detection and validation
+        - Memory-efficient handling of large datasets
+        - Support for various CT data types (sample, OB, DC)
+    
+    Attributes
+    ----------
+    list_of_runs_to_use : Dict[DataType, List]
+        Dictionary mapping data types to lists of run numbers to process
+    
+    Examples
+    --------
+    >>> loader = Load(parent=parent_instance)
+    >>> loader.select_folder(DataType.sample)
+    >>> loader.load_data()
+    >>> sample_data = loader.get_sample_data()
+    """
 
-    list_of_runs_to_use = {DataType.sample: [],
-                           DataType.ob: [],
+    list_of_runs_to_use: Dict[DataType, List[int]] = {DataType.sample: [],
+                                                      DataType.ob: [],
     }
 
-    def select_folder(self, data_type=DataType.sample, multiple_flag=False, output_flag=False):
+    def select_folder(self, data_type: DataType = DataType.sample, 
+                     multiple_flag: bool = False, 
+                     output_flag: bool = False) -> None:
+        """
+        Interactive folder selection for CT data loading.
+        
+        Provides a file browser widget for selecting directories containing
+        CT data files. Supports selection of sample, open beam, or dark current
+        data directories with validation and preview capabilities.
+        
+        Parameters
+        ----------
+        data_type : DataType, default=DataType.sample
+            Type of CT data to load (sample, ob, dc)
+        multiple_flag : bool, default=False
+            Whether to allow multiple folder selection
+        output_flag : bool, default=False
+            Whether this is for output directory selection
+            
+        Notes
+        -----
+        - Creates interactive file browser widget
+        - Validates selected directories for CT data files
+        - Updates parent working directory configuration
+        - Provides preview of selected data files
+        """
         self.parent.current_data_type = data_type
         self.data_type = data_type
         if data_type in [DataType.reconstructed, DataType.extra]:
