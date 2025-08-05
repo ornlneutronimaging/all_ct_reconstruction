@@ -37,6 +37,7 @@ import glob
 import logging
 from typing import List, Dict, Any, Tuple, Optional, Union
 import svmbir
+import time
 import jax.numpy as jnp
 import mbirjax as mj
 from numpy.typing import NDArray
@@ -95,6 +96,8 @@ class SvmbirCliHandler:
                     else:
                         logging.info(f"skipping {_file} as it is not a file") 
 
+        method_used = "mbirjax" if mbirjax else "svmbir"
+
         config = load_json_string(config_json_file)
         logging.info(f"config = {config}")
 
@@ -138,6 +141,11 @@ class SvmbirCliHandler:
             svmbir_lib_path = SVMBIR_LIB_PATH_BACKUP
         max_resolutions = config['svmbir_config']['max_resolutions']
         list_of_slices_to_reconstruct = config['list_of_slices_to_reconstruct']
+
+        if (len(list_of_slices_to_reconstruct) == 1) and (list_of_slices_to_reconstruct[0][0] == 0) and (list_of_slices_to_reconstruct[0][1] == -1):
+            list_of_slices_to_reconstruct = []
+            logging.info(f"reconstructing all slices at once")
+
         top_slice = config['crop_region']['top']
 
         logging.info(f"Shape of corrected_array_log:")
@@ -166,6 +174,7 @@ class SvmbirCliHandler:
         make_or_reset_folder(output_data_folder)
 
         list_of_output_folders = []
+        start_time = time.time()
         if list_of_slices_to_reconstruct:
 
             for [index, [top_slice_index, bottom_slice_index]] in enumerate(list_of_slices_to_reconstruct):
@@ -192,10 +201,14 @@ class SvmbirCliHandler:
                                                   delta_det_channel=center_offset,
                                                   snr_db=snr_db,
                     )
-                    reconstruction_array = ct_model_for_recon.recon(_sino,
+                    reconstruction_array, recond_dict = ct_model_for_recon.recon(_sino,
                                                                     print_logs=False,
                                                                     weights=None,
                                                                     )
+                    logging.info(f"\t{recond_dict = }")
+                    logging.info(f"\treconstruction_array shape: {np.shape(reconstruction_array)} ")
+                    reconstruction_array = np.swapaxes(reconstruction_array, 0, 2)  # swap axes to match SVMBIR output
+                    del recond_dict  
 
                 else:
 
@@ -214,6 +227,8 @@ class SvmbirCliHandler:
                                                         roi_radius=3000,
                                                         svmbir_lib_path = svmbir_lib_path,
                                                         )
+                    logging.info(f"\treconstruction_array shape: {np.shape(reconstruction_array)} ")
+                
                 print(f"done with #{index}!")
                 logging.info(f"done with #{index}!")
                 _index = f"{index:03d}"
@@ -247,10 +262,14 @@ class SvmbirCliHandler:
                                                 det_channel_offset=center_offset,
                                                 snr_db=snr_db,
                 )
-                reconstruction_array = ct_model_for_recon.recon(corrected_array_log,
+                reconstruction_array, recond_dict = ct_model_for_recon.recon(corrected_array_log,
                                                                 print_logs=False,
                                                                 weights=None,
                                                                 )
+               
+                logging.info(f"{recond_dict = }")
+                logging.info(f"reconstruction_array shape: {np.shape(reconstruction_array)} ")
+                del recond_dict
 
             else:
 
@@ -259,8 +278,8 @@ class SvmbirCliHandler:
 
                 reconstruction_array = svmbir.recon(sino=corrected_array_log,
                                                     angles=list_of_angles_rad,
-                                                    num_rows = _sino.shape[2],  # height,
-                                                    num_cols = _sino.shape[2],  # width,
+                                                    num_rows = corrected_array_log.shape[2],  # height,
+                                                    num_cols = corrected_array_log.shape[2],  # width,
                                                     center_offset = center_offset,
                                                     max_resolutions = max_resolutions,
                                                     sharpness = sharpness,
@@ -272,19 +291,24 @@ class SvmbirCliHandler:
                                                     roi_radius=3000,
                                                     svmbir_lib_path = svmbir_lib_path,
                                                     )
+                logging.info(f"reconstruction_array shape: {np.shape(reconstruction_array)} ")
 
             print(f"done! ")
-            logging.info(f"done with!")
+            end_time = time.time()
+            elapsed_time = end_time - start_time
+            logging.info(f">>>> Reconstruction took {elapsed_time:.2f} seconds using {method_used} <<<<")
 
             print(f"exporting reconstructed slices ... ", end="")
             logging.info(f"{np.shape(reconstruction_array) = }")
-            logging.info(f"exporting reconstructed data ...")
+            logging.info(f"exporting reconstructed data in {output_data_folder} ...")
+            print(f"exporting reconstructed data to {output_data_folder} ... ", end="")
             o_export = Export(image_3d=reconstruction_array,
                             output_folder=output_data_folder)
             o_export.run()
             print(f"done!")
 
         logging.info(f"exporting reconstructed data ... done!")
+        logging.info(f"")
 
     @staticmethod
     def run_reconstruction_from_pre_data_mode_for_ai_evaluation(config_json_file):

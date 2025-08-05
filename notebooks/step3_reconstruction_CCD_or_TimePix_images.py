@@ -9,12 +9,6 @@ from __code.workflow_cli.svmbir_white_beam import SvmbirCliHandler
 from __code.utilities.json import load_json_string
 from __code.utilities.configuration_file import ReconstructionAlgorithm
 
-# this requires to activate first the hsnt conda environment
-# ----------------------------------------------------------
-# source /opt/anaconda/etc/profile.d/conda.sh
-# conda activate hsnt
-# ----------------------------------------------------------
-
 file_name, ext = os.path.splitext(os.path.basename(__file__))
 full_log_file_name = setup_logging(file_name)
 

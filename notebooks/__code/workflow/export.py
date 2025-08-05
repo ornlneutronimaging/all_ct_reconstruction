@@ -120,10 +120,6 @@ class Export:
             full_file_name: str = os.path.join(self.output_folder, short_file_name)
             logging.info(f"\texporting {full_file_name}")
             make_tiff(data=_data, filename=full_file_name)
-            # print(f"{type(_data) = }")
-            # print(f"{_data.dtype = }")
-            # print(f"{np.min(_data) = }")
-            # print(f"{np.max(_data) = }")
 
 
 class ExportExtra(Parent):
