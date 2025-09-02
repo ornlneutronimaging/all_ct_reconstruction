@@ -55,6 +55,7 @@ Created: Part of Step 1 preparation workflow for TimePix-based neutron CT
 
 import os
 import logging
+import ipywidgets as widgets
 from collections import OrderedDict
 from typing import Optional, Dict, List, Any, Union
 import numpy as np
@@ -68,6 +69,7 @@ from __code.utilities.configuration_file import Configuration
 from __code.config import DEBUG
 
 from __code.workflow.load import Load
+from __code import FileNamingConvention
 from __code.workflow.checking_data import CheckingData
 from __code.workflow.recap_data import RecapData
 from __code.workflow.combine_tof import CombineTof
@@ -145,6 +147,8 @@ class Step1PrepareTimePixImages:
         DataType.processed: "",
         }
     
+    file_naming_convention = FileNamingConvention.old_file
+
     # {100.000: 'run_1234', 101.000: 'run_1235', ...}
     list_angles_deg_vs_runs_dict: Dict[float, str] = {}
 
@@ -260,6 +264,8 @@ class Step1PrepareTimePixImages:
 
         setup_logging(basename_of_log_file=LOG_BASENAME_FILENAME)        
         self.working_dir[DataType.ipts] = os.path.basename(top_sample_dir)
+        self.working_dir[DataType.sample] = os.path.join(top_sample_dir, "shared", "autoreduce", "mcp")
+        self.working_dir[DataType.ob] = os.path.join(top_sample_dir, "shared", "autoreduce", "mcp")
         self.working_dir[DataType.top] = os.path.join(top_sample_dir, "shared", "autoreduce", "mcp")
         self.working_dir[DataType.nexus] = os.path.join(top_sample_dir, "nexus")
         self.working_dir[DataType.processed] = os.path.join(top_sample_dir, "shared", "processed_data")
@@ -267,6 +273,18 @@ class Step1PrepareTimePixImages:
         logging.info(f"instrument: {self.instrument}")
         if DEBUG:
             logging.info(f"WARNING!!!! we are running using DEBUG mode!")
+
+    def select_file_naming_convention(self) -> None:
+        """
+        Launch interactive selection of file naming convention for data.
+        """
+        # Create a UI widget for file naming convention selection
+        display(HTML("<span style='color: blue; font-size=16px'>Select file naming convention:</span>"))
+        self.file_naming_convention_ui = widgets.Dropdown(options=[FileNamingConvention.old_file,
+                                                                   FileNamingConvention.new_file],
+                                                                   value=FileNamingConvention.old_file,
+                                                                   layout=widgets.Layout(width='400px'))
+        display(self.file_naming_convention_ui)
 
     # Selection of data
     def select_top_sample_folder(self) -> None:

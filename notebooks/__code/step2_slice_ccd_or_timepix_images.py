@@ -12,7 +12,7 @@ from typing import Optional, Tuple, List, Any
 from numpy.typing import NDArray
 
 from __code import OperatingMode, DataType, STEP3_SCRIPTS
-from __code.config import DEBUG, debug_folder
+from __code.config import DEBUG, debug_folder, default_file_naming_convention
 from __code.utilities.configuration_file import CropRegion
 from __code.utilities.configuration_file import select_file, loading_config_file_into_model
 from __code.utilities.logging import setup_logging
@@ -72,7 +72,7 @@ class Step2SliceCcdOrTimePixImages:
         # self.configuration = Configuration()
         self.working_dir: str = system.System.get_working_dir()
         if DEBUG:
-            self.working_dir = debug_folder[OperatingMode.white_beam][DataType.extra]
+            self.working_dir = debug_folder[default_file_naming_convention][OperatingMode.white_beam][DataType.extra]
 
         self.instrument: str = system.System.get_instrument_selected()
 

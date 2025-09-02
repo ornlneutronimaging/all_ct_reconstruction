@@ -49,7 +49,7 @@ from __code import OperatingMode, DataType
 from __code.utilities.logging import setup_logging
 from __code.utilities.file_folder_browser import FileFolderBrowser
 from __code.utilities.load import load_data_using_multithreading
-from __code.config import PERCENTAGE_OF_DATA_TO_USE_FOR_RECONSTRUCTION, DEBUG, debug_folder
+from __code.config import PERCENTAGE_OF_DATA_TO_USE_FOR_RECONSTRUCTION, DEBUG, debug_folder, default_file_naming_convention
 
 LOG_BASENAME_FILENAME, _ = os.path.splitext(os.path.basename(__file__))
 
@@ -107,7 +107,7 @@ class Step4VisualizationCcdImages:
         # self.configuration = Configuration()
         self.working_dir = system.System.get_working_dir()
         if DEBUG:
-            self.working_dir = debug_folder[OperatingMode.white_beam][DataType.extra]
+            self.working_dir = debug_folder[default_file_naming_convention][OperatingMode.white_beam][DataType.extra]
 
         self.instrument = system.System.get_instrument_selected()
 

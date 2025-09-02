@@ -47,7 +47,7 @@ from __code.utilities.file_folder_browser import FileFolderBrowser
 from __code.utilities.load import load_data_using_multithreading, load_list_of_tif
 from __code.utilities.files import retrieve_list_of_tif
 from __code.utilities.math import farthest_point_sampling
-from __code.config import DEBUG, DEFAULT_NAMING_CONVENTION_INDICES, PERCENTAGE_OF_DATA_TO_USE_FOR_RECONSTRUCTION, debug_folder
+from __code.config import DEBUG, DEFAULT_NAMING_CONVENTION_INDICES, PERCENTAGE_OF_DATA_TO_USE_FOR_RECONSTRUCTION, debug_folder, default_file_naming_convention
 from __code.utilities.exceptions import MetadataError
 
 
@@ -122,9 +122,9 @@ class Load(Parent):
             working_dir = self.parent.working_dir[data_type]
 
         if DEBUG:
-            self.data_selected(debug_folder[self.parent.MODE][data_type])
-            self.parent.working_dir[DataType.nexus] = debug_folder[self.parent.MODE][DataType.nexus]
-            logging.info(f"DEBUG MODE: {data_type} folder selected: {debug_folder[self.parent.MODE][data_type]}")
+            self.data_selected(debug_folder[default_file_naming_convention][self.parent.MODE][data_type])
+            self.parent.working_dir[DataType.nexus] = debug_folder[default_file_naming_convention][self.parent.MODE][DataType.nexus]
+            logging.info(f"DEBUG MODE: {data_type} folder selected: {debug_folder[default_file_naming_convention][self.parent.MODE][data_type]}")
             _list_sep = self.parent.working_dir[DataType.sample].split(os.sep)
             # facility = _list_sep[0]
             instrument = _list_sep[2]
@@ -143,16 +143,24 @@ class Load(Parent):
                 
             # working_dir = os.path.abspath(os.path.expanduser("~"))
 
-        if output_flag:
-            o_file_browser = FileFolderBrowser(working_dir=working_dir,
-                                               ipts_folder=self.parent.working_dir[DataType.ipts],
-                                               next_function=self.data_selected)
-            o_file_browser.select_output_folder_with_new(instruction=f"Select Top Folder of {data_type}")
-        else:
-            o_file_browser = FileFolderBrowser(working_dir=working_dir,
-                                               next_function=self.data_selected)
-            o_file_browser.select_input_folder(instruction=f"Select Top Folder of {data_type}",
-                                               multiple_flag=multiple_flag)
+        try:
+
+            if output_flag:
+                o_file_browser = FileFolderBrowser(working_dir=working_dir,
+                                                ipts_folder=self.parent.working_dir[DataType.ipts],
+                                                next_function=self.data_selected)
+                o_file_browser.select_output_folder_with_new(instruction=f"Select Top Folder of {data_type}")
+            else:
+                o_file_browser = FileFolderBrowser(working_dir=working_dir,
+                                                next_function=self.data_selected)
+                o_file_browser.select_input_folder(instruction=f"Select Top Folder of {data_type}",
+                                                multiple_flag=multiple_flag)
+
+        except NotADirectoryError as e:
+            logging.error(f"Error selecting folder: {e}. You probably forgot to select your IPTS in the first cell!")
+            display(HTML(f"<font color='red'><b>ERROR</b>: You probably forgot to select your IPTS in the first cell!</font>"))
+            return
+
 
     def select_images(self, data_type=DataType.ob):
         self.parent.current_data_type = data_type
@@ -163,7 +171,7 @@ class Load(Parent):
             working_dir = self.parent.working_dir[data_type]
 
         if DEBUG:
-            working_dir = debug_folder[self.parent.MODE][data_type]
+            working_dir = debug_folder[default_file_naming_convention][self.parent.MODE][data_type]
             if not os.path.exists(working_dir):
                 return
             #list_images = glob.glob(os.path.join(working_dir, "*_0045_*.tif*"))

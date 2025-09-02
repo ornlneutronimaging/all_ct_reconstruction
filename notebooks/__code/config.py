@@ -14,12 +14,11 @@ data type (sample, OB, DC, etc.).
 """
 
 from typing import Dict, List, Any, Union
-from __code import OperatingMode, DataType
+from __code import OperatingMode, DataType, FileNamingConvention
 from __code.utilities.system import get_user_name
 
-
 # Debug and development settings
-debugging: bool = False
+debugging: bool = True
 verbose: bool = True
 debugger_username: str = 'j35'
 imaging_team: List[str] = ["j35", "gxt"]
@@ -105,26 +104,47 @@ svmbir_parameters: Dict[str, Union[int, float, bool]] = {
     'verbose': True,
 }
 
+default_file_naming_convention = FileNamingConvention.old_file
+
 # Debug data folder configuration organized by operating mode and data type
-debug_folder: Dict[OperatingMode, Dict[DataType, str]] = {
-    OperatingMode.tof: {
-        DataType.sample: "/SNS/VENUS/IPTS-33699/shared/autoreduce/mcp/September20_2024_PurpleCar_GoldenRatio_CT_5_0_C_Cd_inBeam_Resonance",
-        DataType.ob: "/SNS/VENUS/IPTS-33699/shared/autoreduce/mcp/September26_2024_PurpleCar_OpenBean_5_0_C_Cd_inBeam_Resonance",
-        DataType.cleaned_images: '/SNS/VENUS/IPTS-33699/shared/processed_data/jean_test',
-        DataType.normalized: '/SNS/VENUS/IPTS-33699/shared/processed_data/jean_test',
-        DataType.reconstructed: '/SNS/VENUS/IPTS-33699/shared/processed_data/jean_test',
-        DataType.extra: '/SNS/VENUS/IPTS-33699/shared/processed_data/jean_test',
-        DataType.nexus: '/SNS/VENUS/IPTS-33699/nexus/'
+debug_folder: Dict[FileNamingConvention, Dict[OperatingMode, Dict[DataType, str]]] = {
+    FileNamingConvention.old_file: {
+
+        ## old naming convention
+        OperatingMode.tof: {
+            DataType.sample: "/SNS/VENUS/IPTS-33699/shared/autoreduce/mcp/September20_2024_PurpleCar_GoldenRatio_CT_5_0_C_Cd_inBeam_Resonance",
+            DataType.ob: "/SNS/VENUS/IPTS-33699/shared/autoreduce/mcp/September26_2024_PurpleCar_OpenBean_5_0_C_Cd_inBeam_Resonance",
+            DataType.cleaned_images: '/SNS/VENUS/IPTS-33699/shared/processed_data/jean_test',
+            DataType.normalized: '/SNS/VENUS/IPTS-33699/shared/processed_data/jean_test',
+            DataType.reconstructed: '/SNS/VENUS/IPTS-33699/shared/processed_data/jean_test',
+            DataType.extra: '/SNS/VENUS/IPTS-33699/shared/processed_data/jean_test',
+            DataType.nexus: '/SNS/VENUS/IPTS-33699/nexus/'
+        },
+
+        ## new naming convention
+        # OperatingMode.tof: {      
+        #     DataType.sample: "/SNS/VENUS/IPTS-33531/shared/jean/Crushed_ring/",
+        #     DataType.ob: "/SNS/VENUS/IPTS-33531/shared/Crushed_ring_ob",
+        #     DataType.cleaned_images: '/SNS/VENUS/IPTS-33531/shared/processed_data/jean',
+        #     DataType.normalized: '/SNS/VENUS/IPTS-33531/shared/processed_data/jean',
+        #     DataType.reconstructed: '/SNS/VENUS/IPTS-33531/shared/processed_data/jean',
+        #     DataType.extra: '/SNS/VENUS/IPTS-33531/shared/processed_data/jean',
+        #     DataType.nexus: '/SNS/VENUS/IPTS-33531/nexus/'
+        # },
+        OperatingMode.white_beam: {
+            DataType.sample: "/SNS/SNAP/IPTS-25265/shared/moon_rocks_normalized/moon_rocks_normalized_angles_0_180/moon_rocks_combined_renamed_normalized",
+            DataType.ob: "",
+            DataType.dc: "",
+            DataType.cleaned_images: '/SNS/SNAP/IPTS-25265/shared/processed_data/jean_test',
+            DataType.normalized: '/SNS/SNAP/IPTS-25265/shared/processed_data/jean_test',
+            DataType.reconstructed: '/SNS/SNAP/IPTS-25265/shared/processed_data/jean_test',
+            DataType.extra: '/SNS/SNAP/IPTS-25265/shared/processed_data/jean_test',
+            DataType.nexus: '/SNS/SNAP/IPTS-25265/nexus',
+        },
     },
-    OperatingMode.white_beam: {
-        DataType.sample: "/SNS/SNAP/IPTS-25265/shared/moon_rocks_normalized/moon_rocks_normalized_angles_0_180/moon_rocks_combined_renamed_normalized",
-        DataType.ob: "",
-        DataType.dc: "",
-        DataType.cleaned_images: '/SNS/SNAP/IPTS-25265/shared/processed_data/jean_test',
-        DataType.normalized: '/SNS/SNAP/IPTS-25265/shared/processed_data/jean_test',
-        DataType.reconstructed: '/SNS/SNAP/IPTS-25265/shared/processed_data/jean_test',
-        DataType.extra: '/SNS/SNAP/IPTS-25265/shared/processed_data/jean_test',
-        DataType.nexus: '/SNS/SNAP/IPTS-25265/nexus',
+    FileNamingConvention.new_file: {
+        OperatingMode.tof: None,
+        OperatingMode.white_beam: None,
     },
 }
 
