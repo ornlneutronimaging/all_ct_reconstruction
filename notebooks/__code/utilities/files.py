@@ -19,6 +19,7 @@ from typing import List, Optional, Union, Any
 
 from __code import DetectorType
 from __code.config import default_detector_type
+import logging
 
 
 def retrieve_list_of_files_from_folders(list_folders: List[str]) -> List[str]:
@@ -155,23 +156,72 @@ def make_folder(folder_name: str) -> None:
     os.makedirs(folder_name)
     
 
-def get_angle_value(run_full_path: Optional[str] = None) -> Optional[str]:
+def get_angle_value(run_full_path: Optional[str] = None,
+                    detector_type: DetectorType = default_detector_type) -> Optional[str]:
     """
-    Extract rotation angle value from TIFF file names.
-    
-    Parses file names with format:
-    Run_####_20240927_date_..._148_443_######_<file_index>.tif
-    
+    Extract rotation angle value:
+      for TPX1_legacy, from TIFF file names
+        Parses file names with format:
+        Run_####_20240927_date_..._148_443_######_<file_index>.tif
+
+      for TPX1 and TPX3, from folder name itself
+        #####_Run_####_***_Ang_###_###_<file_index>
+
     Args:
         run_full_path: Path to folder containing TIFF files
-        
+        detector_type: Type of detector being used (default: default_detector_type)
+
     Returns:
         Angle value as string in format "148.443", or None if no files found
     """
+    if detector_type == DetectorType.tpx1_legacy:
+        return _get_angle_value_tpx1_legacy(run_full_path=run_full_path)
+    else:
+        return _get_angle_value_tpx1_and_tpx3(run_full_path=run_full_path)
+
+
+def _get_angle_value_tpx1_legacy(run_full_path: Optional[str] = None) -> Optional[str]:
+    """
+    Extract rotation angle value for TPX1_legacy from TIFF file names.
+    Parses file names with format:
+    Run_####_20240927_date_..._148_443_######_<file_index>.tif
+
+    Args:
+        run_full_path: Path to folder containing TIFF files
+
+    Returns:
+        Angle value as string in format "148.443", or None if no files found
+    """
+    logging.info(f"\t get angle for tpix1 legacy")
     list_tiff: List[str] = retrieve_list_of_tif(run_full_path)
     if len(list_tiff) == 0:
         return None
     
     first_tiff: str = list_tiff[0]
     list_part: List[str] = first_tiff.split("_")
-    return f"{list_part[-4]}.{list_part[-3]}"
+    return f"{list_part[-4]:3d}.{list_part[-3]:3d}"
+
+
+def _get_angle_value_tpx1_and_tpx3(run_full_path: Optional[str] = None) -> Optional[str]:
+    """
+    Extract rotation angle value for TPX1 and TPX3 from folder name.
+    Parses folder name with format:
+    #####_Run_####_***_Ang_###_###_<file_index>
+
+    Args:
+        run_full_path: Path to folder containing TIFF files
+
+    Returns:
+        Angle value as string in format "148.443", or None if no files found
+    """
+    logging.info(f"\t get angle for tpix1 and tpix3")
+    if not run_full_path:
+        return None
+
+    folder_name: str = os.path.basename(run_full_path)
+    logging.info(f"\t folder name: {folder_name}")
+    list_part: List[str] = folder_name.split("_")
+    logging.info(f"\t list_part: {list_part}")
+    logging.info(f"\t about to return {int(list_part[-3]):03d}.{int(list_part[-2]):03d}")
+
+    return f"{int(list_part[-3]):03d}.{int(list_part[-2]):03d}"

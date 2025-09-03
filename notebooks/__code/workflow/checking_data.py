@@ -131,11 +131,11 @@ class CheckingData(Parent):
         # # retrieve proton charge of runs
         self.retrieve_proton_charge()
 
-        # # # retrieve rotation angle
-        # self.retrieve_rotation_angle()
+        # # retrieve rotation angle
+        self.retrieve_rotation_angle()
 
-        # # retrieve frame number
-        # self.retrieve_frame_number()
+        # retrieve frame number
+        self.retrieve_frame_number()
 
         # # # display graph
         # self.display_graph()
@@ -160,6 +160,10 @@ class CheckingData(Parent):
         Updates parent object state with frame number metadata
         """
         logging.info(f"Retrieving frame numbers:")
+        if self.parent.detector_type == DetectorType.tpx3:
+            logging.info(f"\tframe number retrieval skipped for TPX3 detector")
+            return
+        
         self.parent.at_least_one_frame_number_not_found = False
         for _data_type in self.parent.list_of_runs.keys():
             logging.info(f"\t{_data_type}:")
