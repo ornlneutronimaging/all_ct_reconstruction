@@ -138,7 +138,7 @@ class CheckingData(Parent):
         self.retrieve_frame_number()
 
         # # # display graph
-        # self.display_graph()
+        self.display_graph()
 
     def retrieve_frame_number(self) -> None:
         """
@@ -493,6 +493,7 @@ class CheckingData(Parent):
                                                                     continuous_update=True),
                             proton_charge_threshold = widgets.FloatSlider(min=0.0001,
                                                                         max=1,
+                                                                        step=0.01,
                                                                         description='threshold',
                                                                         value=PROTON_CHARGE_TOLERANCE_C,
                                                                         continuous_update=True),
