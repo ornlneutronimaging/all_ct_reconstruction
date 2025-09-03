@@ -23,6 +23,12 @@ tomopy.util.dtype.as_dtype = patched_as_dtype
 # from __code.config import debugging, debugger_username
 
 
+class DetectorType:
+    tpx1_legacy = "tpx1 - old naming convention (until July 2025)"
+    tpx1 = "tpx1 - new naming convention (from August 2025)"
+    tpx3 = "tpx3"
+
+
 class DataType:
     sample = 'sample'
     ob = 'ob'
@@ -43,11 +49,6 @@ class Instrument:
     mars = "mars"
     venus = "venus"
     snap = "snap"
-    
-
-class FileNamingConvention:
-    old_file = "Old file naming convention (Run_####/)"
-    new_file = "New file naming convention (####_Run_####_####/)"
 
 
 class OperatingMode:

@@ -31,6 +31,7 @@ Created: Part of CT reconstruction development workflow
 from typing import Optional, Dict, List, Any, Tuple, Union
 import logging
 import os
+import re
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy.typing import NDArray
@@ -40,7 +41,7 @@ import ipywidgets as widgets
 
 from __code.parent import Parent
 from __code.config import PROTON_CHARGE_TOLERANCE_C
-from __code import DataType, Run
+from __code import DataType, DetectorType, Run
 from __code.utilities.files import retrieve_list_of_runs, retrieve_list_of_tif, get_angle_value
 from __code.utilities.nexus import get_proton_charge, get_frame_number
 from __code.utilities.math import calculate_most_dominant_int_value_from_list
@@ -130,14 +131,14 @@ class CheckingData(Parent):
         # # retrieve proton charge of runs
         self.retrieve_proton_charge()
 
-        # # retrieve rotation angle
-        self.retrieve_rotation_angle()
+        # # # retrieve rotation angle
+        # self.retrieve_rotation_angle()
 
-        # retrieve frame number
-        self.retrieve_frame_number()
+        # # retrieve frame number
+        # self.retrieve_frame_number()
 
-        # # display graph
-        self.display_graph()
+        # # # display graph
+        # self.display_graph()
 
     def retrieve_frame_number(self) -> None:
         """
@@ -240,7 +241,9 @@ class CheckingData(Parent):
         
         logging.info(f"Retrieving runs:")
         for _data_type in self.list_of_runs.keys():
-            list_of_runs: List[str] = retrieve_list_of_runs(top_folder=self.parent.working_dir[_data_type])
+            logging.info(f"\t{_data_type}:")
+            list_of_runs: List[str] = retrieve_list_of_runs(top_folder=self.parent.working_dir[_data_type],
+                                                            detector_type=self.parent.detector_type)
             if len(list_of_runs) == 0:
                 display(HTML(f"<font color=red>Found 0 {_data_type} runs in {self.parent.working_dir[_data_type]}</font>"))
                 raise ValueError("Missing files !")
@@ -249,8 +252,9 @@ class CheckingData(Parent):
             
             top_nexus_path: str = self.parent.working_dir[DataType.nexus]
             for _run in list_of_runs:
-                _, number = os.path.basename(_run).split("_")
-                nexus_path: str = os.path.join(top_nexus_path, f"{self.parent.instrument}_{number}.nxs.h5")
+                run_number = self.extract_run_number(_run, self.parent.detector_type)
+                # _, number = os.path.basename(_run).split("_")
+                nexus_path: str = os.path.join(top_nexus_path, f"{self.parent.instrument}_{run_number}.nxs.h5")
                 self.parent.list_of_runs[_data_type][os.path.basename(_run)] = {Run.full_path: _run,
                                                                                 Run.proton_charge_c: None,
                                                                                 Run.use_it: True,
@@ -258,6 +262,23 @@ class CheckingData(Parent):
                                                                                 Run.nexus: nexus_path,
                                                                                 Run.frame_number: None,
                                                                                 }
+
+    def extract_run_number(self, run_full_path: str, detector_type: DetectorType) -> Optional[int]:
+        """
+        Extract the run number from the full path of a run directory.
+
+        Args:
+            run_full_path: Full path to the run directory
+            detector_type: Type of detector being used
+
+        Returns:
+            Extracted run number as integer, or None if not found
+        """
+        match = re.search(r"Run_(\d+)", run_full_path)
+
+        if match:
+            return int(match.group(1))
+        return None
 
     def reject_empty_runs(self) -> None:
         """

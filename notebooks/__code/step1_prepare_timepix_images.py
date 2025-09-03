@@ -63,13 +63,12 @@ from numpy.typing import NDArray
 from IPython.display import display
 from IPython.display import HTML
 
-from __code import DataType, OperatingMode, DEFAULT_OPERATING_MODE
+from __code import DataType, OperatingMode, DEFAULT_OPERATING_MODE, DetectorType
 from __code.utilities.logging import setup_logging
 from __code.utilities.configuration_file import Configuration
-from __code.config import DEBUG
+from __code.config import DEBUG, default_detector_type
 
 from __code.workflow.load import Load
-from __code import FileNamingConvention
 from __code.workflow.checking_data import CheckingData
 from __code.workflow.recap_data import RecapData
 from __code.workflow.combine_tof import CombineTof
@@ -146,8 +145,8 @@ class Step1PrepareTimePixImages:
         DataType.normalized: "",
         DataType.processed: "",
         }
-    
-    file_naming_convention = FileNamingConvention.old_file
+
+    detector_type = DetectorType.tpx1_legacy
 
     # {100.000: 'run_1234', 101.000: 'run_1235', ...}
     list_angles_deg_vs_runs_dict: Dict[float, str] = {}
@@ -273,18 +272,18 @@ class Step1PrepareTimePixImages:
         logging.info(f"instrument: {self.instrument}")
         if DEBUG:
             logging.info(f"WARNING!!!! we are running using DEBUG mode!")
+            _default_detector_type = default_detector_type
+        else:
+            _default_detector_type = DetectorType.tpx1
 
-    def select_file_naming_convention(self) -> None:
-        """
-        Launch interactive selection of file naming convention for data.
-        """
-        # Create a UI widget for file naming convention selection
-        display(HTML("<span style='color: blue; font-size=16px'>Select file naming convention:</span>"))
-        self.file_naming_convention_ui = widgets.Dropdown(options=[FileNamingConvention.old_file,
-                                                                   FileNamingConvention.new_file],
-                                                                   value=FileNamingConvention.old_file,
-                                                                   layout=widgets.Layout(width='400px'))
-        display(self.file_naming_convention_ui)
+        display(HTML("<span style='color:blue; font-size:16px'>Select detector type</span>"))
+        self.detector_type_widget = widgets.Dropdown(
+            options=[DetectorType.tpx1_legacy, DetectorType.tpx1, DetectorType.tpx3],
+            value=_default_detector_type,
+            layout=widgets.Layout(width="400px"),
+            disabled=False,
+        )
+        display(self.detector_type_widget)
 
     # Selection of data
     def select_top_sample_folder(self) -> None:
@@ -300,6 +299,8 @@ class Step1PrepareTimePixImages:
             - Launches interactive folder browser widget
             - Updates working_dir[DataType.sample] upon selection
         """
+        self.detector_type = self.detector_type_widget.value
+        
         o_load = Load(parent=self)
         o_load.select_folder(data_type=DataType.sample)
 

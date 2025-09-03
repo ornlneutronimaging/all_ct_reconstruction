@@ -17,6 +17,9 @@ import json
 import shutil
 from typing import List, Optional, Union, Any
 
+from __code import DetectorType
+from __code.config import default_detector_type
+
 
 def retrieve_list_of_files_from_folders(list_folders: List[str]) -> List[str]:
     """
@@ -37,17 +40,22 @@ def retrieve_list_of_files_from_folders(list_folders: List[str]) -> List[str]:
     return list_files
 
 
-def retrieve_list_of_runs(top_folder: str) -> List[str]:
+def retrieve_list_of_runs(top_folder: str, detector_type: DetectorType = default_detector_type) -> List[str]:
     """
     Retrieve all 'Run_*' folders from a top-level directory.
     
     Args:
         top_folder: Path to the top-level directory to search
-        
+        detector_type: Type of detector being used (default: default_detector_type)
+
     Returns:
         Sorted list of full paths to Run_* folders
     """
-    list_runs: List[str] = glob.glob(os.path.join(top_folder, "Run_*"))
+    if detector_type == DetectorType.tpx1_legacy:
+        list_runs: List[str] = glob.glob(os.path.join(top_folder, "Run_*"))
+    else:
+        list_runs: List[str] = glob.glob(os.path.join(top_folder, "*_Run_*"))
+    
     list_runs.sort()
     return list_runs
 

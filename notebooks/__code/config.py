@@ -14,7 +14,7 @@ data type (sample, OB, DC, etc.).
 """
 
 from typing import Dict, List, Any, Union
-from __code import OperatingMode, DataType, FileNamingConvention
+from __code import DetectorType, OperatingMode, DataType
 from __code.utilities.system import get_user_name
 
 # Debug and development settings
@@ -104,11 +104,12 @@ svmbir_parameters: Dict[str, Union[int, float, bool]] = {
     'verbose': True,
 }
 
-default_file_naming_convention = FileNamingConvention.old_file
+default_detector_type = DetectorType.tpx1
 
 # Debug data folder configuration organized by operating mode and data type
-debug_folder: Dict[FileNamingConvention, Dict[OperatingMode, Dict[DataType, str]]] = {
-    FileNamingConvention.old_file: {
+debug_folder: Dict[DetectorType, Dict[OperatingMode, Dict[DataType, str]]] = {
+    
+    DetectorType.tpx1_legacy: {
 
         ## old naming convention
         OperatingMode.tof: {
@@ -142,10 +143,23 @@ debug_folder: Dict[FileNamingConvention, Dict[OperatingMode, Dict[DataType, str]
             DataType.nexus: '/SNS/SNAP/IPTS-25265/nexus',
         },
     },
-    FileNamingConvention.new_file: {
-        OperatingMode.tof: None,
+    DetectorType.tpx1: {
+        OperatingMode.tof: {
+            DataType.sample: "/SNS/VENUS/IPTS-33531/shared/Shimin_save/new_data_structure_replica/images/tpx1/raw/ct/20241122_CrashRingB_hyperCT_2_500C_1_800AngsMin",
+            DataType.ob: "/SNS/VENUS/IPTS-33531/shared/Shimin_save/new_data_structure_replica/images/tpx1/ob/20241122_CrashRingB_hyperCT_2_500C_1_800AngsMin",
+            DataType.cleaned_images: '/SNS/VENUS/IPTS-33531/shared/jean',
+            DataType.normalized: '/SNS/VENUS/IPTS-33531/shared/jean',
+            DataType.reconstructed: '/SNS/VENUS/IPTS-33531/shared/jean',
+            DataType.extra: '/SNS/VENUS/IPTS-33531/shared/jean',
+            DataType.nexus: '/SNS/VENUS/IPTS-33531/nexus/'
+        },
         OperatingMode.white_beam: None,
     },
+
+    DetectorType.tpx3: {
+        OperatingMode.tof: None,
+        OperatingMode.white_beam: None
+    }
 }
 
 # Region of Interest (ROI) configuration by operating mode
