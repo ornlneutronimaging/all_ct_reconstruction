@@ -44,7 +44,7 @@ from __code.config import PROTON_CHARGE_TOLERANCE_C
 from __code import DataType, DetectorType, Run
 from __code.utilities.files import retrieve_list_of_runs, retrieve_list_of_tif, get_angle_value
 from __code.utilities.nexus import get_proton_charge, get_frame_number
-from __code.utilities.math import calculate_most_dominant_int_value_from_list
+from __code.utilities.math import calculate_most_dominant_int_value_from_list, calculate_most_dominant_float_value_from_list
 
 
 class CheckingData(Parent):
@@ -432,9 +432,9 @@ class CheckingData(Parent):
         ------------
         Creates and displays interactive widget interface for proton charge selection
         """
-        
-        default_sample_proton_charge: float = calculate_most_dominant_int_value_from_list(self.list_proton_charge_c[DataType.sample])
-        default_ob_proton_charge: float = calculate_most_dominant_int_value_from_list(self.list_proton_charge_c[DataType.ob])
+
+        default_sample_proton_charge: float = calculate_most_dominant_float_value_from_list(self.list_proton_charge_c[DataType.sample])
+        default_ob_proton_charge: float = calculate_most_dominant_float_value_from_list(self.list_proton_charge_c[DataType.ob])
 
         def plot_proton_charges(sample_proton_charge_value: float, 
                                ob_proton_charge_value: float, 

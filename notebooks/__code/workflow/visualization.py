@@ -309,10 +309,10 @@ class Visualization(Parent):
                     vmax_before = vmax
 
                 if vmin_after is None:
-                    vmin_after = vmin_before
+                    vmin_after = np.min(data_after)
             
                 if vmax_after is None:
-                    vmax_after = vmax_before
+                    vmax_after = np.max(data_after)
 
                 def plot_norm(image_index=0, 
                               vmin_before=vmin_before, vmax_before=vmax_before,

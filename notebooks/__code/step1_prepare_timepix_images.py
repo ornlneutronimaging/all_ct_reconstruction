@@ -220,6 +220,7 @@ class Step1PrepareTimePixImages:
 
     # center of rotation
     o_center_and_tilt: Optional[Any] = None
+    o_tile = None
     center_of_rotation: Optional[float] = None  # center of rotation calculated by the user
     # remove strips
     o_remove: Optional[Any] = None
@@ -259,17 +260,10 @@ class Step1PrepareTimePixImages:
         self.configuration = Configuration()
 
         top_sample_dir = system.System.get_working_dir()
+        self.top_sample_dir = top_sample_dir
         self.instrument = system.System.get_instrument_selected()
-
         setup_logging(basename_of_log_file=LOG_BASENAME_FILENAME)        
-        self.working_dir[DataType.ipts] = os.path.basename(top_sample_dir)
-        self.working_dir[DataType.sample] = os.path.join(top_sample_dir, "shared", "autoreduce", "mcp")
-        self.working_dir[DataType.ob] = os.path.join(top_sample_dir, "shared", "autoreduce", "mcp")
-        self.working_dir[DataType.top] = os.path.join(top_sample_dir, "shared", "autoreduce", "mcp")
-        self.working_dir[DataType.nexus] = os.path.join(top_sample_dir, "nexus")
-        self.working_dir[DataType.processed] = os.path.join(top_sample_dir, "shared", "processed_data")
-        logging.info(f"working_dir: {self.working_dir}")
-        logging.info(f"instrument: {self.instrument}")
+    
         if DEBUG:
             logging.info(f"WARNING!!!! we are running using DEBUG mode!")
             _default_detector_type = default_detector_type
@@ -284,6 +278,44 @@ class Step1PrepareTimePixImages:
             disabled=False,
         )
         display(self.detector_type_widget)
+        self.detector_type = self.detector_type_widget.value
+
+        logging.info(f"working_dir: {self.working_dir}")
+        logging.info(f"instrument: {self.instrument}")
+
+    def update_all_paths(self) -> None:
+        top_sample_dir = self.top_sample_dir
+        self.working_dir[DataType.ipts] = os.path.basename(top_sample_dir)
+        self.working_dir[DataType.nexus] = os.path.join(top_sample_dir, "nexus")
+        self.working_dir[DataType.processed] = os.path.join(top_sample_dir, "shared", "processed_data")       
+        
+        print(f"Detector type selected: {self.detector_type}")
+
+        if self.detector_type == DetectorType.tpx1_legacy:
+            self.working_dir[DataType.sample] = os.path.join(top_sample_dir, "shared", "autoreduce", "mcp")
+            self.working_dir[DataType.ob] = os.path.join(top_sample_dir, "shared", "autoreduce", "mcp")
+            self.working_dir[DataType.top] = os.path.join(top_sample_dir, "shared", "autoreduce", "mcp")
+      
+        elif self.detector_type in [DetectorType.tpx1, DetectorType.tpx3]:
+            self.working_dir[DataType.sample] = os.path.join(top_sample_dir, "shared", "autoreduce", "images", self.get_unix_detector_name(), 'raw', 'ct')
+            self.working_dir[DataType.ob] = os.path.join(top_sample_dir, "shared", "autoreduce", "images", self.get_unix_detector_name(), 'ob')
+            self.working_dir[DataType.top] = os.path.join(top_sample_dir, "shared", "autoreduce", "images", self.get_unix_detector_name())
+
+        logging.info(f"Updates all paths:")
+        logging.info(f"  - sample: {self.working_dir[DataType.sample]}")
+        logging.info(f"  - ob: {self.working_dir[DataType.ob]}")
+        logging.info(f"  - nexus: {self.working_dir[DataType.nexus]}")  
+        logging.info(f"  - processed: {self.working_dir[DataType.processed]}")
+        logging.info(f"  - ipts: {self.working_dir[DataType.ipts]}")
+        logging.info(f"  - top: {self.working_dir[DataType.top]}")
+
+    def get_unix_detector_name(self) -> str:
+        if  self.detector_type == DetectorType.tpx1:
+            return "tpx1"
+        elif self.detector_type == DetectorType.tpx3:
+            return "tpx3"
+        else:
+            raise ValueError("Detector type not recognized")
 
     # Selection of data
     def select_top_sample_folder(self) -> None:
@@ -300,6 +332,7 @@ class Step1PrepareTimePixImages:
             - Updates working_dir[DataType.sample] upon selection
         """
         self.detector_type = self.detector_type_widget.value
+        self.update_all_paths()
         
         o_load = Load(parent=self)
         o_load.select_folder(data_type=DataType.sample)
@@ -623,7 +656,9 @@ class Step1PrepareTimePixImages:
                               label_before='cleaned',
                               label_after='normalized',
                               data_before=self.master_3d_data_array[DataType.sample],
-                              turn_on_vrange=True)
+                              turn_on_vrange=True,
+                              vmin_after=0,
+                              vmax_after=1,)
     
     def select_export_normalized_folder(self) -> None:
         """
@@ -1265,7 +1300,8 @@ class Step1PrepareTimePixImages:
             - Launches folder browser for extra files export path
         """
         o_select = Load(parent=self)
-        o_select.select_folder(data_type=DataType.extra)
+        o_select.select_folder(data_type=DataType.extra,
+                               output_flag=True)
 
     def export_pre_reconstruction_data(self) -> None:
         """

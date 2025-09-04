@@ -44,7 +44,7 @@ def create_sh_file(json_file_name: str, output_folder: str) -> str:
         #sh_file.write(f"source /opt/anaconda/etc/profile.d/conda.sh\n")
         #sh_file.write(f"conda activate /SNS/users/j35/micromamba/envs/svmbir_py310_micromamba\n")
         #sh_file.write(f"python {STEP3_SCRIPTS} {json_file_name_on_linux}\n")
-        sh_file.write(f"pixi run --manifest-path python /SNS/VENUS/shared/software/git/all_ct_reconstruction {STEP3_SCRIPTS} {json_file_name_on_linux}\n")
+        sh_file.write(f"pixi run --manifest-path /SNS/VENUS/shared/software/git/all_ct_reconstruction python {STEP3_SCRIPTS} {json_file_name_on_linux}\n")
 
     os.chmod(sh_file_name, 0o755)
     return sh_file_name

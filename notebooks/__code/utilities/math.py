@@ -63,6 +63,33 @@ def calculate_most_dominant_int_value_from_list(list_value: List[Union[int, floa
     return max_value
 
 
+def calculate_most_dominant_float_value_from_list(list_value: List[Union[int, float]]) -> float:
+    """
+    Find the most frequently occurring float value in a list.
+    
+    Uses exact matching to find the mode. Useful for determining
+    the most common value from repeated measurements.
+    
+    Args:
+        list_value: List of numeric values
+        
+    Returns:
+        The most frequently occurring float value
+        
+    Example:
+        >>> calculate_most_dominant_float_value_from_list([1.0, 1.0, 2.0, 1.0, 2.0])
+        1.0
+    """
+    count: Counter = Counter(list_value)
+    max_value: float = 0.0
+    max_number: int = 0
+    for _key, _value in count.items():
+        if _value > max_number:
+            max_value = _key
+            max_number = _value
+    return max_value
+
+
 def angular_distance(a: Union[int, float], b: Union[int, float], max_coverage: Union[int, float] = 360) -> Union[int, float]:
     """
     Calculate the minimum angular distance between two angles on a circle.

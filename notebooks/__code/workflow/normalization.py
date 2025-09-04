@@ -111,7 +111,7 @@ class Normalization(Parent):
 
         self.use_proton_charge_ui = widgets.Checkbox(value=False,
                                                 description='Use proton charge',
-                                                disabled=True,
+                                                disabled=False,
                                                 layout=widgets.Layout(width="100%"))
         # self.use_frames_ui = widgets.Checkbox(value=False,
         #                                  description='Use frames',
@@ -207,10 +207,12 @@ class Normalization(Parent):
 
         logging.info(f"Normalization:")
 
+        use_proton_charge = self.use_proton_charge_ui.value
         use_roi = self.use_roi_ui.value
         use_sample_roi = self.use_sample_roi_ui.value
 
         logging.info(f"\tnormalization settings:")
+        logging.info(f"\t\t- use_proton_charge: {use_proton_charge}")
         logging.info(f"\t\t- use_roi: {use_roi}")
         logging.info(f"\t\t- use_sample_roi: {use_sample_roi}")
 
@@ -261,19 +263,17 @@ class Normalization(Parent):
 
             # remove NaN and Inf
             # logging.info(f"removing NaN and Inf values (nan->0, -inf->0, inf->1)")
-            # normalized_sample = tomopy.misc.corr.remove_nan(normalized_sample, val=0, ncore=NUM_THREADS)
-            # normalized_sample = np.nan_to_num(normalized_sample, nan=0, posinf=1, neginf=0)
+            normalized_sample = tomopy.misc.corr.remove_nan(normalized_sample, val=0, ncore=NUM_THREADS)
+            normalized_sample = np.nan_to_num(normalized_sample, nan=0, posinf=1, neginf=0)
 
             # logging_3d_array_infos(message="after normalization", array=normalized_sample)
             # normalized_data.append(normalized_sample) 
 
+            normalized_sample[normalized_sample > 1] = 1
             normalized_data[_index] = normalized_sample[:]
 
-        # all counts above 1 are set to 1
-        # normalized_sample[normalized_sample > 1] = 1
-
         # remove negative values
-        logging.info(f"removing negative values (set to 0)")
+        logging.info(f"removing nan and negative values (set to 0)")
         normalized_data = tomopy.misc.corr.remove_nan(normalized_data, val=0, ncore=NUM_THREADS)
         normalized_data = tomopy.misc.corr.remove_neg(normalized_data, val=0, ncore=NUM_THREADS)
 

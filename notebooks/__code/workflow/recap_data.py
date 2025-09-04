@@ -194,8 +194,8 @@ class RecapData(Parent):
             default_list_sample: Optional[List[str]] = self.final_list_of_runs[DataType.sample][3:]
             default_list_ob: Optional[List[str]] = self.final_list_of_runs[DataType.ob][1:]
         else:
-            default_list_sample = None
-            default_list_ob = None
+            default_list_sample = []
+            default_list_ob = []
 
         final_list_of_sample: List[str] = self.final_list_of_runs[DataType.sample][:]
         sample_runs: widgets.VBox = widgets.VBox([
@@ -206,7 +206,7 @@ class RecapData(Parent):
                                                             width='100%',
                                                             )),                                                       
         ],
-        layout=widgets.Layout(width='200px',
+        layout=widgets.Layout(width='400px',
                                 height='300px'))
         self.parent.list_of_sample_runs_to_reject_ui = sample_runs.children[1]
 
@@ -218,7 +218,7 @@ class RecapData(Parent):
                                     layout=widgets.Layout(height="100%",
                                                             width='100%'))
         ],
-        layout=widgets.Layout(width='200px',
+        layout=widgets.Layout(width='400px',
                                 height='300px'))
         self.parent.list_of_ob_runs_to_reject_ui = ob_runs.children[1]
 
