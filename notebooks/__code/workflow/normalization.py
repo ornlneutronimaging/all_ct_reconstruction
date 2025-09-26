@@ -170,27 +170,31 @@ class Normalization(Parent):
             default_left = roi[self.MODE]['left']
             default_right = roi[self.MODE]['right']
             default_top = roi[self.MODE]['top']
-            defualt_bottom = roi[self.MODE]['bottom']
+            default_bottom = roi[self.MODE]['bottom']
         else:
             default_left = default_top = 0
-            default_right = defualt_bottom = 20
+            default_right = default_bottom = 20
 
         self.display_roi = interactive(plot_roi,
                                        left=widgets.IntSlider(min=0,
                                                               max=width-1,
                                                               value=default_left,
+                                                              continuous_update=False,
                                                               layout=widgets.Layout(width='50%')),
                                         right=widgets.IntSlider(min=0,
                                                                 max=width-1,
                                                                 value=default_right,
+                                                                continuous_update=False,
                                                                 layout=widgets.Layout(width='50%')),                      
                                         top=widgets.IntSlider(min=0,
                                                               max=height-1,
                                                               value=default_top,
+                                                              continuous_update=False,
                                                               layout=widgets.Layout(width='50%')),
                                         bottom=widgets.IntSlider(min=0,
                                                                  max=height-1,
-                                                                 value=defualt_bottom,
+                                                                 value=default_bottom,
+                                                                 continuous_update=False,
                                                                  layout=widgets.Layout(width='50%')))
                                         
         display(self.display_roi)

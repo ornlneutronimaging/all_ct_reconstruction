@@ -38,6 +38,7 @@ def create_sh_file(json_file_name: str, output_folder: str) -> str:
     sh_file_name: str = os.path.join(output_folder, f"run_reconstruction_{time_stamp}.sh")
 
     json_file_name_on_linux: str = json_file_name.replace(" ", "\ ")
+    json_file_name_on_linux = os.path.abspath(json_file_name_on_linux)
 
     with open(sh_file_name, 'w') as sh_file:
         sh_file.write("#!/bin/bash\n")

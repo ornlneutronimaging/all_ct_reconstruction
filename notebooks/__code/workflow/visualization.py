@@ -340,6 +340,7 @@ class Visualization(Parent):
                 display_plot = interactive(plot_norm,
                                         image_index=widgets.IntSlider(min=0,
                                                                         max=nbr_images-1,
+                                                                        continuous_update=False,
                                                                         value=0),
                                         vmin_before=widgets.IntSlider(min=vmin_before, 
                                                                       max=vmax_before, 

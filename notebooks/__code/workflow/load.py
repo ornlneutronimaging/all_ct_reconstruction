@@ -135,8 +135,6 @@ class Load(Parent):
             self.parent.ipts_number = int(ipts)
             return
 
-        print(f"{working_dir = }")
-
         if not os.path.exists(working_dir):
             while (not os.path.exists(working_dir)):
                 print(f"Working directory {working_dir} does not exist, trying to go up one level ...")
@@ -341,7 +339,8 @@ class Load(Parent):
     def data_selected(self, top_folder):
         logging.info(f"{self.parent.current_data_type} top folder selected: {top_folder}")
         self.parent.working_dir[self.data_type] = top_folder
-        print(f"Top {self.data_type} folder selected: {top_folder}")
+        print(f"{self.data_type} top folder is: {top_folder}")
+        display(HTML(f"<font color='green'><b>{self.data_type} folder selected</b>: {top_folder}</font>"))
 
         if self.parent.MODE == OperatingMode.white_beam:
             list_tiff = glob.glob(os.path.join(top_folder, "*.tif*"))

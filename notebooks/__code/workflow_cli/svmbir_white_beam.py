@@ -196,6 +196,8 @@ class SvmbirCliHandler:
 
                     ct_model_for_recon = mj.ParallelBeamModel(sinogram_shape,
                                                              list_of_angles_rad)
+                    ct_model_for_recon.scale_recon_shape(row_scale=1.1, col_scale=1.1) # overide the region removed to avoid flashes around the region of reconstruction
+                    
                     ct_model_for_recon.set_params(sharpness=sharpness,
                                                   verbose=verbose,
                                                   delta_det_channel=center_offset,

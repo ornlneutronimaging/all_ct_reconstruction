@@ -289,8 +289,6 @@ class Step1PrepareTimePixImages:
         self.working_dir[DataType.nexus] = os.path.join(top_sample_dir, "nexus")
         self.working_dir[DataType.processed] = os.path.join(top_sample_dir, "shared", "processed_data")       
         
-        print(f"Detector type selected: {self.detector_type}")
-
         if self.detector_type == DetectorType.tpx1_legacy:
             self.working_dir[DataType.sample] = os.path.join(top_sample_dir, "shared", "autoreduce", "mcp")
             self.working_dir[DataType.ob] = os.path.join(top_sample_dir, "shared", "autoreduce", "mcp")
@@ -352,6 +350,22 @@ class Step1PrepareTimePixImages:
         """
         o_load = Load(parent=self)
         o_load.select_folder(data_type=DataType.ob)
+
+
+    def infos(self) -> None:
+       
+        sample_folder = self.working_dir[DataType.sample]
+        open_beam_folder = self.working_dir[DataType.ob]
+        nexus_folder = self.working_dir[DataType.nexus]
+        detector_type = self.detector_type
+      
+        # look at 1 folder and get infos (nbr of files, nbr of angles, image size ...)
+        # FIXME
+
+
+
+
+
 
     # Checking data (proton charge, empty runs ...)
     def load_and_check_data(self) -> None:
