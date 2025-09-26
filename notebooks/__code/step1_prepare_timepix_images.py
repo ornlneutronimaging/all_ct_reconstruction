@@ -358,14 +358,12 @@ class Step1PrepareTimePixImages:
         open_beam_folder = self.working_dir[DataType.ob]
         nexus_folder = self.working_dir[DataType.nexus]
         detector_type = self.detector_type
-      
-        # look at 1 folder and get infos (nbr of files, nbr of angles, image size ...)
-        # FIXME
 
-
-
-
-
+        logging.info(f"Infos on selected folders:")
+        logging.info(f"  - sample: {sample_folder}")
+        logging.info(f"  - ob: {open_beam_folder}")
+        logging.info(f"  - nexus: {nexus_folder}")
+        logging.info(f"  - detector: {detector_type}")
 
     # Checking data (proton charge, empty runs ...)
     def load_and_check_data(self) -> None:

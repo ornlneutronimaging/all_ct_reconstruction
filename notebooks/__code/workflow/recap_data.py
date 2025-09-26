@@ -206,7 +206,7 @@ class RecapData(Parent):
                                                             width='100%',
                                                             )),                                                       
         ],
-        layout=widgets.Layout(width='400px',
+        layout=widgets.Layout(width='600px',
                                 height='300px'))
         self.parent.list_of_sample_runs_to_reject_ui = sample_runs.children[1]
 
@@ -218,7 +218,7 @@ class RecapData(Parent):
                                     layout=widgets.Layout(height="100%",
                                                             width='100%'))
         ],
-        layout=widgets.Layout(width='400px',
+        layout=widgets.Layout(width='600px',
                                 height='300px'))
         self.parent.list_of_ob_runs_to_reject_ui = ob_runs.children[1]
 
@@ -231,6 +231,48 @@ class RecapData(Parent):
         clear_all: widgets.Button = widgets.Button(description="Clear All")
         display(clear_all)
         clear_all.on_click(self.clear_all)
+
+        display(HTML("<hr>"))
+        display(HTML("<h3>How to treat duplicate angles (this will affect your selection above!):</h3>"))
+        how_to_treat_duplicate_angles_ui = widgets.RadioButtons(options=['Keep only one', 'Combine (average)'],
+                              value='Combine (average)',
+                              description='',
+                              disabled=False)
+        self.parent.how_to_treat_duplicate_angles_ui = how_to_treat_duplicate_angles_ui
+        display(how_to_treat_duplicate_angles_ui)
+        how_to_treat_duplicate_angles_ui.observe(self.on_change_how_to_treat_duplicate_angles, names='value')
+
+
+    def on_change_how_to_treat_duplicate_angles(self, change: Dict[str, Any]) -> None:
+        """
+        Callback for changes in duplicate angle treatment option.
+        
+        This method updates the parent workflow configuration based on user
+        selection of how to handle duplicate angles in the dataset. It ensures
+        that the chosen strategy is reflected in subsequent processing steps.
+        
+        Args:
+            change: Dictionary containing change information from the widget
+        """
+        self.parent.how_to_treat_duplicate_angles = change['new']
+        logging.info(f"How to treat duplicate angles: {change['new']}")
+        if change['new'] == 'Keep only one':
+            final_list_of_sample: List[str] = self.final_list_of_runs[DataType.sample][:]
+            no_duplicate_final_list_of_sample: List[str] = []
+            for _run in final_list_of_sample:
+                # keep string beyond _Ang_ to identify duplicates
+                angle_str: str = _run.split("_Ang_")[-1]
+                if not any(angle_str in s for s in no_duplicate_final_list_of_sample):
+                    no_duplicate_final_list_of_sample.append(_run)  
+            self.parent.list_of_sample_runs_to_reject_ui.value = [run for run in final_list_of_sample if run not in no_duplicate_final_list_of_sample]
+
+        else:
+            self.parent.list_of_sample_runs_to_reject_ui.value = []
+
+
+
+
+
 
     def clear_all(self, _: Any) -> None:
         """
