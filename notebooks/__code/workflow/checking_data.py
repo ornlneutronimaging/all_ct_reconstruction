@@ -205,11 +205,13 @@ class CheckingData(Parent):
         """
         logging.info(f"Retrieving rotation angles:")
         list_of_sample_runs: Dict[str, Any] = self.parent.list_of_runs[DataType.sample]
-        list_angles_deg_vs_runs_dict: Dict[str, str] = {}
+        list_angles_deg_vs_runs_dict: Dict[str, list] = {}
         for _run in list_of_sample_runs.keys():
             if list_of_sample_runs[_run][Run.use_it]:
                 angle_value: str = get_angle_value(run_full_path=list_of_sample_runs[_run][Run.full_path])
-                list_angles_deg_vs_runs_dict[str(angle_value)] = _run
+                if angle_value not in list_angles_deg_vs_runs_dict:
+                    list_angles_deg_vs_runs_dict[str(angle_value)] = []
+                list_angles_deg_vs_runs_dict[str(angle_value)].append(_run)
                 self.parent.list_of_runs[DataType.sample][_run][Run.angle] = angle_value
                 logging.info(f"\t{_run}: {angle_value}")
             else:

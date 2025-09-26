@@ -128,6 +128,7 @@ class CombineTof(Parent):
             - Maintains original run metadata while updating status
             - Essential for quality control in TOF data processing
         """
+        logging.info(f"updating list of runs status ...")
 
         # update list of runs to reject
         list_of_runs: Dict[DataType, Dict[str, Dict[Run, Any]]] = self.parent.list_of_runs
@@ -138,7 +139,9 @@ class CombineTof(Parent):
             list_of_runs[DataType.ob][_run][Run.use_it] = False
 
         list_sample_to_reject: List[str] = self.parent.list_of_sample_runs_to_reject_ui.value
+        logging.info(f"list_sample_to_reject = {list_sample_to_reject}")
         for _run in list_sample_to_reject:
+            logging.info(f"rejecting run {_run}")
             list_of_runs[DataType.sample][_run][Run.use_it] = False
 
         self.parent.list_of_runs = list_of_runs
@@ -177,7 +180,7 @@ class CombineTof(Parent):
 
         # for sample
         logging.info(f"\tworking with sample")
-        list_angles_deg_vs_runs_dict: Dict[str, str] = self.parent.list_angles_deg_vs_runs_dict
+        list_angles_deg_vs_runs_dict: Dict[str, list] = self.parent.list_angles_deg_vs_runs_dict
         list_angles: List[str] = list(list_angles_deg_vs_runs_dict.keys())
         list_angles.sort()
 
@@ -192,23 +195,24 @@ class CombineTof(Parent):
         final_list_of_runs: Dict[DataType, List[str]] = {DataType.sample: [], DataType.ob: []}
 
         for _angle in tqdm(list_angles):
-            _runs: str = list_angles_deg_vs_runs_dict[_angle]
+            _runs: list = list_angles_deg_vs_runs_dict[_angle]
             logging.info(f"Working with angle {_angle} degrees")
-            logging.info(f"\t{_runs}")
+            for _run in _runs:
+                logging.info(f"\t{_run}")
 
-            use_it: bool = list_of_runs[DataType.sample][_runs][Run.use_it]
-            if use_it:
-                logging.info(f"\twe keep that runs!")
-                list_of_angles_of_runs_to_keep.append(_angle)
-                logging.info(f"\tloading run {_runs} ...")
-                _data: NDArray[np.floating] = self.load_data_for_a_run(run=_runs)
-                logging.info(f"\t{_data.shape}")
-                # # combine all tof
-                # _data = np.sum(_data, axis=0)
-                list_sample_data.append(_data)
-                final_list_of_runs[DataType.sample].append(_runs)
-            else:
-                logging.info(f"\twe reject that runs!")
+                use_it: bool = list_of_runs[DataType.sample][_run][Run.use_it]
+                if use_it:
+                    logging.info(f"\twe keep that runs!")
+                    list_of_angles_of_runs_to_keep.append(_angle)
+                    logging.info(f"\tloading run {_run} ...")
+                    _data: NDArray[np.floating] = self.load_data_for_a_run(run=_run)
+                    logging.info(f"\t{_data.shape}")
+                    # # combine all tof
+                    # _data = np.sum(_data, axis=0)
+                    list_sample_data.append(_data)
+                    final_list_of_runs[DataType.sample].append(_run)
+                else:
+                    logging.info(f"\twe reject that runs!")
 
         master_3d_data_array[DataType.sample] = np.array(list_sample_data)
 
