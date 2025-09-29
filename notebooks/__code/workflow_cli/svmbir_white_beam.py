@@ -238,7 +238,7 @@ class SvmbirCliHandler:
                 logging.info(f"\t{np.shape(reconstruction_array) = }")
                 logging.info(f"exporting reconstructed data set #{_index} ...")
 
-                _output_data_folder = os.path.join(output_data_folder, f"set_{_index}")
+                _output_data_folder = os.path.abspath(os.path.join(output_data_folder, f"set_{_index}"))
                 logging.info(f"making or resetting folder {_output_data_folder}")
                 list_of_output_folders.append(_output_data_folder)
                 make_or_reset_folder(_output_data_folder)
@@ -300,7 +300,6 @@ class SvmbirCliHandler:
             elapsed_time = end_time - start_time
             logging.info(f">>>> Reconstruction took {elapsed_time:.2f} seconds using {method_used} <<<<")
 
-            print(f"exporting reconstructed slices ... ", end="")
             logging.info(f"{np.shape(reconstruction_array) = }")
             logging.info(f"exporting reconstructed data in {output_data_folder} ...")
             print(f"exporting reconstructed data to {output_data_folder} ... ", end="")

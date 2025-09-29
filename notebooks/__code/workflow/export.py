@@ -49,6 +49,13 @@ from __code.config import imaging_team
 from __code.utilities.system import get_instrument_generic_name
 
 
+class RunningModeOptions:
+    go_to_step2 = "Divide reconstruction into several jobs and run them in the background"
+    manual_launch = "Manually launch script outside notebook"
+    run_from_notebook = "Launch the script directly from the notebook"
+    run_on_hsnt = "Create script to run from hsnt"
+
+
 class Export:
     """
     Basic image export functionality for 3D CT reconstruction data.
@@ -114,8 +121,8 @@ class Export:
         - Uses make_tiff utility for TIFF file creation
         - Logs each export operation for debugging
         """
-       
-        for _index, _data in tqdm(enumerate(self.image_3d)):
+
+        for _index, _data in enumerate(self.image_3d):
             short_file_name: str = f"{self.base_image_name}_{_index:04d}.tiff"
             full_file_name: str = os.path.join(self.output_folder, short_file_name)
             logging.info(f"\texporting {full_file_name}")
@@ -301,9 +308,9 @@ class ExportExtra(Parent):
         display(HTML(f"<font color='blue'><b>Next step</b></font>"))
 
         list_options: List[str] = [
-                f"Divide reconstruction into several jobs and run them in parallel",
-                f"Manually launch script outside notebook",
-                f"Launch the script directly from the notebook",
+                RunningModeOptions.go_to_step2,
+                RunningModeOptions.manual_launch,
+                RunningModeOptions.run_from_notebook,
         ]
         # ucams = get_user_name()
         # if ucams in imaging_team:
@@ -361,11 +368,11 @@ class ExportExtra(Parent):
         else:
             self.run_script.disabled = True
 
-        if change['new'] == 'Divide reconstruction into several jobs and run them in the background':
+        if change['new'] == RunningModeOptions.go_to_step2:
             self.instructions.value = f"Reload the configuration file ({self.config_file_name}) in the notebook {STEP2_NOTEBOOK}"
-        elif change['new'] == 'Manually launch script outside notebook':
+        elif change['new'] == RunningModeOptions.manual_launch:
             self.instructions.value = f"Launch the following script from the command line: {self.sh_file_name}"
-        elif change['new'] == 'Create script to run from hsnt':
+        elif change['new'] == RunningModeOptions.run_on_hsnt:
             self.instructions.value = f"1. Connect to hsnt\n" + \
                 f"2. Copy the pre-processed data: > 'cp {self.parent.configuration.projections_pre_processing_folder} {self.hsnt_output_folder}'\n" + \
                 f"3. Copy the config json file: > 'cp {self.config_file_name} {self.hsnt_output_json_folder}'\n" + \
