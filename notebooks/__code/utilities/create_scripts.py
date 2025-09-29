@@ -48,6 +48,7 @@ def create_sh_file(json_file_name: str, output_folder: str) -> str:
         sh_file.write(f"pixi run --manifest-path /SNS/VENUS/shared/software/git/all_ct_reconstruction python {STEP3_SCRIPTS} {json_file_name_on_linux}\n")
 
     os.chmod(sh_file_name, 0o755)
+    sh_file_name = os.path.abspath(sh_file_name)
     return sh_file_name
 
 
