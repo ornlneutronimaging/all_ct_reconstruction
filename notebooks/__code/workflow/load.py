@@ -51,6 +51,12 @@ from __code.config import DEBUG, DEFAULT_NAMING_CONVENTION_INDICES, PERCENTAGE_O
 from __code.utilities.exceptions import MetadataError
 
 
+class HowToRetrieveAngleValue:
+    define_naming_convention = "Define naming convention"
+    use_angle_value_from_metadata_file = "Use angle value from metadata file"
+    import_list_from_ascii_file = "Import list from ASCII file"
+
+
 class Load(Parent):
     """
     Data loading and organization for CT reconstruction pipeline.
@@ -170,7 +176,7 @@ class Load(Parent):
             working_dir = self.parent.working_dir[data_type]
 
         if DEBUG:
-            working_dir = debug_folder[default_file_naming_convention][self.parent.MODE][data_type]
+            working_dir = debug_folder[default_detector_type][self.parent.MODE][data_type]
             if not os.path.exists(working_dir):
                 return
             #list_images = glob.glob(os.path.join(working_dir, "*_0045_*.tif*"))
@@ -178,6 +184,13 @@ class Load(Parent):
             list_images.sort()
             self.images_selected(list_images=list_images)
             return
+
+        if not os.path.exists(working_dir):
+            while (not os.path.exists(working_dir)):
+                print(f"Working directory {working_dir} does not exist, trying to go up one level ...")
+                working_dir = os.path.dirname(working_dir)
+                
+            # working_dir = os.path.abspath(os.path.expanduser("~"))
 
         o_file_browser = FileFolderBrowser(working_dir=working_dir,
                                            next_function=self.images_selected)
@@ -193,6 +206,7 @@ class Load(Parent):
         
         list_images.sort()
         logging.info(f"{len(list_images)} {self.data_type} images have been selected!")
+        display(HTML(f"<span style='color:green'>{len(list_images)} images have been selected as {self.data_type}!</span>"))
         self.parent.list_of_images[self.data_type] = list_images
 
     def select_percentage_of_data_to_use(self):
@@ -234,7 +248,9 @@ class Load(Parent):
 
     def how_to_retrieve_angle_value(self):
         self.how_to_retrieve_angle_value_widget = widgets.RadioButtons(
-            options=['Define naming convention', 'Use angle value from metadata file'],
+            options=[HowToRetrieveAngleValue.define_naming_convention, 
+                     HowToRetrieveAngleValue.use_angle_value_from_metadata_file,
+                     HowToRetrieveAngleValue.import_list_from_ascii_file],
             description='How to retrieve angle value:',
             disabled=False,
             style={'description_width': 'initial'}
@@ -243,14 +259,60 @@ class Load(Parent):
 
     def retrieve_angle_value(self):
         """Retrieve angle value from the images file name or metadata file"""
-        if self.how_to_retrieve_angle_value_widget.value == 'Define naming convention':
+        if self.how_to_retrieve_angle_value_widget.value == HowToRetrieveAngleValue.define_naming_convention:
             self.parent.retrieve_angle_value_from_metadata = False
             self.define_naming_convention()
-        elif self.how_to_retrieve_angle_value_widget.value == 'Use angle value from metadata file':
+        elif self.how_to_retrieve_angle_value_widget.value == HowToRetrieveAngleValue.use_angle_value_from_metadata_file:
             self.parent.retrieve_angle_value_from_metadata = True
             display(widgets.HTML("<font color='green'><b>INFO</b>: Angle value will be retrieved from the metadata file.</font>"))
+        elif self.how_to_retrieve_angle_value_widget.value == HowToRetrieveAngleValue.import_list_from_ascii_file:
+            logging.info(f"Importing list of angles from ASCII file ...")
+            self.parent.retrieve_angle_value_from_metadata = False
+            self.import_list_from_ascii_file()
         else:
             raise ValueError("Invalid option selected for angle value retrieval.")
+
+    def import_list_from_ascii_file(self):
+        filters = {"Text files": "*.txt",
+                   "All files": "*.*"}
+        o_file_browser = FileFolderBrowser(working_dir=os.path.dirname(self.parent.working_dir[DataType.sample]),
+                                           next_function=self.ascii_file_selected)
+        o_file_browser.select_file(instruction="Select ASCII file containing list of angles ...",
+                                   filters=filters,
+                                   default_filter="Text files")
+        
+    def ascii_file_selected(self, list_angle_file):
+        logging.info(f"ASCII file selected: {list_angle_file}")
+
+        if not list_angle_file:
+            logging.error("No file selected!")
+            print("No file selected!")
+            return
+
+        if not os.path.exists(list_angle_file):
+            logging.error(f"File {list_angle_file} does not exist!")
+            print(f"File {list_angle_file} does not exist!")
+            return
+        
+        try:
+            list_of_angles = np.loadtxt(list_angle_file, dtype=float)
+        except Exception as e:
+            logging.error(f"Error loading ASCII file {list_angle_file}: {e}")
+            display(widgets.HTML(f"<font color='red'><b>ERROR</b>: Could not load ASCII file {list_angle_file}. Ensure the file is formatted correctly.</font>"))
+            return
+        
+        if len(list_of_angles) != len(self.parent.list_of_images[DataType.sample]):
+            logging.error(f"Number of angles in {list_angle_file} does not match number of images.")
+            display(widgets.HTML(f"<font color='red'><b>ERROR</b>: Number of angles in {list_angle_file} does not match number of images.</font>"))
+            return
+
+        display(widgets.HTML(f"<font color='green'><b>Number of angles from ASCII file and number of images match!</b></font>"))
+
+        self.parent.final_list_of_angles = list_of_angles.tolist()
+        self.parent.final_list_of_angles_rad = np.deg2rad(list_of_angles).tolist()
+        
+        logging.info(f"Angle values imported from ASCII file: {self.parent.final_list_of_angles}")
+        display(widgets.HTML(f"<font color='green'><b>INFO</b>: Angle values imported from ASCII file successfully.</font>"))
 
     def define_naming_convention(self):
         number_of_images = len(self.parent.list_of_images[DataType.sample])
@@ -354,7 +416,7 @@ class Load(Parent):
             self.parent.configuration.top_folder.ob = top_folder
 
     def save_list_of_angles(self, list_of_images):
-        if self.parent.retrieve_angle_value_from_metadata:
+        if self.how_to_retrieve_angle_value_widget.value == HowToRetrieveAngleValue.use_angle_value_from_metadata_file:
             self.retrieve_angle_value_from_metadata_file(list_of_images)
             
             self.parent.final_list_of_angles = [float(angle) for angle in self.parent.final_list_of_angles]
@@ -367,7 +429,7 @@ class Load(Parent):
             logging.info(f"Angle values retrieved from metadata file and sorted: {self.parent.final_list_of_angles}")
             logging.info(f"list of files sorted the same way: {[os.path.basename(file) for file in self.parent.list_of_images[DataType.sample]]}")
 
-        else:
+        elif self.how_to_retrieve_angle_value_widget.value == HowToRetrieveAngleValue.define_naming_convention:
             self.retrieve_angle_value_from_file_name(list_of_images)
 
     def retrieve_list_of_files_and_angles(self):

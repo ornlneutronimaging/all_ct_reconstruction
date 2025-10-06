@@ -153,7 +153,7 @@ class CombineTof(Parent):
         Loads TOF neutron imaging data for all non-rejected runs, organizing
         them by angular position for proper tomographic reconstruction. Handles
         both sample and open beam data with progress tracking and logging.
-        
+       
         Returns:
             None: Updates parent object with loaded and organized data
             
@@ -197,6 +197,7 @@ class CombineTof(Parent):
         for _angle in tqdm(list_angles):
             _runs: list = list_angles_deg_vs_runs_dict[_angle]
             logging.info(f"Working with angle {_angle} degrees")
+
             for _run in _runs:
                 logging.info(f"\t{_run}")
 
@@ -211,6 +212,7 @@ class CombineTof(Parent):
                     # _data = np.sum(_data, axis=0)
                     list_sample_data.append(_data)
                     final_list_of_runs[DataType.sample].append(_run)
+
                 else:
                     logging.info(f"\twe reject that runs!")
 

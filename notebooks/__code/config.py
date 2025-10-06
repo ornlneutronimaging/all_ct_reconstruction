@@ -104,7 +104,7 @@ svmbir_parameters: Dict[str, Union[int, float, bool]] = {
     'verbose': True,
 }
 
-default_detector_type = DetectorType.tpx1
+default_detector_type = DetectorType.ccd
 
 # Debug data folder configuration organized by operating mode and data type
 debug_folder: Dict[DetectorType, Dict[OperatingMode, Dict[DataType, str]]] = {
@@ -133,14 +133,14 @@ debug_folder: Dict[DetectorType, Dict[OperatingMode, Dict[DataType, str]]] = {
         #     DataType.nexus: '/SNS/VENUS/IPTS-33531/nexus/'
         # },
         OperatingMode.white_beam: {
-            DataType.sample: "/SNS/SNAP/IPTS-25265/shared/moon_rocks_normalized/moon_rocks_normalized_angles_0_180/moon_rocks_combined_renamed_normalized",
-            DataType.ob: "",
-            DataType.dc: "",
-            DataType.cleaned_images: '/SNS/SNAP/IPTS-25265/shared/processed_data/jean_test',
-            DataType.normalized: '/SNS/SNAP/IPTS-25265/shared/processed_data/jean_test',
-            DataType.reconstructed: '/SNS/SNAP/IPTS-25265/shared/processed_data/jean_test',
-            DataType.extra: '/SNS/SNAP/IPTS-25265/shared/processed_data/jean_test',
-            DataType.nexus: '/SNS/SNAP/IPTS-25265/nexus',
+            DataType.sample: "/SNS/SNAP/IPTS-34899/shared/CT_by_jean/UTK_ORNL_VENUS_collaboration/UHP_CT_TIF",
+            DataType.ob: "/SNS/SNAP/IPTS-34899/shared/CT_by_jean/UTK_ORNL_VENUS_collaboration//brights_for_CT",
+            DataType.dc: "/SNS/SNAP/IPTS-34899/shared/CT_by_jean/UTK_ORNL_VENUS_collaboration//darks_for_CT",
+            DataType.cleaned_images: '/SNS/SNAP/IPTS-34899/shared/processed_data/jean_test',
+            DataType.normalized: '/SNS/SNAP/IPTS-34899/shared/processed_data/jean_test',
+            DataType.reconstructed: '/SNS/SNAP/IPTS-34899/shared/processed_data/jean_test',
+            DataType.extra: '/SNS/SNAP/IPTS-34899/shared/processed_data/jean_test',
+            DataType.nexus: '/SNS/SNAP/IPTS-34899/nexus',
         },
     },
     DetectorType.tpx1: {
@@ -159,7 +159,20 @@ debug_folder: Dict[DetectorType, Dict[OperatingMode, Dict[DataType, str]]] = {
     DetectorType.tpx3: {
         OperatingMode.tof: None,
         OperatingMode.white_beam: None
-    }
+    },
+
+    DetectorType.ccd: {
+       OperatingMode.white_beam: {
+            DataType.sample: "/SNS/SNAP/IPTS-34899/shared/CT_by_jean/UTK_ORNL_VENUS_collaboration/UHP_CT_TIF",
+            DataType.ob: "/SNS/SNAP/IPTS-34899/shared/CT_by_jean/UTK_ORNL_VENUS_collaboration//brights_for_CT",
+            DataType.dc: "/SNS/SNAP/IPTS-34899/shared/CT_by_jean/UTK_ORNL_VENUS_collaboration//darks_for_CT",
+            DataType.cleaned_images: '/SNS/SNAP/IPTS-34899/shared/processed_data/jean_test',
+            DataType.normalized: '/SNS/SNAP/IPTS-34899/shared/processed_data/jean_test',
+            DataType.reconstructed: '/SNS/SNAP/IPTS-34899/shared/processed_data/jean_test',
+            DataType.extra: '/SNS/SNAP/IPTS-34899/shared/processed_data/jean_test',
+            DataType.nexus: '/SNS/SNAP/IPTS-34899/nexus',
+        },
+    },
 }
 
 # Region of Interest (ROI) configuration by operating mode

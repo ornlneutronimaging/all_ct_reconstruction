@@ -235,7 +235,7 @@ class RecapData(Parent):
         display(HTML("<hr>"))
         display(HTML("<h3>How to treat duplicate angles (this will affect your selection above!):</h3>"))
         how_to_treat_duplicate_angles_ui = widgets.RadioButtons(options=['Keep only one', 'Combine (average)'],
-                              value='Combine (average)',
+                              value='Keep only one',
                               description='',
                               disabled=False)
         self.parent.how_to_treat_duplicate_angles_ui = how_to_treat_duplicate_angles_ui
@@ -255,7 +255,7 @@ class RecapData(Parent):
             change: Dictionary containing change information from the widget
         """
         self.parent.how_to_treat_duplicate_angles = change['new']
-        logging.info(f"How to treat duplicate angles: {change['new']}")
+        # logging.info(f"How to treat duplicate angles: {change['new']}")
         if change['new'] == 'Keep only one':
             final_list_of_sample: List[str] = self.final_list_of_runs[DataType.sample][:]
             no_duplicate_final_list_of_sample: List[str] = []
@@ -265,14 +265,10 @@ class RecapData(Parent):
                 if not any(angle_str in s for s in no_duplicate_final_list_of_sample):
                     no_duplicate_final_list_of_sample.append(_run)  
             self.parent.list_of_sample_runs_to_reject_ui.value = [run for run in final_list_of_sample if run not in no_duplicate_final_list_of_sample]
-
+            self.parent.list_of_sample_runs_to_reject_ui.disabled = False
         else:
             self.parent.list_of_sample_runs_to_reject_ui.value = []
-
-
-
-
-
+            self.parent.list_of_sample_runs_to_reject_ui.disabled = True
 
     def clear_all(self, _: Any) -> None:
         """

@@ -27,6 +27,7 @@ class DetectorType:
     tpx1_legacy = "tpx1 - old naming convention (until July 2025)"
     tpx1 = "tpx1 - new naming convention (from August 2025)"
     tpx3 = "tpx3"
+    ccd = "CCD"
 
 
 class DataType:

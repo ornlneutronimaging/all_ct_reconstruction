@@ -54,6 +54,7 @@ Created: Part of Step 1 preparation workflow for TimePix-based neutron CT
 """
 
 import os
+import glob
 import logging
 import ipywidgets as widgets
 from collections import OrderedDict
@@ -83,6 +84,7 @@ from __code.workflow.export import ExportExtra
 from __code.workflow.visualization import Visualization
 from __code.workflow.crop import Crop
 from __code.workflow.combine_ob_dc import CombineObDc
+from __code.workflow.combine_runs_with_same_angle import CombineRunsWithSameAngle
 from __code.workflow.mode_selection import ModeSelection
 from __code.workflow.reconstruction_selection import ReconstructionSelection
 from __code.workflow.rebin import Rebin
@@ -359,8 +361,11 @@ class Step1PrepareTimePixImages:
         nexus_folder = self.working_dir[DataType.nexus]
         detector_type = self.detector_type
 
+        list_sample_projections = glob.glob(os.path.join(sample_folder, "*"))
+
         logging.info(f"Infos on selected folders:")
         logging.info(f"  - sample: {sample_folder}")
+        logging.info(f"  - number of projections found: {len(list_sample_projections)}")
         logging.info(f"  - ob: {open_beam_folder}")
         logging.info(f"  - nexus: {nexus_folder}")
         logging.info(f"  - detector: {detector_type}")
@@ -369,6 +374,7 @@ class Step1PrepareTimePixImages:
         display(HTML(f"<ul>"
                       f"<li><b>Sample folder:</b> {sample_folder}</li>"
                       f"<li><b>Open beam folder:</b> {open_beam_folder}</li>"
+                      f"<li><b>Number of projections:</b> {len(list_sample_projections)}</li>"
                       f"<li><b>Nexus folder:</b> {nexus_folder}</li>"
                       f"<li><b>Detector type:</b> {detector_type}</li>"
                       f"</ul>"))
@@ -647,6 +653,10 @@ class Step1PrepareTimePixImages:
         o_combine = CombineObDc(parent=self)
         o_combine.run(ignore_dc=True)
         self.o_norm.normalize(ignore_dc=True)
+
+        # if we had duplicate angles and chose to combine them, we need to update the master_3d_data_array
+        o_combine = CombineRunsWithSameAngle(parent=self)
+        o_combine.run()
 
     def visualization_normalization_settings(self) -> None:
         """
