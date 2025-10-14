@@ -186,7 +186,7 @@ class CombineTof(Parent):
 
         list_of_runs: Dict[DataType, Dict[str, Dict[Run, Any]]] = self.parent.list_of_runs
 
-        list_of_angles_of_runs_to_keep: List[str] = []
+        list_of_angles_of_runs_to_keep: set[str] = set()
         master_3d_data_array: Dict[DataType, Optional[NDArray[np.floating]]] = {DataType.sample: None,
                                 DataType.ob: None,
                                 DataType.dc: None}
@@ -204,7 +204,7 @@ class CombineTof(Parent):
                 use_it: bool = list_of_runs[DataType.sample][_run][Run.use_it]
                 if use_it:
                     logging.info(f"\twe keep that runs!")
-                    list_of_angles_of_runs_to_keep.append(_angle)
+                    list_of_angles_of_runs_to_keep.add(_angle)
                     logging.info(f"\tloading run {_run} ...")
                     _data: NDArray[np.floating] = self.load_data_for_a_run(run=_run)
                     logging.info(f"\t{_data.shape}")
@@ -240,8 +240,8 @@ class CombineTof(Parent):
         master_3d_data_array[DataType.ob] = np.array(list_ob_data)
 
         self.parent.master_3d_data_array = master_3d_data_array
-        self.parent.final_list_of_angles = list_of_angles_of_runs_to_keep
-        self.parent.final_list_of_angles_rad = [np.deg2rad(float(_angle)) for _angle in list_of_angles_of_runs_to_keep]
+        self.parent.final_list_of_angles = list(list_of_angles_of_runs_to_keep)
+        self.parent.final_list_of_angles_rad = [np.deg2rad(float(_angle)) for _angle in list(list_of_angles_of_runs_to_keep)]
         self.parent.final_list_of_runs = final_list_of_runs
         self.parent.list_of_images = final_list_of_runs
 

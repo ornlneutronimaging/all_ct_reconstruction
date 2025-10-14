@@ -241,7 +241,7 @@ class RecapData(Parent):
         self.parent.how_to_treat_duplicate_angles_ui = how_to_treat_duplicate_angles_ui
         display(how_to_treat_duplicate_angles_ui)
         how_to_treat_duplicate_angles_ui.observe(self.on_change_how_to_treat_duplicate_angles, names='value')
-
+        self.on_change_how_to_treat_duplicate_angles({'new': how_to_treat_duplicate_angles_ui.value})
 
     def on_change_how_to_treat_duplicate_angles(self, change: Dict[str, Any]) -> None:
         """
