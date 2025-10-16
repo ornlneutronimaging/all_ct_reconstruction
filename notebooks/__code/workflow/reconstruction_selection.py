@@ -61,7 +61,7 @@ class ReconstructionSelection(Parent):
         on_change: Handle algorithm selection changes and update configuration
     """
 
-    def select(self) -> None:   
+    def select(self, default_selection: Tuple[str, ...] = None) -> None:   
         """
         Display interactive reconstruction algorithm selection interface.
         
@@ -74,6 +74,9 @@ class ReconstructionSelection(Parent):
         and can be used by subsequent reconstruction workflow steps.
         """
 
+        if default_selection is None:
+            default_selection = DEFAULT_RECONSTRUCTION_ALGORITHM
+
         # get all the attribute names of the ReconstructionAlgorithm class
         list_algo: List[str] = retrieve_list_class_attributes_name(ReconstructionAlgorithm)
 
@@ -84,7 +87,7 @@ class ReconstructionSelection(Parent):
                                                                         options=list_algo,
                                                                         rows=len(list_algo),
                                                                         description="",
-                                                                        value=DEFAULT_RECONSTRUCTION_ALGORITHM,
+                                                                        value=default_selection,
         )
 
         self.multi_reconstruction_selection_ui.observe(self.on_change, names='value')

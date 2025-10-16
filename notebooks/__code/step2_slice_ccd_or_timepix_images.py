@@ -12,10 +12,11 @@ from typing import Optional, Tuple, List, Any
 from numpy.typing import NDArray
 
 from __code import OperatingMode, DataType, STEP3_SCRIPTS
-from __code.config import DEBUG, debug_folder, default_file_naming_convention
+from __code.config import DEBUG, debug_folder # , default_file_naming_convention
 from __code.utilities.configuration_file import CropRegion
 from __code.utilities.configuration_file import select_file, loading_config_file_into_model
 from __code.utilities.logging import setup_logging
+from __code.workflow.reconstruction_selection import ReconstructionSelection
 from __code.utilities.files import retrieve_list_of_tif, make_or_reset_folder
 from __code.utilities.create_scripts import create_sh_file, create_sh_hsnt_file
 from __code.utilities.load import load_data_using_multithreading, load_list_of_tif
@@ -60,6 +61,7 @@ class Step2SliceCcdOrTimePixImages:
     """
 
     json_type_requested: str = JsonTypeRequested.undefined
+    MODE = OperatingMode.white_beam
 
     def __init__(self, system: Optional[Any] = None) -> None:
         """
@@ -70,13 +72,14 @@ class Step2SliceCcdOrTimePixImages:
         """
 
         # self.configuration = Configuration()
-        self.working_dir: str = system.System.get_working_dir()
+        self.working_dir: str = os.path.join(system.System.get_working_dir(), "shared")
         if DEBUG:
             self.working_dir = debug_folder[default_file_naming_convention][OperatingMode.white_beam][DataType.extra]
 
         self.instrument: str = system.System.get_instrument_selected()
 
         setup_logging(BASENAME_FILENAME)      
+
         logging.info(f"working_dir: {self.working_dir}")
         logging.info(f"instrument: {self.instrument}")
         if DEBUG:
@@ -109,6 +112,7 @@ class Step2SliceCcdOrTimePixImages:
         self.configuration = loading_config_file_into_model(config_file_path)
         self.images_path: str = self.configuration.projections_pre_processing_folder
         print(f"Configuration file {os.path.basename(config_file_path)} loaded!")
+        self.configuration_file_name = os.path.basename(config_file_path)
 
     def load_and_crop(self) -> None:
         """
@@ -218,6 +222,10 @@ class Step2SliceCcdOrTimePixImages:
                                                                           layout=widgets.Layout(width='50%')))
         display(self.display_plot_images)
 
+    def reconstruction_algorithm_selection(self) -> None:
+        self.o_mode = ReconstructionSelection(parent=self)
+        self.o_mode.select(default_selection=self.configuration.reconstruction_algorithm)
+
     def crop_settings(self) -> None:
         """
         Display interactive widget for selecting Region of Interest (ROI) cropping parameters.
@@ -312,6 +320,47 @@ class Step2SliceCcdOrTimePixImages:
                                         )
         display(self.display_roi)
   
+    def rename_or_not_configuration_files(self) -> None:
+        """
+        Display option to rename configuration files in the output directory.
+        
+        Provides a checkbox to choose whether to rename existing configuration
+        files in the output directory. If checked, all JSON files matching the
+        naming convention will be renamed with a timestamp suffix.
+        """
+        self.rename_ui = widgets.Checkbox(
+            value=False,
+            description='Rename base configuration file',
+            disabled=False,
+            indent=False,
+            layout=widgets.Layout(width='50%')
+        )
+        display(self.rename_ui)
+        self.rename_ui.observe(self.on_rename_ui_change, names='value')
+
+        new_name_label = widgets.Label("New basename:",
+                                        layout=widgets.Layout(width='100px'))
+        self.new_name_ui = widgets.Text(
+            value=f"{BASENAME_FILENAME}",
+            layout=widgets.Layout(width='800px'),
+        )
+        hori_layout = widgets.HBox([new_name_label, self.new_name_ui])
+        self.new_name_ui.disabled = True
+        display(hori_layout)
+
+        old_name_label = widgets.Label("Old basename:",
+                                        layout=widgets.Layout(width='100px'))
+        old_name = widgets.Label(BASENAME_FILENAME)
+        hori_layout2 = widgets.HBox([old_name_label, old_name])
+        display(hori_layout2)
+
+    def on_rename_ui_change(self, change: dict) -> None:
+        state = change['new']
+        if state:
+            self.new_name_ui.disabled = False
+        else:
+            self.new_name_ui.disabled = True
+
     def select_json_type_you_want_to_create(self) -> None:
         """
         Display options for selecting the type of JSON configuration files to create.
@@ -350,13 +399,29 @@ class Step2SliceCcdOrTimePixImages:
         Routes to either export_single_config_file() or export_multi_config_file()
         depending on the user's selection from select_json_type_you_want_to_create().
         """
+        if self.rename_ui.value:
+            self.BASENAME_FILENAME = self.new_name_ui.value
+            logging.info(f"Renaming base configuration files to: {self.BASENAME_FILENAME}")
+        else:
+            self.BASENAME_FILENAME = BASENAME_FILENAME
+            logging.info(f"Keeping original base configuration file name: {self.BASENAME_FILENAME}")
+
+        logging.info(f"{self.json_type_requested}")
+
         if self.json_type_requested == JsonTypeRequested.undefined:
             export_options = self.json_type.value
-            if export_options == JsonTypeRequested.single:
-                self.export_single_config_file()
-            else:
-                self.export_multi_config_file()
+        else:
+            export_options = JsonTypeRequested.single
+        
+        # update config with reconstruction algorithm selected
+        self.configuration.reconstruction_algorithm = list(self.o_mode.multi_reconstruction_selection_ui.value)
+        logging.info(f"reconstruction_algorithm selected: {self.configuration.reconstruction_algorithm}")
 
+        if export_options == JsonTypeRequested.single:
+            self.export_single_config_file()
+        else:
+            self.export_multi_config_file()
+    
     def export_multi_config_file(self) -> None:
         """
         Export multiple JSON configuration files for parallel reconstruction.
@@ -416,8 +481,8 @@ class Step2SliceCcdOrTimePixImages:
 
             list_slices.append((_top_slice, _bottom_slice))
             self.configuration.list_of_slices_to_reconstruct = list_slices
-            
-            config_file_name: str = f"{BASENAME_FILENAME}_{current_time}_from_{_top_slice}_to_{_bottom_slice}.json"
+
+            config_file_name: str = f"{self.BASENAME_FILENAME}_{current_time}_from_{_top_slice}_to_{_bottom_slice}.json"
             full_config_file_name: str = os.path.join(sub_folder_for_all_config_files, config_file_name)
             list_of_json_files.append(full_config_file_name)
             config_json: str = self.configuration.model_dump_json()
@@ -449,7 +514,7 @@ class Step2SliceCcdOrTimePixImages:
         
         Displays the configuration file name and shell script to run.
         """
- 
+
         top_slice: int
         bottom_slice: int
         nbr: int
@@ -483,7 +548,7 @@ class Step2SliceCcdOrTimePixImages:
 
         working_dir: str = self.output_config_file
         current_time: str = get_current_time_in_special_file_name_format()
-        config_file_name: str = f"{BASENAME_FILENAME}_{current_time}.json"
+        config_file_name: str = f"{self.BASENAME_FILENAME}_{current_time}.json"
         full_config_file_name: str = os.path.join(working_dir, config_file_name)
         config_json: str = self.configuration.model_dump_json()
         save_json(full_config_file_name, json_dictionary=config_json)
