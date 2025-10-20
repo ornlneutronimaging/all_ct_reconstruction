@@ -146,7 +146,10 @@ class Normalization(Parent):
         integrated_images = np.min(sample_images, axis=0)
         height, width = np.shape(integrated_images)
 
-        def plot_roi(left, right, top, bottom):
+        def plot_roi(left_right, top_bottom):
+
+            left, right = left_right
+            top, bottom = top_bottom
 
             height = np.abs(bottom - top) + 1
             width = np.abs(right - left) + 1
@@ -176,26 +179,17 @@ class Normalization(Parent):
             default_right = default_bottom = 20
 
         self.display_roi = interactive(plot_roi,
-                                       left=widgets.IntSlider(min=0,
-                                                              max=width-1,
-                                                              value=default_left,
-                                                              continuous_update=False,
-                                                              layout=widgets.Layout(width='50%')),
-                                        right=widgets.IntSlider(min=0,
-                                                                max=width-1,
-                                                                value=default_right,
-                                                                continuous_update=False,
-                                                                layout=widgets.Layout(width='50%')),                      
-                                        top=widgets.IntSlider(min=0,
-                                                              max=height-1,
-                                                              value=default_top,
-                                                              continuous_update=False,
-                                                              layout=widgets.Layout(width='50%')),
-                                        bottom=widgets.IntSlider(min=0,
-                                                                 max=height-1,
-                                                                 value=default_bottom,
-                                                                 continuous_update=False,
-                                                                 layout=widgets.Layout(width='50%')))
+                                       left_right=widgets.SelectionRangeSlider(options=list(range(width)),
+                                                                                index=(default_left, default_right),
+                                                                                description='Left-Right:',
+                                                                                orientation='horizontal',
+                                                                                layout=widgets.Layout(width='50%')),
+                                        top_bottom=widgets.SelectionRangeSlider(options=list(range(height)),
+                                                                                index=(default_top, default_bottom),
+                                                                                description='Top-Bottom:',
+                                                                                orientation='horizontal',
+                                                                                layout=widgets.Layout(width='50%')),
+                                      )
                                         
         display(self.display_roi)
       

@@ -120,8 +120,7 @@ class Crop(Parent):
         else:
             vmax_default_value = 1
 
-        def plot_crop(left: int, right: int, top: int, bottom: int, 
-                     vmin: float, vmax: float) -> Tuple[int, int, int, int]:
+        def plot_crop(left_right: list, top_bottom: list, vmin_vmax: list) -> Tuple[int, int, int, int]:
             """
             Inner function to plot the crop region visualization.
             
@@ -137,8 +136,16 @@ class Crop(Parent):
                 Tuple of (left, right, top, bottom) crop boundaries
             """
 
-            fig, axs = plt.subplots(figsize=(7,7))
+            left: int = left_right[0]
+            right: int = left_right[1]
 
+            top: int = top_bottom[0]
+            bottom: int = top_bottom[1]
+
+            vmin: float = vmin_vmax[0]
+            vmax: float = vmin_vmax[1]
+
+            fig, axs = plt.subplots(figsize=(7,7)) 
             img = axs.imshow(integrated, vmin=vmin, vmax=vmax)
             plt.colorbar(img, ax=axs, shrink=0.5)
 
@@ -157,37 +164,28 @@ class Crop(Parent):
             return left, right, top, bottom            
         
         self.display_roi = interactive(plot_crop,
-                                       left=widgets.IntSlider(min=0,
-                                                              max=width-1,
-                                                              layout=widgets.Layout(width="50%"),
-                                                              continuous_update=False,
-                                                              value=default_left),
-                                        right=widgets.IntSlider(min=0,
-                                                              layout=widgets.Layout(width="50%"),
-                                                                max=width-1,
-                                                              continuous_update=False,
-                                                                value=default_right),                      
-                                        top=widgets.IntSlider(min=0,
-                                                              layout=widgets.Layout(width="50%"),
-                                                              max=height-1,
-                                                              continuous_update=False,
-                                                              value=default_top),
-                                        bottom=widgets.IntSlider(min=0,
-                                                              layout=widgets.Layout(width="50%"),
-                                                                 max=height-1,
-                                                              continuous_update=False,
-                                                                 value=default_bottom),
-                                        vmin=widgets.FloatSlider(min=0,
-                                                              layout=widgets.Layout(width="50%"),
-                                                                 max=max_value,
-                                                              continuous_update=False,
-                                                                 value=0),
-                                        vmax=widgets.FloatSlider(min=0,
-                                                              layout=widgets.Layout(width="50%"),
-                                                                 max=max_value,
-                                                              continuous_update=False,
-                                                                 value=vmax_default_value),
-                                        )
+                                       left_right=widgets.SelectionRangeSlider(options=list(range(width)),
+                                                                                index=(default_left, default_right),
+                                                                                description='Left/Right:',
+                                                                                layout=widgets.Layout(width="50%"),
+                                                                                continuous_update=False,
+                                                                                ),
+
+                                        top_bottom=widgets.SelectionRangeSlider(options=list(range(height)),
+                                                                                index=(default_top, default_bottom),
+                                                                                description='Top/Bottom:',
+                                                                                layout=widgets.Layout(width="50%"),
+                                                                                continuous_update=False,
+                                                                                ),
+                                        vmin_vmax=widgets.FloatRangeSlider(description='Vmin/Vmax:',
+                                                                           options=list(np.linspace(0, max_value, num=100)),
+                                                                           layout=widgets.Layout(width="50%"),
+                                                                           min=0,
+                                                                           max=max_value,
+                                                                           continuous_update=False,
+                                                                           value=(0, vmax_default_value)
+                                        ),
+        )
         display(self.display_roi)
 
     def run(self) -> None:

@@ -315,8 +315,12 @@ class Visualization(Parent):
                     vmax_after = np.max(data_after)
 
                 def plot_norm(image_index=0, 
-                              vmin_before=vmin_before, vmax_before=vmax_before,
-                              vmin_after=vmin_after, vmax_after=vmax_after):
+                              v_before=None, 
+                              v_after=None
+                              ):
+
+                    vmin_before, vmax_before = v_before
+                    vmin_after, vmax_after = v_after
 
                     fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
 
@@ -335,29 +339,44 @@ class Visualization(Parent):
                     # fig.set_title(f"{_run_number}")
                     
                     plt.tight_layout()
-                    plt.show()
+                    # plt.show()
 
                 display_plot = interactive(plot_norm,
                                         image_index=widgets.IntSlider(min=0,
                                                                         max=nbr_images-1,
                                                                         continuous_update=False,
+                                                                        layout=widgets.Layout(width='50%'),
                                                                         value=0),
-                                        vmin_before=widgets.IntSlider(min=vmin_before, 
-                                                                      max=vmax_before, 
-                                                                      value=vmin_before,
-                                                                      continuous_update=False),
-                                        vmax_before=widgets.IntSlider(min=vmin_before, 
-                                                                      max=vmax_before, 
-                                                                      value=vmax_before,
-                                                                      continuous_update=False),
-                                        vmin_after=widgets.FloatSlider(min=vmin_after, 
-                                                                       max=vmax_after,
-                                                                       value=vmin_after,
-                                                                       continuous_update=False),
-                                        vmax_after=widgets.FloatSlider(min=vmin_after, 
-                                                                       max=vmax_after, 
-                                                                       value=vmax_after,
-                                                                       continuous_update=False),
+                                        v_before=widgets.IntRangeSlider(min=vmin_before, 
+                                                                        max=vmax_before, 
+                                                                        value=[vmin_before, vmax_before],
+                                                                        continuous_update=False,
+                                                                        layout=widgets.Layout(width='50%')),
+                                        v_after=widgets.FloatRangeSlider(min=vmin_after, 
+                                                                            max=vmax_after, 
+                                                                            value=[vmin_after, vmax_after],
+                                                                            continuous_update=False,
+                                                                            layout=widgets.Layout(width='50%')),
+                                        # vmin_before=widgets.IntSlider(min=vmin_before, 
+                                        #                               max=vmax_before, 
+                                        #                               value=vmin_before,
+                                        #                               continuous_update=False,
+                                        #                               layout=widgets.Layout(width='50%')),
+                                        # vmax_before=widgets.IntSlider(min=vmin_before, 
+                                        #                               max=vmax_before, 
+                                        #                               value=vmax_before,
+                                        #                               continuous_update=False,
+                                        #                               layout=widgets.Layout(width='50%')),
+                                        # vmin_after=widgets.FloatSlider(min=vmin_after, 
+                                        #                                max=vmax_after,
+                                        #                                value=vmin_after,
+                                        #                                continuous_update=False,
+                                        #                                layout=widgets.Layout(width='50%')),
+                                        # vmax_after=widgets.FloatSlider(min=vmin_after, 
+                                        #                                max=vmax_after, 
+                                        #                                value=vmax_after,
+                                        #                                continuous_update=False,
+                                        #                                layout=widgets.Layout(width='50%')),
                                                                        )
 
             else:
@@ -502,6 +521,7 @@ class Visualization(Parent):
         display_plot = interactive(plot_images,
                                 index=widgets.IntSlider(min=0,
                                                         max=len(left)-1,
+                                                        layout=widgets.Layout(width='50%'),
                                                         value=0),
         )
         display(display_plot)
@@ -529,6 +549,7 @@ class Visualization(Parent):
             
         _display_plot_images = interactive(plot_images,
                                 index=widgets.IntSlider(min=0,
+                                                        layout=widgets.Layout(width='50%'),
                                                         max=len(data)-1,
                                                         value=0),
         )

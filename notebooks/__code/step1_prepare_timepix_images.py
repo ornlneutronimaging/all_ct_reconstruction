@@ -222,7 +222,7 @@ class Step1PrepareTimePixImages:
 
     # center of rotation
     o_center_and_tilt: Optional[Any] = None
-    o_tile = None
+    o_tilt = None
     center_of_rotation: Optional[float] = None  # center of rotation calculated by the user
     # remove strips
     o_remove: Optional[Any] = None
@@ -380,7 +380,7 @@ class Step1PrepareTimePixImages:
                       f"</ul>"))
 
     # Checking data (proton charge, empty runs ...)
-    def load_and_check_data(self) -> None:
+    def preload_and_check_data(self) -> None:
         """
         Load and validate TimePix neutron imaging data quality.
         

@@ -198,7 +198,10 @@ class CenterOfRotationAndTilt(Parent):
 
         height, _ = np.shape(self.image_0_degree)
 
-        def plot_range(y_top, y_bottom):
+        def plot_range(y_range):
+
+            y_top, y_bottom = y_range
+
             _, axs = plt.subplots(nrows=1, ncols=2, figsize=(10,5))
 
            # im0 = axs[0].imshow(self.image_0_degree, vmin=0, vmax=1)
@@ -219,12 +222,10 @@ class CenterOfRotationAndTilt(Parent):
             return y_top, y_bottom
 
         self.display_plot = interactive(plot_range,
-                                   y_top = widgets.IntSlider(min=0, 
-                                                            max=height-1, 
-                                                            value=0),
-                                   y_bottom = widgets.IntSlider(min=0,
-                                                            max=height-1, 
-                                                            value=height-1),
+                                        y_range = widgets.IntRangeSlider(min=0, 
+                                                                        max=height-1, 
+                                                                        value=[0, height-1],
+                                                                        layout=widgets.Layout(width="50%")),
         )
 
         display(self.display_plot)
@@ -343,11 +344,11 @@ class CenterOfRotationAndTilt(Parent):
                                                                       value=[ImageAngles.degree_0, ImageAngles.degree_180]),
                                    center=widgets.IntSlider(min=0, 
                                                                       max=int(width-1), 
-                                                                      layout=widgets.Layout(width="100%"),
+                                                                      layout=widgets.Layout(width="50%"),
                                                                       value=int(width/2)),
                                     v_range = widgets.FloatRangeSlider(min=0,
                                                                        max=vmax,
-                                                                       layout=widgets.Layout(width='100%'),
+                                                                       layout=widgets.Layout(width='50%'),
                                                                        value=[0, vmax]),
 
                                     )                                                                     
@@ -384,7 +385,9 @@ class CenterOfRotationAndTilt(Parent):
         max_value = np.max([image_0_degree, image_180_degree])
         # max_value = 4 # DEBUG
 
-        def plot_images(slice_value=int(height/2), vmin=0, vmax=max_value):
+        def plot_images(slice_value=int(height/2), vmin_vmax: list = None):
+
+            vmin, vmax = vmin_vmax
 
             fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(10,5))
             
@@ -410,16 +413,11 @@ class CenterOfRotationAndTilt(Parent):
                                              slice_value = widgets.IntSlider(min=0, 
                                                                              max=height-1, 
                                                                              value=int(height/2),
-                                                                             layout=widgets.Layout(width="75%")),
-                                             vmin=widgets.FloatSlider(min=0, 
+                                                                             layout=widgets.Layout(width="50%")),
+                                            vmin_vmax=widgets.FloatRangeSlider(min=0, 
                                                                       max=max_value, 
-                                                                      value=0,
-                                                                      layout=widgets.Layout(width="75%")),
-                                             vmax=widgets.FloatSlider(min=0, 
-                                                                      max=max_value, 
-                                                                      value=max_value,
-                                                                      layout=widgets.Layout(width="75%"),
-                                                                      ),
+                                                                      value=[0, max_value],
+                                                                      layout=widgets.Layout(width="50%")),
         )
         display(self.plot_slice_to_use)
 
@@ -490,7 +488,7 @@ class CenterOfRotationAndTilt(Parent):
         manual_center_selection = interactive(plot_result,
                                     v_range = widgets.FloatRangeSlider(min=vmin,
                                                                        max=vmax,
-                                                                       layout=widgets.Layout(width='100%'),
+                                                                       layout=widgets.Layout(width='50%'),
                                                                        value=[0, vmax]),
 
                                     )                                                                     

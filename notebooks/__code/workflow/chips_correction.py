@@ -285,8 +285,10 @@ class ChipsCorrection(Parent):
         # list_of_runs_to_use = self.parent.list_of_runs_to_use[DataType.sample]
         normalized_images: NDArray[np.floating] = self.parent.normalized_images
 
-        def plot_norm(image_index: int = 0, vmin: float = 0, vmax: float = 1) -> None:
+        def plot_norm(image_index: int = 0, vmin_vmax: list[float] = None) -> None:
             """Plot comparison of uncorrected vs corrected chip alignment."""
+
+            vmin, vmax = vmin_vmax
 
             fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
 
@@ -310,8 +312,11 @@ class ChipsCorrection(Parent):
         display_plot = interactive(plot_norm,
                                   image_index=widgets.IntSlider(min=0,
                                                                 max=len(corrected_images) -1,
+                                                                layout=widgets.Layout(width='50%'),
                                                                 value=0),
-                                  vmin=widgets.IntSlider(min=0, max=10, value=0),
-                                  vmax=widgets.IntSlider(min=0, max=10, value=1))
+                                                                v_range=widgets.FloatRangeSlider(min=0.0, max=10.0, value=[0.0, 1.0], step=0.01,
+                                                                                                 layout=widgets.Layout(width='50%')),
+        )
+
         display(display_plot)
         
