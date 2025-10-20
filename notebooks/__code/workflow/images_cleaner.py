@@ -232,11 +232,13 @@ class ImagesCleaner(Parent):
                                                                                     max=1000,
                                                                                     value=100,
                                                                                     description='Nbr bins',
+                                                                                    layout=widgets.Layout(width='50%'),
                                                                                     continuous_update=False),
                                                         nbr_exclude = widgets.IntSlider(min=0,
                                                                                         max=10,
                                                                                         value=1,
                                                                                         description='Bins to excl.',
+                                                                                        layout=widgets.Layout(width='50%'),
                                                                                         continuous_update=False,
                                                                                         ),
                                                         )
@@ -247,9 +249,10 @@ class ImagesCleaner(Parent):
             display(HTML("<hr>"))
             display(widgets.HTML("<h2> Tomopy settings </h2>"))
             self.tomopy_diff = widgets.FloatSlider(min=1,
-                                       max=100,
-                                       value=20,
-                                       description='Diff value')
+                                                   layout=widgets.Layout(width='50%'),
+                                                    max=100,
+                                                    value=20,
+                                                    description='Diff value')
             display(self.tomopy_diff)
         
     def cleaning(self, ignore_dc=False):

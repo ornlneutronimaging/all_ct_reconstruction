@@ -287,9 +287,11 @@ class Step1PrepareTimePixImages:
 
     def update_all_paths(self) -> None:
         top_sample_dir = self.top_sample_dir
-        self.working_dir[DataType.ipts] = os.path.basename(top_sample_dir)
+        # self.working_dir[DataType.ipts] = os.path.basename(top_sample_dir)
+        self.working_dir[DataType.ipts] = top_sample_dir
         self.working_dir[DataType.nexus] = os.path.join(top_sample_dir, "nexus")
         self.working_dir[DataType.processed] = os.path.join(top_sample_dir, "shared", "processed_data")       
+        self.working_dir[DataType.normalized] = os.path.join(top_sample_dir, "shared", "normalized_data")
         
         if self.detector_type == DetectorType.tpx1_legacy:
             self.working_dir[DataType.sample] = os.path.join(top_sample_dir, "shared", "autoreduce", "mcp")
@@ -302,6 +304,7 @@ class Step1PrepareTimePixImages:
             self.working_dir[DataType.top] = os.path.join(top_sample_dir, "shared", "autoreduce", "images", self.get_unix_detector_name())
 
         logging.info(f"Updates all paths:")
+        logging.info(f"  - top_sample_dir: {top_sample_dir}")
         logging.info(f"  - sample: {self.working_dir[DataType.sample]}")
         logging.info(f"  - ob: {self.working_dir[DataType.ob]}")
         logging.info(f"  - nexus: {self.working_dir[DataType.nexus]}")  

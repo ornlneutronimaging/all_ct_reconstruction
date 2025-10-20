@@ -127,6 +127,8 @@ class Load(Parent):
         else:
             working_dir = self.parent.working_dir[data_type]
 
+        logging.info(f"Selecting folder for {data_type} ...")
+
         if DEBUG:
             self.data_selected(debug_folder[default_detector_type][self.parent.MODE][data_type])
             logging.info(f"{default_detector_type = }")
@@ -141,12 +143,21 @@ class Load(Parent):
             self.parent.ipts_number = int(ipts)
             return
 
+        logging.info(f"\t{working_dir = }")
         if not os.path.exists(working_dir):
+            logging.warning(f"Working directory {working_dir} does not exist!")
             while (not os.path.exists(working_dir)):
                 print(f"Working directory {working_dir} does not exist, trying to go up one level ...")
                 working_dir = os.path.dirname(working_dir)
+        else:
+            logging.info(f"\tWorking directory exists.")
                 
             # working_dir = os.path.abspath(os.path.expanduser("~"))
+
+        logging.info(f"ipts_folder: {self.parent.working_dir[DataType.ipts]}")
+
+        display(HTML(f"<u>REMINDER:</u>"))
+        display(HTML(f"- Sample folder: <b>{os.path.basename(self.parent.working_dir[DataType.sample])}</b>"))
 
         try:
 

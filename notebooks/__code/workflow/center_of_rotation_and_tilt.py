@@ -169,7 +169,9 @@ class CenterOfRotationAndTilt(Parent):
 
         # retrieve data for those indexes
         self.image_0_degree = self.parent.normalized_images_log[index_0_degree]
+        self.real_0_degree_angle = self.parent.final_list_of_angles[index_0_degree]
         self.image_180_degree = self.parent.normalized_images_log[index_180_degree]
+        self.real_180_degree_angle = self.parent.final_list_of_angles[index_180_degree]
 
     def _saving_360(self, list_of_angles):
         angles_minus_360 = [float(_value) - 360 for _value in list_of_angles]
@@ -179,6 +181,7 @@ class CenterOfRotationAndTilt(Parent):
         index_360_degree = np.where(minimum_value == abs_angles_minus_360)[0][0]
         self.index_360_degree = index_360_degree
         self.image_360_degree = self.parent.normalized_images_log[index_360_degree]
+        self.real_360_degree_angle = self.parent.final_list_of_angles[index_360_degree]
         logging.info(f"\t{index_360_degree = }")
 
     def isolate_0_180_360_degrees_images(self):
@@ -207,13 +210,13 @@ class CenterOfRotationAndTilt(Parent):
            # im0 = axs[0].imshow(self.image_0_degree, vmin=0, vmax=1)
             im0 = axs[0].imshow(self.image_0_degree)
             plt.colorbar(im0, ax=axs[0])
-            axs[0].set_title("0 degree")
+            axs[0].set_title(f"theory: 0 degree - measured: {self.real_0_degree_angle} degree")
             axs[0].axhspan(y_top, y_bottom, color='blue', alpha=0.2)
 
             #im1 = axs[1].imshow(self.image_180_degree, vmin=0, vmax=1)
             im1 = axs[1].imshow(self.image_180_degree)
             plt.colorbar(im1, ax=axs[1])
-            axs[1].set_title("180 degree")
+            axs[1].set_title(f"theory: 180 degree - measured: {self.real_180_degree_angle} degree")
             axs[1].axhspan(y_top, y_bottom, color='blue', alpha=0.2)
 
             plt.tight_layout()

@@ -295,3 +295,4 @@ class Normalization(Parent):
                           output_folder=full_output_folder)
         o_export.run()
         logging.info(f"\texporting normalized images ... Done!")
+        display(HTML(f"<b> Exported normalized images to folder: </b> {full_output_folder}"))
