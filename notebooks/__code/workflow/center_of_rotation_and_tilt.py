@@ -152,15 +152,16 @@ class CenterOfRotationAndTilt(Parent):
         Uses final_list_of_angles from parent to identify angular positions.
         """
         logging.info(f"\tisolating 0 and 180 degres: ")
-        list_of_angles: List[float] = self.parent.final_list_of_angles
+        list_of_angles = np.array(self.parent.final_list_of_angles, dtype=float)
+        list_of_angles = [float(_angle) for _angle in list_of_angles]
         self._saving_0_and_180(list_of_angles)
 
-    def _saving_0_and_180(self, list_of_angles: List[float]) -> None:
-        angles_minus_180 = [float(_value) - 180 for _value in list_of_angles]
+    def _saving_0_and_180(self, list_of_angles: np.ndarray) -> None:
+        angles_minus_180 = np.array([_angle-180. for _angle in list_of_angles])
         abs_angles_minus_180 = np.abs(angles_minus_180)
         minimum_value = np.min(abs_angles_minus_180)
 
-        index_0_degree = 0
+        index_0_degree = np.where(list_of_angles == np.min(list_of_angles))[0][0]
         index_180_degree = np.where(minimum_value == abs_angles_minus_180)[0][0]
         self.index_180_degree = index_180_degree
 
@@ -186,6 +187,8 @@ class CenterOfRotationAndTilt(Parent):
 
     def isolate_0_180_360_degrees_images(self):
         list_of_angles = self.parent.final_list_of_angles
+        list_of_angles = [float(_angle) for _angle in list_of_angles]
+        self.parent.final_list_of_angles = list_of_angles
         self._saving_0_and_180(list_of_angles)
         self._saving_360(list_of_angles)
 

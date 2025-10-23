@@ -217,6 +217,8 @@ class CombineTof(Parent):
                     logging.info(f"\twe reject that runs!")
 
         master_3d_data_array[DataType.sample] = np.array(list_sample_data)
+        list_of_angles_of_runs_to_keep = list(list_of_angles_of_runs_to_keep)
+        list_of_angles_of_runs_to_keep.sort()
 
         # for ob
         logging.info(f"\tworking with ob")
