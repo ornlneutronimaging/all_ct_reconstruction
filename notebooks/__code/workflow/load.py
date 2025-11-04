@@ -132,7 +132,7 @@ class Load(Parent):
         if DEBUG:
             self.data_selected(debug_folder[default_detector_type][self.parent.MODE][data_type])
             logging.info(f"{default_detector_type = }")
-            self.parent.working_dir[DataType.nexus] = debug_folder[default_detector_type][self.parent.MODE][DataType.nexus]
+            self.parent.working_dir[DataType.nexus] = debug_folder[default_detector_type][self.parent.MODE].get(DataType.nexus, None)
             logging.info(f"DEBUG MODE: {data_type} folder selected: {debug_folder[default_detector_type][self.parent.MODE][data_type]}")
             _list_sep = self.parent.working_dir[DataType.sample].split(os.sep)
             # facility = _list_sep[0]
@@ -220,42 +220,68 @@ class Load(Parent):
         display(HTML(f"<span style='color:green'>{len(list_images)} images have been selected as {self.data_type}!</span>"))
         self.parent.list_of_images[self.data_type] = list_images
 
-    def select_percentage_of_data_to_use(self):
+    def use_all_or_fraction(self):
        
-        def display_data_to_use(slider_index):
+        self.select_widget = widgets.RadioButtons(options=['Use all data for reconstruction', 
+                                                      'Use a fraction of the data for reconstruction'],
+                                              description='',
+                                              disabled=False,
+                                              value='Use all data for reconstruction',
+                                              style={'description_width': 'initial'}
+                                              )
         
-            self.determine_projections_angles_to_use(slider_index)
-            display(HTML(f"{self.parent.temp_nbr_of_images_will_be_used} images will be used for the reconstruction"))
+        display(self.select_widget)
 
+    def select_percentage_of_data_to_use(self):
+
+        if self.select_widget.value == 'Use all data for reconstruction':
+            self.parent.percentage_of_data_to_use_for_reconstruction = 100
+            self.determine_projections_angles_to_use(percentage_to_use=100)
+            display(HTML(f"All images will be used for the reconstruction: {self.parent.temp_nbr_of_images_will_be_used} images"))
+            return
+        
+        def display_data_to_use(slider_index, preview=False):
+        
+            logging.info(f"Percentage of data to use for reconstruction: {slider_index}%")
+            display(HTML(f"Processing how many images will be used for the reconstruction ..."))
+            self.determine_projections_angles_to_use(percentage_to_use=slider_index)
+            display(HTML(f"{self.parent.temp_nbr_of_images_will_be_used} images will be used for the reconstruction"))
+    
             logging.info("Visualizing angles selected for the projections.")
             full_list_of_angles_rad = self.parent.full_list_of_angles_rad
             logging.info(f"\tFull list of angles (radians): {full_list_of_angles_rad}")
             logging.info(f"\tSelected angles (radians): {self.parent.temp_final_list_of_angles_rad}")
-            fig, ax = plt.subplots(figsize=(5, 5), subplot_kw={'projection': 'polar'})
-            ax.plot(full_list_of_angles_rad, np.ones(len(full_list_of_angles_rad))*2, marker='o', linestyle='None', color='blue', markersize=5, label='All Angles')
-            ax.set_rmax(2)
-            ax.set_rticks([0.5, 1, 1.5])
-            selected_list_of_angles_rad = self.parent.temp_final_list_of_angles_rad
-            ax.plot(selected_list_of_angles_rad, np.ones(len(selected_list_of_angles_rad))*2, marker='o', linestyle='None', color='green', markersize=10, label='Selected Angles')
-            ax.legend()
+            
+            if preview:
+                fig, ax = plt.subplots(figsize=(5, 5), subplot_kw={'projection': 'polar'})
+                ax.plot(full_list_of_angles_rad, np.ones(len(full_list_of_angles_rad))*2, marker='o', linestyle='None', color='blue', markersize=5, label='All Angles')
+                ax.set_rmax(2)
+                ax.set_rticks([0.5, 1, 1.5])
+                selected_list_of_angles_rad = self.parent.temp_final_list_of_angles_rad
+                ax.plot(selected_list_of_angles_rad, np.ones(len(selected_list_of_angles_rad))*2, marker='o', linestyle='None', color='green', markersize=10, label='Selected Angles')
+                ax.legend()
+            
             return slider_index
         
         self.percentage_of_data_to_use_widget = interactive(display_data_to_use,
-                                                              slider_index=widgets.IntSlider(value=PERCENTAGE_OF_DATA_TO_USE_FOR_RECONSTRUCTION,
-                                                                                           min=5,
-                                                                                           max=100,
-                                                                                           step=1,
-                                                                                           layout=widgets.Layout(width='100%')))
+                                                            slider_index=widgets.IntSlider(value=PERCENTAGE_OF_DATA_TO_USE_FOR_RECONSTRUCTION,
+                                                                                            min=5,
+                                                                                            max=100,
+                                                                                            step=1,
+                                                                                            continuous_update=False,
+                                                                                            layout=widgets.Layout(width='100%')),
+                                                               preview=widgets.Checkbox(value=False,),
+                                                               )
 
         display(self.percentage_of_data_to_use_widget)
 
-    def on_percentage_to_use_change(self, change):
-        new_value = change['new']
-        list_tiff = self.parent.list_of_images[DataType.sample]
-        nbr_images = int(new_value / 100 * len(list_tiff))
-        self.number_of_images_to_use.value = f"{nbr_images} images will be used for the reconstruction"
-        self.determine_projections_angles_to_use()
-        self.visualize_angles_selected()
+    # def on_percentage_to_use_change(self, change):
+    #     new_value = change['new']
+    #     list_tiff = self.parent.list_of_images[DataType.sample]
+    #     nbr_images = int(new_value / 100 * len(list_tiff))
+    #     self.number_of_images_to_use.value = f"{nbr_images} images will be used for the reconstruction"
+    #     self.determine_projections_angles_to_use()
+    #     self.visualize_angles_selected()
 
     def how_to_retrieve_angle_value(self):
         self.how_to_retrieve_angle_value_widget = widgets.RadioButtons(
@@ -318,6 +344,9 @@ class Load(Parent):
             return
 
         display(widgets.HTML(f"<font color='green'><b>Number of angles from ASCII file and number of images match!</b></font>"))
+
+        # make sure the angles values are within 0-360 degrees
+        list_of_angles = np.array(list_of_angles) % 360
 
         self.parent.final_list_of_angles = list_of_angles.tolist()
         self.parent.final_list_of_angles_rad = np.deg2rad(list_of_angles).tolist()
@@ -511,29 +540,44 @@ class Load(Parent):
     def determine_projections_angles_to_use(self, percentage_to_use=50):
         """Retrieve list of TIFF files from the selected folder."""
         logging.info(f"Determine list of projections to use according to percentage selected ...")
+        
+        # if retrieve_list_of_files_and_angles:
+        logging.info(f"\tRetrieving list of files and angles ...")
         list_of_tiff = self.parent.list_of_images[DataType.sample]
         list_of_tiff.sort()
         _dict = self.retrieve_list_of_files_and_angles()
         list_of_tiff = _dict['list_of_images']
         list_of_angles_deg = _dict['list_of_angles_deg']
         # list_of_angles_rad = _dict['list_of_angles_rad']
-
+        logging.info(f"Done retrieving list of files and angles.")
+        
         nbr_images_to_use = int(percentage_to_use / 100 * len(list_of_tiff))
         if nbr_images_to_use < 5:
             nbr_images_to_use = 5
         logging.info(f"\tNumber of projections to use: {nbr_images_to_use}")
         list_of_angles_deg = [float(_value) for _value in self.parent.final_list_of_angles]
         self.parent.full_list_of_angles_rad = self.parent.final_list_of_angles_rad
+
+        if percentage_to_use == 100:
+            logging.info(f"\tUsing all angles for the reconstruction.")
+            self.parent.temp_final_list_of_angles = list_of_angles_deg
+            self.parent.temp_final_list_of_angles_rad = self.parent.final_list_of_angles_rad
+            self.parent.temp_list_of_images = list_of_tiff
+            self.parent.temp_nbr_of_images_will_be_used = len(list_of_tiff)
+            return
+
+        logging.info(f"\tSelecting angles using farthest point sampling ...")
         selected_angles = farthest_point_sampling(list_of_angles_deg, nbr_images_to_use)
+        logging.info(f"\tDone selecting angles.")
 
         logging.info(f"Making sure 0 and 180 degrees are included in the selected angles.")
         if not list_of_angles_deg[0] in selected_angles:
             logging.info(f"\tAdding 0 degrees to the selected angles.")
             selected_angles.insert(0, np.float64(list_of_angles_deg[0]))
 
-        if not list_of_angles_deg[-1] in selected_angles:
-            logging.info(f"\tAdding 180 degrees to the selected angles.")
-            selected_angles.append(np.float64(list_of_angles_deg[-1]))
+        # if not list_of_angles_deg[-1] in selected_angles:
+        #     logging.info(f"\tAdding 180 degrees to the selected angles.")
+        #     selected_angles.append(np.float64(list_of_angles_deg[-1]))
 
         logging.info(f"\tSelected angles: {selected_angles}")
         selected_indices = [np.where(list_of_angles_deg == angle)[0][0] for angle in selected_angles]

@@ -123,7 +123,7 @@ class Normalization(Parent):
         self.use_sample_roi_ui = widgets.Checkbox(value=False,
                                         description='Use sample ROI normalization',
                                         layout=widgets.Layout(width="100%"))
-        vertical_layout = widgets.VBox([self.use_proton_charge_ui,
+        vertical_layout = widgets.VBox([# self.use_proton_charge_ui,
                                         # self.use_frames_ui,
                                         self.use_roi_ui,
                                         self.use_sample_roi_ui])
@@ -143,7 +143,7 @@ class Normalization(Parent):
 
         # integrated_images = np.log(np.min(self.parent.master_3d_data_array[DataType.sample], axis=0))
         sample_images = self.parent.master_3d_data_array[DataType.sample]
-        integrated_images = np.min(sample_images, axis=0)
+        integrated_images = np.mean(sample_images, axis=0)
         height, width = np.shape(integrated_images)
 
         def plot_roi(left_right, top_bottom):
@@ -178,17 +178,26 @@ class Normalization(Parent):
             default_left = default_top = 0
             default_right = default_bottom = 20
 
+        if default_left >= width:
+            default_left = 0
+        if default_right >= width:
+            default_right = width // 10
+        if default_top >= height:
+            default_top = 0
+        if default_bottom >= height:
+            default_bottom = height // 10
+
         self.display_roi = interactive(plot_roi,
                                        left_right=widgets.SelectionRangeSlider(options=list(range(width)),
                                                                                 index=(default_left, default_right),
                                                                                 description='Left-Right:',
                                                                                 orientation='horizontal',
-                                                                                layout=widgets.Layout(width='50%')),
+                                                                                layout=widgets.Layout(width='80%')),
                                         top_bottom=widgets.SelectionRangeSlider(options=list(range(height)),
                                                                                 index=(default_top, default_bottom),
                                                                                 description='Top-Bottom:',
                                                                                 orientation='horizontal',
-                                                                                layout=widgets.Layout(width='50%')),
+                                                                                layout=widgets.Layout(width='80%')),
                                       )
                                         
         display(self.display_roi)
@@ -248,12 +257,17 @@ class Normalization(Parent):
                 coeff *= ob_roi_counts / sample_roi_counts
 
             if not (dc_data_combined is None):
-                num = sample_data - dc_data_combined
-                den = ob_data_combined - dc_data_combined
-                normalized_sample = np.true_divide(num, den, dtype=np.float32) * coeff
-            else:
-                normalized_sample = np.true_divide(sample_data, ob_data_combined, dtype=np.float32) * coeff
 
+                normalized_sample = np.divide(np.subtract(sample_data, dc_data_combined, dtype=np.float32),
+                                             np.subtract(ob_data_combined, dc_data_combined, dtype=np.float32),
+                                             out=np.zeros_like(sample_data, dtype=np.float32),
+                                             where=(ob_data_combined - dc_data_combined) != 0,
+                                            ) * coeff
+            else:
+                normalized_sample = np.divide(sample_data, ob_data_combined,
+                                              out=np.zeros_like(sample_data, dtype=np.float32),
+                                              where=ob_data_combined != 0) * coeff
+                
             if use_sample_roi:
                 sample_roi_counts = np.median(normalized_sample[top: bottom+1, left: right+1])
                 coeff = 1 / sample_roi_counts
@@ -261,19 +275,20 @@ class Normalization(Parent):
 
             # remove NaN and Inf
             # logging.info(f"removing NaN and Inf values (nan->0, -inf->0, inf->1)")
-            normalized_sample = tomopy.misc.corr.remove_nan(normalized_sample, val=0, ncore=NUM_THREADS)
-            normalized_sample = np.nan_to_num(normalized_sample, nan=0, posinf=1, neginf=0)
+            # normalized_sample = tomopy.misc.corr.remove_nan(normalized_sample, val=0, ncore=NUM_THREADS)
+            # normalized_sample = np.nan_to_num(normalized_sample, nan=0, posinf=1, neginf=0)
 
             # logging_3d_array_infos(message="after normalization", array=normalized_sample)
             # normalized_data.append(normalized_sample) 
 
             normalized_sample[normalized_sample > 1] = 1
+            normalized_sample[normalized_sample < 0] = 0
             normalized_data[_index] = normalized_sample[:]
 
         # remove negative values
         logging.info(f"removing nan and negative values (set to 0)")
-        normalized_data = tomopy.misc.corr.remove_nan(normalized_data, val=0, ncore=NUM_THREADS)
-        normalized_data = tomopy.misc.corr.remove_neg(normalized_data, val=0, ncore=NUM_THREADS)
+        # normalized_data = tomopy.misc.corr.remove_nan(normalized_data, val=0, ncore=NUM_THREADS)
+        # normalized_data = tomopy.misc.corr.remove_neg(normalized_data, val=0, ncore=NUM_THREADS)
 
         self.parent.normalized_images = np.squeeze(np.asarray(normalized_data, dtype=np.float32))
         logging_3d_array_infos(message="normalized images", array=self.parent.normalized_images)

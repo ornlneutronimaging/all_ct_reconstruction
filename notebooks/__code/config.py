@@ -18,7 +18,7 @@ from __code import DetectorType, OperatingMode, DataType
 from __code.utilities.system import get_user_name
 
 # Debug and development settings
-debugging: bool = False
+debugging: bool = True
 verbose: bool = True
 debugger_username: str = 'j35'
 imaging_team: List[str] = ["j35", "gxt"]
@@ -163,14 +163,14 @@ debug_folder: Dict[DetectorType, Dict[OperatingMode, Dict[DataType, str]]] = {
 
     DetectorType.ccd: {
        OperatingMode.white_beam: {
-            DataType.sample: "/SNS/SNAP/IPTS-34899/shared/CT_by_jean/UTK_ORNL_VENUS_collaboration/UHP_CT_TIF",
-            DataType.ob: "/SNS/SNAP/IPTS-34899/shared/CT_by_jean/UTK_ORNL_VENUS_collaboration//brights_for_CT",
-            DataType.dc: "/SNS/SNAP/IPTS-34899/shared/CT_by_jean/UTK_ORNL_VENUS_collaboration//darks_for_CT",
-            DataType.cleaned_images: '/SNS/SNAP/IPTS-34899/shared/processed_data/jean_test',
-            DataType.normalized: '/SNS/SNAP/IPTS-34899/shared/processed_data/jean_test',
-            DataType.reconstructed: '/SNS/SNAP/IPTS-34899/shared/processed_data/jean_test',
-            DataType.extra: '/SNS/SNAP/IPTS-34899/shared/processed_data/jean_test',
-            DataType.nexus: '/SNS/SNAP/IPTS-34899/nexus',
+            DataType.sample: "/HFIR/CG1D/IPTS-33767/shared/PSI_files/sample_jean",
+            DataType.ob: "/HFIR/CG1D/IPTS-33767/shared/PSI_files/ob_tiff",
+            DataType.dc: "/HFIR/CG1D/IPTS-33767/shared/PSI_files/dc_tiff",
+            DataType.cleaned_images: '/HFIR/CG1D/IPTS-33767/shared/processed_data/jean_psi_files',
+            DataType.normalized: '/HFIR/CG1D/IPTS-33767/shared/processed_data/jean_psi_files',
+            DataType.reconstructed: '/HFIR/CG1D/IPTS-33767/shared/processed_data/jean_psi_files',
+            DataType.extra: '/HFIR/CG1D/IPTS-33767/shared/processed_data/jean_psi_files',
+            # DataType.nexus: '/HFIR/CG1D/IPTS-33767/nexus',
         },
     },
 }

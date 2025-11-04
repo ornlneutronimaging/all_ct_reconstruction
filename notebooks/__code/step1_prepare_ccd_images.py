@@ -175,7 +175,7 @@ class Step1PrepareCcdImages:
     # reconstructed 3D array with svmbir
     reconstruction_array = None
 
-    def __init__(self, system=None):
+    def __init__(self, system=None, ):
 
         self.configuration = Configuration()
 
@@ -228,13 +228,16 @@ class Step1PrepareCcdImages:
     #     self.o_load.define_naming_convention()
 
     # pecentage of data to use
-    def select_percentage_of_data_to_use(self):
+    def use_all_or_fraction(self):
         try:
-            self.o_load.select_percentage_of_data_to_use()
+            self.o_load.use_all_or_fraction()
         except MetadataError as e:
             logging.error(f"MetadataError: {e.message}")
             display(widgets.HTML(f"<font color='red'><b>ERROR</b>: {e.message}</font>"))
   
+    def select_percentage_of_data_to_use(self):
+        self.o_load.select_percentage_of_data_to_use()
+
     # load data
     def load_data(self):
         """creates: master_3d_data_array
@@ -471,6 +474,11 @@ class Step1PrepareCcdImages:
 
     def display_center_of_rotation(self):
         self.o_tilt.test_center_of_rotation_calculated()
+
+    def visualize_sinograms(self):
+        o_vizu = Visualization(parent=self)
+        o_vizu.visualize_1_stack(data=self.sinogram_normalized_images_log,
+                                 title="Sinograms")
 
     # test reconstruction using gridrec (fast algorithm)
     def select_slices_to_use_to_test_reconstruction(self):

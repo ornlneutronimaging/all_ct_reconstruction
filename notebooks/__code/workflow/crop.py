@@ -82,11 +82,12 @@ class Crop(Parent):
             _data = self.parent.master_3d_data_array[DataType.sample]
         else:
            _data = self.parent.normalized_images
-        integrated: NDArray[np.generic] = np.min(_data, axis=0)
+        integrated_min: NDArray[np.generic] = np.min(_data, axis=0)
+        integrated_mean: NDArray[np.generic] = np.mean(_data, axis=0)
 
         height: int
         width: int
-        height, width = integrated.shape
+        height, width = integrated_min.shape
 
         # Set default crop boundaries based on debug mode
         default_left: int
@@ -112,7 +113,7 @@ class Crop(Parent):
         if default_bottom < 0:
             default_bottom = height - abs(default_bottom)
 
-        max_value: float = np.max(integrated)
+        max_value: float = np.max(integrated_mean)
 
         vmax_default_value: float
         if before_normalization:
@@ -120,7 +121,7 @@ class Crop(Parent):
         else:
             vmax_default_value = 1
 
-        def plot_crop(left_right: list, top_bottom: list, vmin_vmax: list) -> Tuple[int, int, int, int]:
+        def plot_crop(left_right: list, top_bottom: list, vmin_vmax: list, data_type: str) -> Tuple[int, int, int, int]:
             """
             Inner function to plot the crop region visualization.
             
@@ -145,6 +146,11 @@ class Crop(Parent):
             vmin: float = vmin_vmax[0]
             vmax: float = vmin_vmax[1]
 
+            if data_type == "Min":
+                integrated: NDArray[np.generic] = integrated_min
+            else:
+                integrated: NDArray[np.generic] = integrated_mean
+
             fig, axs = plt.subplots(figsize=(7,7)) 
             img = axs.imshow(integrated, vmin=vmin, vmax=vmax)
             plt.colorbar(img, ax=axs, shrink=0.5)
@@ -167,24 +173,29 @@ class Crop(Parent):
                                        left_right=widgets.SelectionRangeSlider(options=list(range(width)),
                                                                                 index=(default_left, default_right),
                                                                                 description='Left/Right:',
-                                                                                layout=widgets.Layout(width="50%"),
+                                                                                layout=widgets.Layout(width="80%"),
                                                                                 continuous_update=False,
                                                                                 ),
 
                                         top_bottom=widgets.SelectionRangeSlider(options=list(range(height)),
                                                                                 index=(default_top, default_bottom),
                                                                                 description='Top/Bottom:',
-                                                                                layout=widgets.Layout(width="50%"),
+                                                                                layout=widgets.Layout(width="80%"),
                                                                                 continuous_update=False,
                                                                                 ),
                                         vmin_vmax=widgets.FloatRangeSlider(description='Vmin/Vmax:',
                                                                            options=list(np.linspace(0, max_value, num=100)),
-                                                                           layout=widgets.Layout(width="50%"),
+                                                                           layout=widgets.Layout(width="80%"),
                                                                            min=0,
                                                                            max=max_value,
                                                                            continuous_update=False,
                                                                            value=(0, vmax_default_value)
                                         ),
+                                        data_type=widgets.RadioButtons(options=["Min", "Mean"],
+                                                                       description='Data type:',
+                                                                       disabled=False,
+                                                                       value="Min",
+                                                                       layout=widgets.Layout(width="50%"))
         )
         display(self.display_roi)
 

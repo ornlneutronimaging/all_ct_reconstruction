@@ -101,7 +101,9 @@ class Visualization(Parent):
         Creates and displays what_to_visualize_ui widget
         """
         display(HTML(f"<hr><h2>How to visualize the {data_type} data?</h2>"))
-        self.what_to_visualize_ui = widgets.ToggleButtons(options=['All images', 'Statistics'],
+        self.what_to_visualize_ui = widgets.ToggleButtons(options=['All images', 
+                                                                   '1 image at a time',
+                                                                   'Statistics'],
                                                           value='Statistics')
         display(self.what_to_visualize_ui)
 
@@ -127,16 +129,22 @@ class Visualization(Parent):
         self.mode = mode
         if self.what_to_visualize_ui.value == 'All images':
             self.visualize_all_images_at_once()
-        else:
+        elif self.what_to_visualize_ui.value == 'Statistics':
             self.visualize_statistics()
+        elif self.what_to_visualize_ui.value == '1 image at a time':
+            self.visualize_1_stack(data=self.parent.master_3d_data_array[DataType.sample],
+                                   title=f"{self.mode} data")
 
     def visualize_timepix_according_to_selection(self, mode='cleaned'):
         # for timepix data
         self.mode = mode
         if self.what_to_visualize_ui.value == 'All images':
             self.visualize_all_images_at_once()
-        else:
+        elif self.what_to_visualize_ui.value == 'Statistics':
             self.visualize_timepix_statistics()
+        elif self.what_to_visualize_ui.value == '1 image at a time':
+            self.visualize_1_stack(data=self.parent.master_3d_data_array[DataType.sample],
+                                   title=f"{self.mode} data")
 
     def visualize_statistics(self):
 
@@ -345,18 +353,18 @@ class Visualization(Parent):
                                         image_index=widgets.IntSlider(min=0,
                                                                         max=nbr_images-1,
                                                                         continuous_update=False,
-                                                                        layout=widgets.Layout(width='50%'),
+                                                                        layout=widgets.Layout(width='80%'),
                                                                         value=0),
                                         v_before=widgets.IntRangeSlider(min=vmin_before, 
                                                                         max=vmax_before, 
                                                                         value=[vmin_before, vmax_before],
                                                                         continuous_update=False,
-                                                                        layout=widgets.Layout(width='50%')),
+                                                                        layout=widgets.Layout(width='80%')),
                                         v_after=widgets.FloatRangeSlider(min=vmin_after, 
                                                                             max=vmax_after, 
                                                                             value=[vmin_after, vmax_after],
                                                                             continuous_update=False,
-                                                                            layout=widgets.Layout(width='50%')),
+                                                                            layout=widgets.Layout(width='80%')),
                                         # vmin_before=widgets.IntSlider(min=vmin_before, 
                                         #                               max=vmax_before, 
                                         #                               value=vmin_before,
@@ -527,7 +535,9 @@ class Visualization(Parent):
         display(display_plot)
 
     def visualize_1_stack(self,
-                          data=None, vmin=None, vmax=None,
+                          data=None, 
+                          vmin=None, 
+                          vmax=None,
                           title="normalized"):
         
         self.vmin = vmin
@@ -549,7 +559,7 @@ class Visualization(Parent):
             
         _display_plot_images = interactive(plot_images,
                                 index=widgets.IntSlider(min=0,
-                                                        layout=widgets.Layout(width='50%'),
+                                                        layout=widgets.Layout(width='80%'),
                                                         max=len(data)-1,
                                                         value=0),
         )
