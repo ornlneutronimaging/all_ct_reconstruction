@@ -33,6 +33,7 @@ import os
 import numpy as np
 from numpy.typing import NDArray
 import logging
+from loguru import logger as loguru_logging
 from tqdm import tqdm
 from IPython.display import display, HTML
 import ipywidgets as widgets
@@ -177,7 +178,6 @@ class Load(Parent):
             display(HTML(f"<font color='red'><b>ERROR</b>: You probably forgot to select your IPTS in the first cell!</font>"))
             return
 
-
     def select_images(self, data_type=DataType.ob):
         self.parent.current_data_type = data_type
         self.data_type = data_type
@@ -309,17 +309,8 @@ class Load(Parent):
         else:
             raise ValueError("Invalid option selected for angle value retrieval.")
 
-    def import_list_from_ascii_file(self):
-        filters = {"Text files": "*.txt",
-                   "All files": "*.*"}
-        o_file_browser = FileFolderBrowser(working_dir=os.path.dirname(self.parent.working_dir[DataType.sample]),
-                                           next_function=self.ascii_file_selected)
-        o_file_browser.select_file(instruction="Select ASCII file containing list of angles ...",
-                                   filters=filters,
-                                   default_filter="Text files")
-        
-    def ascii_file_selected(self, list_angle_file):
-        logging.info(f"ASCII file selected: {list_angle_file}")
+    def testing_angle_values(self):
+        list_angle_file = self.list_angle_file
 
         if not list_angle_file:
             logging.error("No file selected!")
@@ -353,6 +344,19 @@ class Load(Parent):
         
         logging.info(f"Angle values imported from ASCII file: {self.parent.final_list_of_angles}")
         display(widgets.HTML(f"<font color='green'><b>INFO</b>: Angle values imported from ASCII file successfully.</font>"))
+
+    def import_list_from_ascii_file(self):
+        filters = {"Text files": "*.txt",
+                   "All files": "*.*"}
+        o_file_browser = FileFolderBrowser(working_dir=os.path.dirname(self.parent.working_dir[DataType.sample]),
+                                           next_function=self.ascii_file_selected)
+        o_file_browser.select_file(instruction="Select ASCII file containing list of angles ...",
+                                   filters=filters,
+                                   default_filter="Text files")
+        
+    def ascii_file_selected(self, list_angle_file):
+        logging.info(f"ASCII file selected: {list_angle_file}")
+        self.list_angle_file = list_angle_file
 
     def define_naming_convention(self):
         number_of_images = len(self.parent.list_of_images[DataType.sample])
@@ -441,8 +445,10 @@ class Load(Parent):
     def data_selected(self, top_folder):
         logging.info(f"{self.parent.current_data_type} top folder selected: {top_folder}")
         self.parent.working_dir[self.data_type] = top_folder
-        print(f"{self.data_type} top folder is: {top_folder}")
+        # print(f"{self.data_type} top folder is: {top_folder}")
         display(HTML(f"<font color='green'><b>{self.data_type} folder selected</b>: {top_folder}</font>"))
+        # loguru_logging.info(f"{self.data_type} folder selected: {top_folder} via LOGURU"  )
+        logging.info(f"{self.data_type} folder selected: {top_folder}")
 
         if self.parent.MODE == OperatingMode.white_beam:
             list_tiff = glob.glob(os.path.join(top_folder, "*.tif*"))

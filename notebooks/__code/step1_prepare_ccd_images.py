@@ -1,5 +1,6 @@
 import os
 import logging
+from loguru import logger as loguru_logging
 from collections import OrderedDict
 import numpy as np
 from IPython.display import display, HTML
@@ -133,7 +134,8 @@ class Step1PrepareCcdImages:
     normalized_images = None   # after normalization
     normalized_images_log = None   # after log conversion
     corrected_images = None  # after chips correction
-
+    sinogram_normalized_images_log = None  # sinograms after log conversion
+    
     instrument = "VENUS"
     ipts = None
 
@@ -221,6 +223,9 @@ class Step1PrepareCcdImages:
 
     def retrieve_angle_value(self):
         self.o_load.retrieve_angle_value()
+
+    def testing_angle_values(self):
+        self.o_load.testing_angle_values()
 
     # # define naming convention to easily extract angle value
     # def define_naming_schema(self):
@@ -411,16 +416,6 @@ class Step1PrepareCcdImages:
                                   vmin_right=None,
                                   vmax_right=None,)
         
-    # sinograms
-    def create_sinograms(self):
-        """creates: sinogram_normalized_images_log"""
-        self.sinogram_normalized_images_log = np.moveaxis(self.normalized_images_log, 1, 0)
-
-    def visualize_sinograms(self):
-        o_vizu = Visualization(parent=self)
-        o_vizu.visualize_1_stack(data=self.sinogram_normalized_images_log,
-                                 title="Sinograms")
-
     # strips removal
     def select_range_of_data_to_test_stripes_removal(self):
         """updates: list_of_images[DataType.sample]"""
@@ -475,11 +470,20 @@ class Step1PrepareCcdImages:
     def display_center_of_rotation(self):
         self.o_tilt.test_center_of_rotation_calculated()
 
+    # sinograms
+    def create_sinograms(self):
+        """creates: sinogram_normalized_images_log"""
+        self.sinogram_normalized_images_log = np.moveaxis(self.normalized_images_log, 1, 0)
+
     def visualize_sinograms(self):
+        if self.sinogram_normalized_images_log is None:
+            self.create_sinograms()
+
+        logging.debug(f"sinogram_normalized_images_log shape: {self.sinogram_normalized_images_log.shape}")
+
         o_vizu = Visualization(parent=self)
         o_vizu.visualize_1_stack(data=self.sinogram_normalized_images_log,
                                  title="Sinograms")
-
     # test reconstruction using gridrec (fast algorithm)
     def select_slices_to_use_to_test_reconstruction(self):
         """uses: normalized_images_log"""

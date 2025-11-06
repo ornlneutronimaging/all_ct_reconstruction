@@ -8,6 +8,7 @@ for numpy array analysis.
 """
 
 import logging
+from loguru import logger as loguru_logging
 import os
 import numpy as np
 from typing import Optional
