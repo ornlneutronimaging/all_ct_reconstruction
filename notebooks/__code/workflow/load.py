@@ -226,6 +226,7 @@ class Load(Parent):
                                                       'Use a fraction of the data for reconstruction'],
                                               description='',
                                               disabled=False,
+                                              layout=widgets.Layout(width='80%'),
                                               value='Use all data for reconstruction',
                                               style={'description_width': 'initial'}
                                               )

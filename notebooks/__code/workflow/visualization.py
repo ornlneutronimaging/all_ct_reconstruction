@@ -100,7 +100,7 @@ class Visualization(Parent):
         ------------
         Creates and displays what_to_visualize_ui widget
         """
-        display(HTML(f"<hr><h2>How to visualize the {data_type} data?</h2>"))
+        display(HTML(f"<h2>How to visualize the {data_type} data?</h2>"))
         self.what_to_visualize_ui = widgets.ToggleButtons(options=['All images', 
                                                                    '1 image at a time',
                                                                    'Statistics'],
