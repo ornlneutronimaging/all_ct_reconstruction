@@ -278,6 +278,14 @@ class SvmbirCliHandler:
                 print(f"launching svmbir with all slices ... ", end="")
                 logging.info(f"launching svmbir with all slices ...")
 
+                logging.info(f"{corrected_array_log.shape = }")
+                logging.info(f"{list_of_angles_rad.shape = }")
+                
+
+
+
+
+
                 reconstruction_array = svmbir.recon(sino=corrected_array_log,
                                                     angles=list_of_angles_rad,
                                                     num_rows = corrected_array_log.shape[2],  # height,
@@ -290,7 +298,7 @@ class SvmbirCliHandler:
                                                     max_iterations = max_iterations,
                                                     num_threads = NUM_THREADS,
                                                     verbose = verbose,
-                                                    roi_radius=3000,
+                                                    # roi_radius=3000,
                                                     svmbir_lib_path = svmbir_lib_path,
                                                     )
                 logging.info(f"reconstruction_array shape: {np.shape(reconstruction_array)} ")
