@@ -261,6 +261,16 @@ class Step1PrepareCcdImages:
         """uses: master_3d_data_array"""
         self.o_vizu.visualize_according_to_selection(mode='raw')
 
+    # exclude images
+    def list_of_images_to_exclude(self):
+        """updates: master_3d_data_array"""
+        self.o_exclude = Load(parent=self)
+        self.o_exclude.list_of_images_to_exclude()
+
+    def exclude_this_list_of_images(self):
+        """updates: master_3d_data_array"""
+        self.o_exclude.exclude_this_list_of_images()
+
     # pre processing crop
     def pre_processing_crop_settings(self):
         self.o_crop1 = Crop(parent=self)

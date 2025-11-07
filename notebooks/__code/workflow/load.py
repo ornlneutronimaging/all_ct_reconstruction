@@ -45,7 +45,7 @@ from ipywidgets import interactive
 from __code import DataType, Run, OperatingMode
 from __code.parent import Parent
 from __code.utilities.file_folder_browser import FileFolderBrowser
-from __code.utilities.load import load_data_using_multithreading, load_list_of_tif
+from __code.utilities.load import load_data_using_multithreading, load_list_of_images
 from __code.utilities.files import retrieve_list_of_tif
 from __code.utilities.math import farthest_point_sampling
 from __code.config import DEBUG, DEFAULT_NAMING_CONVENTION_INDICES, PERCENTAGE_OF_DATA_TO_USE_FOR_RECONSTRUCTION, debug_folder, default_detector_type
@@ -192,6 +192,9 @@ class Load(Parent):
                 return
             #list_images = glob.glob(os.path.join(working_dir, "*_0045_*.tif*"))
             list_images = glob.glob(os.path.join(working_dir, "*.tif*"))
+            if len(list_images) == 0:
+                list_images = glob.glob(os.path.join(working_dir, "*.fits"))
+
             list_images.sort()
             self.images_selected(list_images=list_images)
             return
@@ -206,7 +209,8 @@ class Load(Parent):
         o_file_browser = FileFolderBrowser(working_dir=working_dir,
                                            next_function=self.images_selected)
         o_file_browser.select_images_with_search(instruction="Select all images ...",
-                                                 filters={"TIFF": "*.tif*"})
+                                                 filters={"TIFF": "*.tif*", "FITS": "*.fits*"},
+                                                 default_filter="TIFF",)
     
     def images_selected(self, list_images):
         if list_images:
@@ -452,10 +456,19 @@ class Load(Parent):
         logging.info(f"{self.data_type} folder selected: {top_folder}")
 
         if self.parent.MODE == OperatingMode.white_beam:
-            list_tiff = glob.glob(os.path.join(top_folder, "*.tif*"))
-            list_tiff.sort()
-            self.parent.list_of_images[self.data_type] = list_tiff
-            logging.info(f"{len(list_tiff)} {self.data_type} files!")
+            list_images = glob.glob(os.path.join(top_folder, "*.tif*"))
+            list_images.sort()
+            logging.info(f"\t {len(list_images)} {self.data_type} files found as TIFF!")
+
+            if len(list_images) == 0:
+                list_images = glob.glob(os.path.join(top_folder, "*.fits"))
+                list_images.sort()
+                logging.info(f"\t {len(list_images)} {self.data_type} files found as FITS!")
+
+            self.parent.list_of_images[self.data_type] = list_images
+            logging.info(f"{len(list_images)} {self.data_type} files!")
+
+            display(HTML(f"<b>{len(list_images)} {self.data_type} files found!</b>"))
 
         if self.data_type == DataType.sample:
             self.parent.configuration.top_folder.sample = top_folder
@@ -616,47 +629,33 @@ class Load(Parent):
         self.parent.final_list_of_angles_rad = self.parent.temp_final_list_of_angles_rad
         self.parent.list_of_images[DataType.sample] = self.parent.temp_list_of_images
 
-        list_of_images = self.parent.list_of_images
+        all_data_types_list_of_images = self.parent.list_of_images
         logging.info(f"loading the data:")
 
-        for _data_type in list_of_images.keys():
+        for _data_type in all_data_types_list_of_images.keys():
             logging.info(f"\tworking with {_data_type} ... ")
 
-            if not list_of_images[_data_type]:
+            if not all_data_types_list_of_images[_data_type]:
                 logging.info(f" nothing to load for {_data_type}, no files have been selected!")
                 continue
 
-            # list_of_images[_data_type].sort()
-            list_tiff = list_of_images[_data_type]
-            # nbr_images_to_use = int(self.percentage_to_use.value / 100 * len(list_of_images[_data_type]))
-            # if nbr_images_to_use == 0:
-            #     nbr_images_to_use = 1
-
-            # logging.info(f"\t{nbr_images_to_use} images will be used for the reconstruction")    
-            # list_tiff = random.sample(list_tiff, nbr_images_to_use)
-            # logging.info(f"\t{len(set(list_tiff))} unique images will be used for the reconstruction")
-
-            # list_tiff.sort()
-
-            # list_tiff_index_to_use = np.random.randint(0, len(list_of_images[_data_type]), nbr_images_to_use)
-            # list_tiff_index_to_use.sort()
-            # list_tiff = [list_tiff[_index] for _index in list_tiff_index_to_use]
+            list_images = all_data_types_list_of_images[_data_type]
             
-            self.parent.list_of_images[_data_type] = list_tiff
-            list_of_images[_data_type] = list_tiff
+            self.parent.list_of_images[_data_type] = list_images
+            all_data_types_list_of_images[_data_type] = list_images
 
             if _data_type == DataType.sample:
-                self.save_list_of_angles(list_tiff)
+                self.save_list_of_angles(list_images)
 
             # self.parent.master_3d_data_array[_data_type] = load_data_using_multithreading(list_of_images[_data_type])
 
-            if list_of_images[DataType.ob] is None:
+            if all_data_types_list_of_images[DataType.ob] is None:
                 # we are dealing with normalized data
                 dtype = np.float32
             else:
                 dtype = np.uint16
 
-            self.parent.master_3d_data_array[_data_type] = load_list_of_tif(list_of_images[_data_type], dtype=dtype)
+            self.parent.master_3d_data_array[_data_type] = load_list_of_images(all_data_types_list_of_images[_data_type], dtype=dtype)
             logging.info(f"{np.shape(self.parent.master_3d_data_array[_data_type]) = }")
             logging.info(f"\tloading {_data_type} ... done !")
 
@@ -733,3 +732,56 @@ class Load(Parent):
             time_spectra_file = ""
         self.parent.spectra_file_full_path = time_spectra_file
         
+    def list_of_images_to_exclude(self):
+        """List of images to exclude from the reconstruction."""
+        label = widgets.HTML("<b>Define the index of the images you want to exclude from the reconstruction:</b>")
+        display(label)
+        self.list_index_widget = widgets.Text(
+            value='',
+            layout=widgets.Layout(width='80%'),
+            placeholder='')
+        display(self.list_index_widget)
+
+        example = widgets.HTML("<font color='gray' size='2'><i>Example: 0, 1, 2, 10-20 (to exclude images with index 0, 1, 2 and from 10 to 20)</i></font>")
+        display(example)
+
+    def exclude_this_list_of_images(self):
+        list_of_images_to_exclude = self.get_list_of_images_to_exclude()
+
+        # update master_3d_data_array to exclude the images, list_of_images, final_list_of_angles, final_list_of_angles_rad
+        if list_of_images_to_exclude:
+
+            logging.info(f"Before exclusion:")
+            logging.info(f"\t{len(self.parent.list_of_images[DataType.sample])} images remain for reconstruction.")
+            logging.info(f"\t{len(self.parent.final_list_of_angles)} angles remain for reconstruction.")
+            logging.info(f"\t{len(self.parent.final_list_of_angles_rad)} angles (rad) remain for reconstruction.")
+
+            logging.info(f"Excluding images with index: {list_of_images_to_exclude} from the reconstruction.")
+            mask = np.ones(len(self.parent.list_of_images[DataType.sample]), dtype=bool)
+            mask[list_of_images_to_exclude] = False
+
+            self.parent.master_3d_data_array[DataType.sample] = self.parent.master_3d_data_array[DataType.sample][mask]
+            self.parent.list_of_images[DataType.sample] = [img for idx, img in enumerate(self.parent.list_of_images[DataType.sample]) if mask[idx]]
+            self.parent.final_list_of_angles = [angle for idx, angle in enumerate(self.parent.final_list_of_angles) if mask[idx]]
+            self.parent.final_list_of_angles_rad = [angle for idx, angle in enumerate(self.parent.final_list_of_angles_rad) if mask[idx]]
+
+            logging.info(f"After exclusion:")
+            logging.info(f"\t{len(self.parent.list_of_images[DataType.sample])} images remain for reconstruction.")
+            logging.info(f"\t{len(self.parent.final_list_of_angles)} angles remain for reconstruction.")
+            logging.info(f"\t{len(self.parent.final_list_of_angles_rad)} angles (rad) remain for reconstruction.")
+
+    def get_list_of_images_to_exclude(self):
+        """Get the list of images to exclude from the reconstruction."""
+        list_index_str = self.list_index_widget.value
+        list_index = []
+        if list_index_str:
+            parts = list_index_str.split(',')
+            for part in parts:
+                part = part.strip()
+                if '-' in part:
+                    start, end = map(int, part.split('-'))
+                    list_index.extend(range(start, end + 1))
+                else:
+                    list_index.append(int(part))
+        logging.info(f"List of images to exclude: {list_index}")
+        return list_index

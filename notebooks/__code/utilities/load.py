@@ -8,6 +8,7 @@ used in neutron imaging and CT reconstruction workflows.
 
 from skimage.io import imread
 import numpy as np
+import os
 import multiprocessing as mp 
 import dxchange
 import logging
@@ -57,6 +58,30 @@ def load_data_using_multithreading(list_tif: List[str], combine_tof: bool = Fals
         return np.array(data)
 
 
+def load_list_of_images(list_of_images: List[str], dtype: Optional[np.dtype] = None) -> NDArray[np.generic]:  
+    """
+    Load a list of TIFF files into a 3D numpy array sequentially.
+    
+    This function is more memory-efficient than multiprocessing for large datasets
+    and provides better control over memory usage. It pre-allocates the output
+    array based on the first image dimensions.
+    
+    Args:
+        list_of_tiff: List of TIFF file paths to load
+        dtype: Data type for the output array (default: np.uint16)
+        
+    Returns:
+        3D numpy array with shape (n_images, height, width)
+    """
+    
+    # find file extension
+    [base, extension] = os.path.splitext(list_of_images[0])
+    if extension.lower() == '.tif' or extension.lower() == '.tiff':
+        return load_list_of_tif(list_of_images, dtype=dtype)
+    else:
+        return load_list_of_fits(list_of_images, dtype=dtype)
+
+
 def load_list_of_tif(list_of_tiff: List[str], dtype: Optional[np.dtype] = None) -> NDArray[np.generic]:
     """
     Load a list of TIFF files into a 3D numpy array sequentially.
@@ -89,6 +114,38 @@ def load_list_of_tif(list_of_tiff: List[str], dtype: Optional[np.dtype] = None) 
     logging.info(f"loading {len(list_of_tiff)} images into 3D array of shape {size_3d}")
     for _index, _file in enumerate(list_of_tiff):
         _array: NDArray[np.generic] = dxchange.read_tiff(_file)
+        data_3d_array[_index] = _array
+    return data_3d_array
+
+
+def load_list_of_fits(list_of_fits: List[str], dtype: Optional[np.dtype] = None) -> NDArray[np.generic]:
+    """
+    Load a list of FITS files into a 3D numpy array sequentially.
+    
+    This function is more memory-efficient than multiprocessing for large datasets
+    and provides better control over memory usage. It pre-allocates the output
+    array based on the first image dimensions.
+    
+    Args:
+        list_of_fits: List of FITS file paths to load
+        dtype: Data type for the output array (default: np.uint16)
+        
+    Returns:
+        3D numpy array with shape (n_images, height, width) 
+    """
+    if dtype is None:
+        dtype = np.uint16
+
+    # init array
+    logging.info(f"loading first image to determine size of 3D array")
+    first_image: NDArray[np.generic] = dxchange.read_fits(list_of_fits[0])
+    size_3d: List[int] = [len(list_of_fits), np.shape(first_image)[0], np.shape(first_image)[1]]
+    data_3d_array: NDArray[np.generic] = np.empty(size_3d, dtype=dtype)
+
+    # load stack of fits
+    logging.info(f"loading {len(list_of_fits)} images into 3D array of shape {size_3d}")
+    for _index, _file in enumerate(list_of_fits):
+        _array: NDArray[np.generic] = dxchange.read_fits(_file)
         data_3d_array[_index] = _array
     return data_3d_array
 

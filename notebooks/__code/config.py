@@ -18,7 +18,7 @@ from __code import DetectorType, OperatingMode, DataType
 from __code.utilities.system import get_user_name
 
 # Debug and development settings
-debugging: bool = False
+debugging: bool = True
 verbose: bool = True
 debugger_username: str = 'j35'
 imaging_team: List[str] = ["j35", "gxt"]
@@ -161,11 +161,23 @@ debug_folder: Dict[DetectorType, Dict[OperatingMode, Dict[DataType, str]]] = {
         OperatingMode.white_beam: None
     },
 
-    DetectorType.ccd: {
+    # DetectorType.ccd: {
+    #    OperatingMode.white_beam: {
+    #         DataType.sample: "/HFIR/CG1D/IPTS-33767/shared/PSI_files/sample_jean",
+    #         DataType.ob: "/HFIR/CG1D/IPTS-33767/shared/PSI_files/ob_tiff",
+    #         DataType.dc: "/HFIR/CG1D/IPTS-33767/shared/PSI_files/dc_tiff",
+    #         DataType.cleaned_images: '/HFIR/CG1D/IPTS-33767/shared/processed_data/jean_psi_files',
+    #         DataType.normalized: '/HFIR/CG1D/IPTS-33767/shared/processed_data/jean_psi_files',
+    #         DataType.reconstructed: '/HFIR/CG1D/IPTS-33767/shared/processed_data/jean_psi_files',
+    #         DataType.extra: '/HFIR/CG1D/IPTS-33767/shared/processed_data/jean_psi_files',
+    #         # DataType.nexus: '/HFIR/CG1D/IPTS-33767/nexus',
+    #     },
+
+     DetectorType.ccd: {
        OperatingMode.white_beam: {
-            DataType.sample: "/HFIR/CG1D/IPTS-33767/shared/PSI_files/sample_jean",
-            DataType.ob: "/HFIR/CG1D/IPTS-33767/shared/PSI_files/ob_tiff",
-            DataType.dc: "/HFIR/CG1D/IPTS-33767/shared/PSI_files/dc_tiff",
+            DataType.sample: "/HFIR/CG1D/IPTS-33767/shared/PSI_files/09_nct/09_nct_post_2",
+            DataType.ob: "/HFIR/CG1D/IPTS-33767/shared/PSI_files/09_nct/09_nct_ob",
+            DataType.dc: "/HFIR/CG1D/IPTS-33767/shared/PSI_files/09_nct/09_nct_dc",
             DataType.cleaned_images: '/HFIR/CG1D/IPTS-33767/shared/processed_data/jean_psi_files',
             DataType.normalized: '/HFIR/CG1D/IPTS-33767/shared/processed_data/jean_psi_files',
             DataType.reconstructed: '/HFIR/CG1D/IPTS-33767/shared/processed_data/jean_psi_files',
