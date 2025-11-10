@@ -732,56 +732,56 @@ class Load(Parent):
             time_spectra_file = ""
         self.parent.spectra_file_full_path = time_spectra_file
         
-    def list_of_images_to_exclude(self):
-        """List of images to exclude from the reconstruction."""
-        label = widgets.HTML("<b>Define the index of the images you want to exclude from the reconstruction:</b>")
-        display(label)
-        self.list_index_widget = widgets.Text(
-            value='',
-            layout=widgets.Layout(width='80%'),
-            placeholder='')
-        display(self.list_index_widget)
+    # def list_of_images_to_exclude(self):
+    #     """List of images to exclude from the reconstruction."""
+    #     label = widgets.HTML("<b>Define the index of the images you want to exclude from the reconstruction:</b>")
+    #     display(label)
+    #     self.list_index_widget = widgets.Text(
+    #         value='',
+    #         layout=widgets.Layout(width='80%'),
+    #         placeholder='')
+    #     display(self.list_index_widget)
 
-        example = widgets.HTML("<font color='gray' size='2'><i>Example: 0, 1, 2, 10-20 (to exclude images with index 0, 1, 2 and from 10 to 20)</i></font>")
-        display(example)
+    #     example = widgets.HTML("<font color='gray' size='2'><i>Example: 0, 1, 2, 10-20 (to exclude images with index 0, 1, 2 and from 10 to 20)</i></font>")
+    #     display(example)
 
-    def exclude_this_list_of_images(self):
-        list_of_images_to_exclude = self.get_list_of_images_to_exclude()
+    # def exclude_this_list_of_images(self):
+    #     list_of_images_to_exclude = self.get_list_of_images_to_exclude()
 
-        # update master_3d_data_array to exclude the images, list_of_images, final_list_of_angles, final_list_of_angles_rad
-        if list_of_images_to_exclude:
+    #     # update master_3d_data_array to exclude the images, list_of_images, final_list_of_angles, final_list_of_angles_rad
+    #     if list_of_images_to_exclude:
 
-            logging.info(f"Before exclusion:")
-            logging.info(f"\t{len(self.parent.list_of_images[DataType.sample])} images remain for reconstruction.")
-            logging.info(f"\t{len(self.parent.final_list_of_angles)} angles remain for reconstruction.")
-            logging.info(f"\t{len(self.parent.final_list_of_angles_rad)} angles (rad) remain for reconstruction.")
+    #         logging.info(f"Before exclusion:")
+    #         logging.info(f"\t{len(self.parent.list_of_images[DataType.sample])} images remain for reconstruction.")
+    #         logging.info(f"\t{len(self.parent.final_list_of_angles)} angles remain for reconstruction.")
+    #         logging.info(f"\t{len(self.parent.final_list_of_angles_rad)} angles (rad) remain for reconstruction.")
 
-            logging.info(f"Excluding images with index: {list_of_images_to_exclude} from the reconstruction.")
-            mask = np.ones(len(self.parent.list_of_images[DataType.sample]), dtype=bool)
-            mask[list_of_images_to_exclude] = False
+    #         logging.info(f"Excluding images with index: {list_of_images_to_exclude} from the reconstruction.")
+    #         mask = np.ones(len(self.parent.list_of_images[DataType.sample]), dtype=bool)
+    #         mask[list_of_images_to_exclude] = False
 
-            self.parent.master_3d_data_array[DataType.sample] = self.parent.master_3d_data_array[DataType.sample][mask]
-            self.parent.list_of_images[DataType.sample] = [img for idx, img in enumerate(self.parent.list_of_images[DataType.sample]) if mask[idx]]
-            self.parent.final_list_of_angles = [angle for idx, angle in enumerate(self.parent.final_list_of_angles) if mask[idx]]
-            self.parent.final_list_of_angles_rad = [angle for idx, angle in enumerate(self.parent.final_list_of_angles_rad) if mask[idx]]
+    #         self.parent.master_3d_data_array[DataType.sample] = self.parent.master_3d_data_array[DataType.sample][mask]
+    #         self.parent.list_of_images[DataType.sample] = [img for idx, img in enumerate(self.parent.list_of_images[DataType.sample]) if mask[idx]]
+    #         self.parent.final_list_of_angles = [angle for idx, angle in enumerate(self.parent.final_list_of_angles) if mask[idx]]
+    #         self.parent.final_list_of_angles_rad = [angle for idx, angle in enumerate(self.parent.final_list_of_angles_rad) if mask[idx]]
 
-            logging.info(f"After exclusion:")
-            logging.info(f"\t{len(self.parent.list_of_images[DataType.sample])} images remain for reconstruction.")
-            logging.info(f"\t{len(self.parent.final_list_of_angles)} angles remain for reconstruction.")
-            logging.info(f"\t{len(self.parent.final_list_of_angles_rad)} angles (rad) remain for reconstruction.")
+    #         logging.info(f"After exclusion:")
+    #         logging.info(f"\t{len(self.parent.list_of_images[DataType.sample])} images remain for reconstruction.")
+    #         logging.info(f"\t{len(self.parent.final_list_of_angles)} angles remain for reconstruction.")
+    #         logging.info(f"\t{len(self.parent.final_list_of_angles_rad)} angles (rad) remain for reconstruction.")
 
-    def get_list_of_images_to_exclude(self):
-        """Get the list of images to exclude from the reconstruction."""
-        list_index_str = self.list_index_widget.value
-        list_index = []
-        if list_index_str:
-            parts = list_index_str.split(',')
-            for part in parts:
-                part = part.strip()
-                if '-' in part:
-                    start, end = map(int, part.split('-'))
-                    list_index.extend(range(start, end + 1))
-                else:
-                    list_index.append(int(part))
-        logging.info(f"List of images to exclude: {list_index}")
-        return list_index
+    # def get_list_of_images_to_exclude(self):
+    #     """Get the list of images to exclude from the reconstruction."""
+    #     list_index_str = self.list_index_widget.value
+    #     list_index = []
+    #     if list_index_str:
+    #         parts = list_index_str.split(',')
+    #         for part in parts:
+    #             part = part.strip()
+    #             if '-' in part:
+    #                 start, end = map(int, part.split('-'))
+    #                 list_index.extend(range(start, end + 1))
+    #             else:
+    #                 list_index.append(int(part))
+    #     logging.info(f"List of images to exclude: {list_index}")
+    #     return list_index

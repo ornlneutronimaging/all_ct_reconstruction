@@ -34,6 +34,7 @@ from __code.workflow.test_reconstruction import TestReconstruction
 from __code.utilities.configuration_file import ReconstructionAlgorithm
 from __code.utilities.logging import logging_3d_array_infos
 from __code.utilities.exceptions import MetadataError
+from __code.workflow.exclusion import Exclusion
 
 LOG_BASENAME_FILENAME, _ = os.path.splitext(os.path.basename(__file__))
 
@@ -262,10 +263,16 @@ class Step1PrepareCcdImages:
         self.o_vizu.visualize_according_to_selection(mode='raw')
 
     # exclude images
-    def list_of_images_to_exclude(self):
-        """updates: master_3d_data_array"""
-        self.o_exclude = Load(parent=self)
-        self.o_exclude.list_of_images_to_exclude()
+    def selection_mode(self):
+        self.o_exclude = Exclusion(parent=self)
+        self.o_exclude.selection_mode()
+
+    def process_exclusion_mode(self):
+        self.o_exclude.process_exclusion_mode()
+
+    # def list_of_images_to_exclude(self):
+    #     """updates: master_3d_data_array"""
+    #     self.o_exclude.list_of_images_to_exclude()
 
     def exclude_this_list_of_images(self):
         """updates: master_3d_data_array"""

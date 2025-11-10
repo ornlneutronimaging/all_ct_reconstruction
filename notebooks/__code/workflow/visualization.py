@@ -103,7 +103,8 @@ class Visualization(Parent):
         display(HTML(f"<h2>How to visualize the {data_type} data?</h2>"))
         self.what_to_visualize_ui = widgets.ToggleButtons(options=['All images', 
                                                                    '1 image at a time',
-                                                                   'Statistics'],
+                                                                   'Statistics',
+                                                                   'Integrated intensity vs image index'],
                                                           value='Statistics')
         display(self.what_to_visualize_ui)
 
@@ -134,6 +135,8 @@ class Visualization(Parent):
         elif self.what_to_visualize_ui.value == '1 image at a time':
             self.visualize_1_stack(data=self.parent.master_3d_data_array[DataType.sample],
                                    title=f"{self.mode} data")
+        elif self.what_to_visualize_ui.value == 'Integrated intensity vs image index':
+            self.visualize_integrated_intensity_vs_image_index()
 
     def visualize_timepix_according_to_selection(self, mode='cleaned'):
         # for timepix data
@@ -145,6 +148,21 @@ class Visualization(Parent):
         elif self.what_to_visualize_ui.value == '1 image at a time':
             self.visualize_1_stack(data=self.parent.master_3d_data_array[DataType.sample],
                                    title=f"{self.mode} data")
+
+    def visualize_integrated_intensity_vs_image_index(self):
+           
+        sample_data = self.parent.master_3d_data_array[DataType.sample]
+        integrated_intensity = sample_data.sum(axis=(1,2))
+
+        fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(7, 5))
+
+        ax.plot(integrated_intensity, marker='o')
+        ax.set_title(f"Integrated intensity vs image index ({self.mode} data)")
+        ax.set_xlabel("Angle (degrees)")
+        ax.set_ylabel("Integrated intensity (a.u.)")
+
+        plt.tight_layout()
+        plt.show()
 
     def visualize_statistics(self):
 
