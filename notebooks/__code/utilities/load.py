@@ -32,6 +32,7 @@ def _worker(fl: str) -> NDArray[np.floating]:
         Loaded image data with swapped axes and converted to LOAD_DTYPE
     """
     return (imread(fl).astype(LOAD_DTYPE)).swapaxes(0, 1)
+    # return (imread)(fl).astype(LOAD_DTYPE)
 
 
 def load_data_using_multithreading(list_tif: List[str], combine_tof: bool = False) -> NDArray[np.floating]:
@@ -146,6 +147,8 @@ def load_list_of_fits(list_of_fits: List[str], dtype: Optional[np.dtype] = None)
     logging.info(f"loading {len(list_of_fits)} images into 3D array of shape {size_3d}")
     for _index, _file in enumerate(list_of_fits):
         _array: NDArray[np.generic] = dxchange.read_fits(_file)
+        # flip upside down
+        _array = np.flipud(_array)
         data_3d_array[_index] = _array
     return data_3d_array
 
