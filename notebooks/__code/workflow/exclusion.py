@@ -47,6 +47,8 @@ class Exclusion(Parent):
         sample_data = self.parent.master_3d_data_array[DataType.sample]
         integrated_intensity = sample_data.sum(axis=(1,2))
 
+        display(HTML("<b>Use the slider to define the threshold below which images will be excluded from the reconstruction:</b>"))
+
         def on_threshold_change(threshold_value):
 
             fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(7, 5))
