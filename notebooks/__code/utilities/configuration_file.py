@@ -392,7 +392,7 @@ class ReconstructionAlgorithm:
     """
     svmbir: str = "svmbir"
     mbirjax: str = "mbirjax"
-    astra_fbb: str = "astra_fbp"
+    # astra_fbb: str = "astra_fbp"
     tomopy_fbp: str = "tomopy_fbp"
     algotom_fbp: str = "algotom_fbp"
     algotom_gridrec: str = "algotom_gridrec"
