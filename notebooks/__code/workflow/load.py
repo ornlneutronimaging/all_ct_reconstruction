@@ -743,8 +743,19 @@ class Load(Parent):
         logging.info(f"\tRandom run selected: {random_run} with full path: {full_path}")
         list_tif = retrieve_list_of_tif(full_path)
         _random_data = load_data_using_multithreading(list_tif, combine_tof=False)
-
+        logging.info(f"\tRandom run data shape: {np.shape(_random_data)}")
+        _short_name_of_random_run = os.path.basename(random_run)
+        logging.info(f"\tshort name of random run: {_short_name_of_random_run}")
+        
         # display spectrum of that random projection
+        _profile = np.sum(_random_data, axis=(1, 2))
+        fig, ax = plt.subplots(figsize=(10, 5))
+        ax.plot(_profile, marker='o', linestyle='-')
+        ax.set_title(f"{_short_name_of_random_run}")
+        ax.set_xlabel("TOF Channel")
+        ax.set_ylabel("Sum of counts over all pixels")
+        plt.show()
+
 
         # add range slider to select range of TOF to integrate
 
