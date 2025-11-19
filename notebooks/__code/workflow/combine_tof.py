@@ -80,32 +80,32 @@ class CombineTof(Parent):
         load_data_for_a_run(): Load individual run data with TOF combination
     """
 
-    def run(self) -> None:
-        """
-        Execute the complete TOF data combination workflow.
+    # def run(self) -> None:
+    #     """
+    #     Execute the complete TOF data combination workflow.
         
-        Orchestrates the full process of combining TOF neutron CT data,
-        including run status updates, data loading, and organization.
-        This is the main entry point for TOF data processing.
+    #     Orchestrates the full process of combining TOF neutron CT data,
+    #     including run status updates, data loading, and organization.
+    #     This is the main entry point for TOF data processing.
         
-        Returns:
-            None: Modifies parent object with combined data
+    #     Returns:
+    #         None: Modifies parent object with combined data
             
-        Side Effects:
-            - Updates run status based on quality criteria
-            - Loads and organizes all selected data
-            - Creates master_3d_data_array with combined data
-            - Sets up angular and run lists for reconstruction
+    #     Side Effects:
+    #         - Updates run status based on quality criteria
+    #         - Loads and organizes all selected data
+    #         - Creates master_3d_data_array with combined data
+    #         - Sets up angular and run lists for reconstruction
             
-        Workflow:
-            1. Update run inclusion/exclusion status
-            2. Load data for all selected runs
-            3. Organize data by angular position
-            4. Create master data arrays for reconstruction
-        """      
-        self.update_list_of_runs_status()
-        self.load_data()
-        # self.combine_tof_data_range(self.parent.master_3d_data_array)
+    #     Workflow:
+    #         1. Update run inclusion/exclusion status
+    #         2. Load data for all selected runs
+    #         3. Organize data by angular position
+    #         4. Create master data arrays for reconstruction
+    #     """      
+    #     self.update_list_of_runs_status()
+    #     # self.load_data()
+    #     # self.combine_tof_data_range(self.parent.master_3d_data_array)
 
     def update_list_of_runs_status(self) -> None:
         """

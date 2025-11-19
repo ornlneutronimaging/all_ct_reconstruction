@@ -72,7 +72,7 @@ from __code.config import DEBUG, default_detector_type
 from __code.workflow.load import Load
 from __code.workflow.checking_data import CheckingData
 from __code.workflow.recap_data import RecapData
-from __code.workflow.combine_tof import CombineTof
+from __code.workflow.combine_tof import  CombineTof
 from __code.workflow.images_cleaner import ImagesCleaner
 from __code.workflow.normalization import Normalization
 from __code.workflow.chips_correction import ChipsCorrection
@@ -431,12 +431,39 @@ class Step1PrepareTimePixImages:
         o_recap = RecapData(parent=self)
         o_recap.run()
 
+    def how_to_integrate(self) -> None:
+        """
+        Configure TimePix data integration parameters.
+        
+        Sets up the interface for defining integration parameters specific
+        to TimePix detector data. Allows users to select integration ranges
+        and methods optimized for TimePix time-of-flight imaging.
+        
+        Side Effects:
+            - Creates Load workflow object for integration configuration
+            - Launches TimePix-optimized integration parameter interface
+        """
+        o_check = CheckingData(parent=self)
+        o_check.checking_minimum_requirements()
+        if self.minimum_requirements_met:           
+            o_combine = CombineTof(parent=self)
+            o_combine.update_list_of_runs_status()
+            self.o_load = Load(parent=self)
+            self.o_load.how_to_integrate()
+        else:
+            o_check.minimum_requirement_not_met()
+
     # def checkin_data_entries(self):
     #     o_check = CheckingData(parent=self)
     #     o_check.checking_minimum_requirements()
 
     def load_images(self) -> None:
-        self.combine_images()
+        # self.combine_images()
+        if self.minimum_requirements_met:           
+            o_combine = CombineTof(parent=self)
+            o_combine.load_data()
+        else:
+            self.o_check.minimum_requirement_not_met()
 
     # combine images
     def combine_images(self) -> None:

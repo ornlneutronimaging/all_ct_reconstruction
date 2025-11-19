@@ -94,6 +94,7 @@ class Load(Parent):
     list_of_runs_to_use: Dict[DataType, List[int]] = {DataType.sample: [],
                                                       DataType.ob: [],
     }
+    list_angle_file = None
 
     def select_folder(self, data_type: DataType = DataType.sample, 
                      multiple_flag: bool = False, 
@@ -732,6 +733,27 @@ class Load(Parent):
             time_spectra_file = ""
         self.parent.spectra_file_full_path = time_spectra_file
         
+    def how_to_integrate(self):
+        # select a random projection and load it
+        logging.info(f"Selecting a random projection to display profile to select range of TOF  ...")
+        list_of_runs = list(self.parent.list_of_runs[DataType.sample].keys())
+        logging.info(f"\tList of runs to use: {list_of_runs}")
+        random_run = random.choice(list_of_runs)
+        full_path = self.parent.list_of_runs[DataType.sample][random_run][Run.full_path]
+        logging.info(f"\tRandom run selected: {random_run} with full path: {full_path}")
+        list_tif = retrieve_list_of_tif(full_path)
+        _random_data = load_data_using_multithreading(list_tif, combine_tof=False)
+
+        # display spectrum of that random projection
+
+        # add range slider to select range of TOF to integrate
+
+
+        # FIXME
+
+
+
+
     # def list_of_images_to_exclude(self):
     #     """List of images to exclude from the reconstruction."""
     #     label = widgets.HTML("<b>Define the index of the images you want to exclude from the reconstruction:</b>")

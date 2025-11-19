@@ -104,7 +104,7 @@ svmbir_parameters: Dict[str, Union[int, float, bool]] = {
     'verbose': True,
 }
 
-default_detector_type = DetectorType.ccd
+default_detector_type = DetectorType.tpx1
 
 # Debug data folder configuration organized by operating mode and data type
 debug_folder: Dict[DetectorType, Dict[OperatingMode, Dict[DataType, str]]] = {
