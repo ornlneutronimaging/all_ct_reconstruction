@@ -55,12 +55,15 @@ def load_data_using_multithreading(list_tif: List[str],
     with mp.Pool(processes=40) as pool:
         data = pool.map(_worker, list_tif)
 
+    logging.info(f"load_data_using_multithreading: loaded {len(data)} images of shape {data[0].shape}:")
     if combine_tof:
         if tof_integration_range is not None:
+            logging.info(f"\tsumming data from ToF range: {tof_integration_range[0]} to {tof_integration_range[1]}")
             left_tof = tof_integration_range[0]
             right_tof = tof_integration_range[1] + 1  # inclusive range
             return np.array(data[left_tof:right_tof]).sum(axis=0)
         else:
+            logging.info(f"\tsumming all ToF data")
             return np.array(data).sum(axis=0)
     else:
         return np.array(data)
