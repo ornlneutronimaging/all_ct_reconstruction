@@ -258,8 +258,7 @@ class CombineTof(Parent):
         Load TOF data for a specific run with spectral combination.
         
         Loads time-of-flight neutron imaging data for a single run,
-        retrieving all TIFF files and combining TOF channels as specified.
-        Uses multi-threaded loading for performance optimization.
+        retrieving all TIFF files and combining TOF channels as specified by the self.parent.tof_integration_range.
         
         Args:
             run: Run identifier string for data location
@@ -282,7 +281,9 @@ class CombineTof(Parent):
 
         # load data
         # data = load_list_of_tif(list_tif)
-        data: NDArray[np.floating] = load_data_using_multithreading(list_tif, combine_tof=True)
+        data: NDArray[np.floating] = load_data_using_multithreading(list_tif, 
+                                                                    combine_tof=True, 
+                                                                    tof_integration_range=self.parent.tof_integration_range)
 
         return data
     

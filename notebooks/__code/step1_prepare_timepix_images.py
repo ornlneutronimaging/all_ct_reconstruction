@@ -150,6 +150,9 @@ class Step1PrepareTimePixImages:
 
     detector_type = DetectorType.tpx1_legacy
 
+    # TOF integration range selected by the user
+    tof_integration_range = [0, -1]  # full range by default
+
     # {100.000: 'run_1234', 101.000: 'run_1235', ...}
     list_angles_deg_vs_runs_dict: Dict[float, str] = {}
 

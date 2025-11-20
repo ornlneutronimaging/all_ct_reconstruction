@@ -35,7 +35,9 @@ def _worker(fl: str) -> NDArray[np.floating]:
     # return (imread)(fl).astype(LOAD_DTYPE)
 
 
-def load_data_using_multithreading(list_tif: List[str], combine_tof: bool = False) -> NDArray[np.floating]:
+def load_data_using_multithreading(list_tif: List[str], 
+                                   combine_tof: bool = False, 
+                                   tof_integration_range: Optional[List[int]] = None) -> NDArray[np.floating]:
     """
     Load TIFF images using multiprocessing for improved performance.
     
@@ -54,7 +56,12 @@ def load_data_using_multithreading(list_tif: List[str], combine_tof: bool = Fals
         data = pool.map(_worker, list_tif)
 
     if combine_tof:
-        return np.array(data).sum(axis=0)
+        if tof_integration_range is not None:
+            left_tof = tof_integration_range[0]
+            right_tof = tof_integration_range[1] + 1  # inclusive range
+            return np.array(data[left_tof:right_tof]).sum(axis=0)
+        else:
+            return np.array(data).sum(axis=0)
     else:
         return np.array(data)
 
