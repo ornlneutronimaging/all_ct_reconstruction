@@ -134,7 +134,7 @@ class FbpCliHandler:
                                                               )
             reconstruction_array = np.swapaxes(reconstruction_array, 0, 1)
             
-        elif algorithm == ReconstructionAlgorithm.astra_fbb:
+        elif algorithm == ReconstructionAlgorithm.astra_fbp:
 
             reconstruction_array = rec.astra_reconstruction(projections,
                                                             center_of_rotation,
