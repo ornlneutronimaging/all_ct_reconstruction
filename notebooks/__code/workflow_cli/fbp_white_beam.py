@@ -99,6 +99,9 @@ class FbpCliHandler:
             - svmbir: Model-based iterative reconstruction
         """
         
+        if center_of_rotation is None:
+            center_of_rotation = projections.shape[2] / 2
+
         logging.info(f"\t -> {np.shape(projections) = }")
         logging.info(f"\t -> {center_of_rotation = }")
         logging.info(f"\t -> {list_of_angles_rad = }")

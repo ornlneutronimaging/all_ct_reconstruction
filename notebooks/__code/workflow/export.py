@@ -341,6 +341,7 @@ class ExportExtra(Parent):
         display(self.run_script)
 
         choices.observe(self.on_choice_change, names='value')
+        self.on_choice_change({'new': choices.value})
         self.run_script.on_click(self.on_run_script_click)
 
     def on_choice_change(self, change: Dict[str, Any]) -> None:
