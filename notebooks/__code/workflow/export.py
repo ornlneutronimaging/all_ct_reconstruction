@@ -406,7 +406,9 @@ class ExportExtra(Parent):
             If script execution fails or xterm cannot be launched
         """
         print("Running the script directly from the notebook...")
-        subprocess.run(["xterm", "-e", f"{self.sh_file_name}", "exec bash"], check=True)
+        logging.info("Running the script directly from the notebook...")
+        logging.info(f"Executing: xterm -e bash {self.sh_file_name}")
+        subprocess.run(["xterm", "-e", f"bash {self.sh_file_name}"], check=True)
 
         # display(HTML(f"<font color='blue'>From this point you have 3 options:</font>"))
         # display(HTML(f"<font color='blue'> 1. reload the configuration file </font>(<font color='green'>{config_file_name}</font>) in the notebook <font color='green'> {STEP2_NOTEBOOK}</font>"))
