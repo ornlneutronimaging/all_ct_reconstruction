@@ -409,7 +409,8 @@ class ExportExtra(Parent):
         print("Running the script directly from the notebook...")
         logging.info("Running the script directly from the notebook...")
         logging.info(f"Executing: xterm -e bash {self.sh_file_name}")
-        subprocess.run(["xterm", "-e", f"bash {self.sh_file_name}"], check=True)
+        # subprocess.run(["xterm", "-e", f"bash {self.sh_file_name}"], check=True)
+        subprocess.Popen(["gnome-terminal", "--", "bash", "-c", f"bash {self.sh_file_name}; exec bash"])
 
         # display(HTML(f"<font color='blue'>From this point you have 3 options:</font>"))
         # display(HTML(f"<font color='blue'> 1. reload the configuration file </font>(<font color='green'>{config_file_name}</font>) in the notebook <font color='green'> {STEP2_NOTEBOOK}</font>"))
