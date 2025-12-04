@@ -181,7 +181,7 @@ class FinalProjectionsReview(Parent):
         if image is None:
             return
 
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(num="After rotation")
         im1 = ax.imshow(image, vmin=0, vmax=1)
         plt.colorbar(im1, ax=ax, shrink=0.5)
         ax.axis('off')

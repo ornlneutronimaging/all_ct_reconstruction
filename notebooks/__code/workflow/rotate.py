@@ -168,7 +168,7 @@ class Rotate(Parent):
         vbox: widgets.VBox = widgets.VBox([title_ui, self.angle_ui])
         display(vbox)
 
-        fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(15, 5))
+        fig, axs = plt.subplots(nrows=2, ncols=1, figsize=(5, 10), num="Rotation Preview")
 
         image_normal: NDArray[np.floating] = self.parent.normalized_images[0]
         #image_rot_plut_90 = transform.rotate(self.parent.normalized_images[0], +90)

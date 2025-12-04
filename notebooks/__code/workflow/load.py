@@ -751,7 +751,7 @@ class Load(Parent):
         def display_profile(tof_range):
             left_tof, right_tof = tof_range
 
-            fig, ax = plt.subplots(figsize=(10, 5))
+            fig, ax = plt.subplots(figsize=(8, 5))
             ax.plot(_profile, marker='o', linestyle='-')
             ax.axvspan(left_tof, right_tof, color='green', alpha=0.3)
 

@@ -546,18 +546,32 @@ class Visualization(Parent):
         self.vmin_right = vmin_right
         self.vmax_right = vmax_right
 
+        self.fig, self.axs = plt.subplots(nrows=2, ncols=1, figsize=(5, 8), num="Visualization")
+        
+        self.img_before = m0 = self.axs[0].imshow(left[0], vmin=self.vmin_left, vmax=self.vmax_left)
+        self.axs[0].set_title("normalized")
+        self.cbar_before = plt.colorbar(m0, ax=self.axs[0], shrink=0.5)
+        
+        self.img_after = m1 = self.axs[1].imshow(right[0], vmin=self.vmin_right, vmax=self.vmax_right)
+        self.axs[1].set_title("log(normalized)")
+        self.cbar_after = plt.colorbar(m1, ax=self.axs[1], shrink=0.5)
+
         def plot_images(index=0):
 
-            fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
+            # fig, axs = plt.subplots(nrows=2, ncols=1, figsize=(5, 8), num="Visualization")
+
+            if self.cbar_before is not None:
+                self.cbar_before.remove()
+                self.cbar_after.remove()
 
             if self.vmin_left is None:
                 self.vmin_left = np.min(left[index])
             if self.vmax_left is None:
                 self.vmax_left = np.max(left[index])
 
-            im0 = axs[0].imshow(left[index], vmin=self.vmin_left, vmax=self.vmax_left, )
-            axs[0].set_title("normalized")
-            plt.colorbar(im0, ax=axs[0], shrink=0.5)
+            self.img_before = self.axs[0].imshow(left[index], vmin=self.vmin_left, vmax=self.vmax_left, )
+            # axs[0].set_title("normalized")
+            self.cbar_before = plt.colorbar(self.img_before, ax=self.axs[0], shrink=0.5)
 
             if self.vmin_right is None:
                 self.vmin_right = np.min(right[index])
@@ -565,9 +579,9 @@ class Visualization(Parent):
                 self.vmax_right = np.max(right[index])   
 
             # im1 = axs[1].imshow(right[index], vmin=self.vmin_right, vmax=self.vmax_right)
-            im1 = axs[1].imshow(right[index])
-            axs[1].set_title("log(normalized)")
-            plt.colorbar(im1, ax=axs[1], shrink=0.5)
+            self.img_after = self.axs[1].imshow(right[index])
+            # self.axs[1].set_title("log(normalized)")
+            self.cbar_after = plt.colorbar(self.img_after, ax=self.axs[1], shrink=0.5)
 
             plt.tight_layout()
             plt.show()

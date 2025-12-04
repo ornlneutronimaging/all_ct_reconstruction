@@ -100,10 +100,16 @@ class RemoveStrips:
         - Mixed patterns: Combination of different stripe types
     """
 
+    _roi = None
+    fig = None
+    ax = None
+    img = None
+    cbar = None
+
     sinogram: Optional[NDArray[np.floating]] = None
     skip_remove_strips: bool = True
 
-    default_list_algo_to_use: List[RemoveStripeAlgo] = [RemoveStripeAlgo.remove_large_stripe]
+    default_list_algo_to_use: List[RemoveStripeAlgo] = [RemoveStripeAlgo.remove_stripe_fw]
 
     list_algo: Dict[RemoveStripeAlgo, Dict[str, Any]] = {RemoveStripeAlgo.remove_stripe_fw: {'help': 'Remove horizontal stripes from sinogram using the Fourier-Wavelet (FW) based method',
                                              'function': stripe.remove_stripe_fw,
@@ -246,43 +252,64 @@ class RemoveStrips:
         default_left_slice = width//2 - width//4
         default_right_slice = width//2 + width//4
 
-        def select_range_of_data(left_slice=default_left_slice,
-                                 right_slice=default_right_slice,
-                                 top_slice=default_top_slice, 
-                                 bottom_slice=default_bottom_slice,
+        self.fig, self.ax = plt.subplots(figsize=(5, 5), 
+                                         num="Select range of data to test stripes removal")
+        self.img = self.ax.imshow(normalized_images[0])
+        self.cbar = plt.colorbar(self.img, ax=self.ax, shrink=0.5)
+        self.image_index = 0
+
+        def select_range_of_data(left_right=[default_left_slice, default_right_slice], 
+                                 top_bottom=[default_top_slice, default_bottom_slice],
                                  image_index=0):
-            fig, ax = plt.subplots(figsize=(10, 5))
-            ax.imshow(normalized_images[image_index])
+                
+            left_slice, right_slice = left_right
+            top_slice, bottom_slice = top_bottom
+                
+            if self._roi is not None:
+                self._roi.remove()
+            
+            if self.image_index != image_index:
+                
+                if self.cbar is not None:
+                    self.cbar.remove()
+                
+                self.image_index = image_index
+            
+                self.img = self.ax.imshow(normalized_images[image_index])
+                self.cbar = plt.colorbar(self.img, ax=self.ax, shrink=0.5)
 
             width = right_slice - left_slice
             height = bottom_slice - top_slice
 
-            ax.add_patch(Rectangle((left_slice, top_slice), width, height,
+            self._roi = Rectangle((left_slice, top_slice), width, height,
                                                 edgecolor='yellow',
                                                 facecolor='green',
                                                 fill=True,
                                                 lw=2,
                                                 alpha=0.3,
-                                                ),
-                            )    
+                                                )
+            self.ax.add_patch(self._roi)
+            
             return left_slice, right_slice, top_slice, bottom_slice
 
         self.range_to_use_to_test = interactive(select_range_of_data,
-                                                left_slice=widgets.IntSlider(min=0,
-                                                                                max=width-1,
-                                                                                value=default_left_slice),
-                                                right_slice=widgets.IntSlider(min=0,
-                                                                                max=width-1,
-                                                                                value=default_right_slice),
-                                                top_slice=widgets.IntSlider(min=0,
-                                                                            max=height-1,
-                                                                            value=default_top_slice),
-                                                bottom_slice=widgets.IntSlider(min=0,
-                                                                                max=height-1,
-                                                                                value=default_bottom_slice),
+                                                left_right = widgets.IntRangeSlider(min=0,
+                                                                                     max=width-1,
+                                                                                     value=(default_left_slice,
+                                                                                            default_right_slice),
+                                                                                     description="Left - Right",
+                                                                                     layout=widgets.Layout(width='50%')),
+                                                top_bottom = widgets.IntRangeSlider(min=0,
+                                                                                   max=height-1,
+                                                                                   value=(default_top_slice,
+                                                                                          default_bottom_slice),
+                                                                                   description="Top - Bottom",
+                                                                                   layout=widgets.Layout(width='50%')),
                                                 image_index=widgets.IntSlider(min=0,
                                                                                 max=nbr_projections-1,
-                                                                                value=0))
+                                                                                value=0,
+                                                                                layout=widgets.Layout(width='50%')),
+        )
         display(self.range_to_use_to_test)
 
     def define_default_lists(self):
@@ -557,7 +584,6 @@ class RemoveStrips:
 
     def display_cleaning(self, test=False):
 
-
         if not test:
             if self.parent.configuration.when_to_remove_stripes == WhenToRemoveStripes.out_notebook:
                 logging.info("Strips removal will be done in the background just before reconstruction. No display.")
@@ -587,48 +613,53 @@ class RemoveStrips:
         # final_list_of_runs = self.parent.list_of_runs_to_use[DataType.sample]
         final_list_of_runs = self.parent.final_list_of_runs[DataType.sample]
 
+        self.fig, self.axs1 = plt.subplots(nrows=1, ncols=2, figsize=(7, 5), 
+                                         num="Comparison before and after stripes removal")
+        self.axs1[0].imshow(normalized_images_before[0], vmin=0, vmax=1)
+        self.axs1[0].set_title("Before correction")
+        self.axs1[0].axhline(0, color='red', linestyle='--')
+        
+        self.axs1[1].imshow(normalized_images_after[0], vmin=0, vmax=1)
+        self.axs1[1].set_title("After correction")
+        self.axs1[1].axhline(0, color='red', linestyle='--')
+        
+        self.fig2, self.axs2 = plt.subplots(nrows=1, ncols=3, figsize=(7, 5),
+                                            num="Sinogram comparison before and after stripes removal")
+
+        self.axs2[0].imshow(sinogram_before[0], vmin=0, vmax=1)
+        self.axs2[0].set_title("Before correction")
+        self.axs2[1].imshow(sinogram_after[0], vmin=0, vmax=1)
+        self.axs2[1].set_title("After correction")
+        self.axs2[2].imshow(sinogram_before[0] - sinogram_after[0])
+        self.axs2[2].set_title("Difference (before - after)")
+
+        self.slice_index = 0
+
         def plot_result(image_index, slice_index):
 
-            fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
-            # fig = plt.figure(figsize=(10, 20))
-
-            # axs0 = plt.subplot(221)
-            # axs1 = plt.subplot(222)
-            # axs2 = plt.subplot(334)
-            # axs3 = plt.subplot(335)
-            # axs4 = plt.subplot(336)
+            if self.slice_index != slice_index:
+                self.slice_index = slice_index
+                self.axs1[0].cla()
+                self.axs1[1].cla()
 
             if self.parent.MODE == OperatingMode.tof:
-                fig.suptitle(f"Run: {final_list_of_runs[image_index]}, Angle: {final_list_of_angles[image_index]}")
+                self.fig.suptitle(f"Run: {final_list_of_runs[image_index]}, Angle: {final_list_of_angles[image_index]}")
 
-            axs[0].imshow(normalized_images_before[image_index], vmin=0, vmax=1)
-            axs[0].set_title("Before correction")
-            axs[0].axhline(slice_index, color='red', linestyle='--')
+            self.axs1[0].imshow(normalized_images_before[image_index], vmin=0, vmax=1)
+            self.axs1[0].set_title("Before correction")
+            self.axs1[0].axhline(slice_index, color='red', linestyle='--')
 
-            axs[1].imshow(normalized_images_after[image_index], vmin=0, vmax=1)
-            axs[1].set_title("After correction")
-            axs[1].axhline(slice_index, color='red', linestyle='--')
+            self.axs1[1].imshow(normalized_images_after[image_index], vmin=0, vmax=1)
+            self.axs1[1].set_title("After correction")
+            self.axs1[1].axhline(slice_index, color='red', linestyle='--')
 
-            fig2, axs2 = plt.subplots(nrows=1, ncols=3, figsize=(10, 5))
-
-            axs2[0].imshow(sinogram_before[slice_index], vmin=0, vmax=1)
-            axs2[0].set_title("Before correction")
-            axs2[1].imshow(sinogram_after[slice_index], vmin=0, vmax=1)
-            axs2[1].set_title("After correction")
-            axs2[2].imshow(sinogram_before[slice_index] - sinogram_after[slice_index])
-            axs2[2].set_title("Difference (before - after)")
-
-            # axs0.imshow(normalized_images_before[image_index], vmin=0, vmax=1)
-            # axs0.set_title("Before correction")
-            # axs0.axhline(slice_index, color='red', linestyle='--')
-
-            # axs1.imshow(normalized_images_after[image_index], vmin=0, vmax=1)
-            # axs1.set_title("After correction")
-            # axs1.axhline(slice_index, color='red', linestyle='--')
-
-            # axs2.imshow(sinogram_before[slice_index], vmin=0, vmax=1)
-            # axs3.imshow(sinogram_after[slice_index], vmin=0, vmax=1)
-            # axs4.imshow(sinogram_before[slice_index] - sinogram_after[slice_index])
+            self.axs2[0].imshow(sinogram_before[slice_index], vmin=0, vmax=1)
+            self.axs2[0].set_title("Before correction")
+            self.axs2[1].imshow(sinogram_after[slice_index], vmin=0, vmax=1)
+            
+            self.axs2[1].set_title("After correction")
+            self.axs2[2].imshow(sinogram_before[slice_index] - sinogram_after[slice_index])
+            self.axs2[2].set_title("Difference (before - after)")
 
             plt.tight_layout()
             plt.show()
