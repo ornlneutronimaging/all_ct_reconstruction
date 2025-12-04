@@ -123,9 +123,13 @@ class Crop(Parent):
             vmax_default_value = 1
 
         integrated: NDArray[np.generic] = integrated_min
-        self.fig, self.axs = plt.subplots(figsize=(7,7)) 
-        img = self.axs.imshow(integrated, vmin=0, vmax=vmax_default_value)
-        self.cbar = plt.colorbar(img, ax=self.axs, shrink=0.5)
+        self.fig, self.axs = plt.subplots(figsize=(7,7), num="Select Crop Region") 
+        # self.fig.suptitle("Select Crop Region")
+        self.img = self.axs.imshow(integrated, vmin=0, vmax=vmax_default_value)
+        self.cbar = plt.colorbar(self.img, ax=self.axs, shrink=0.5)
+
+        self.mean_or_min = "Min"
+        self.vmin_vmax = [0, vmax_default_value]
 
         def plot_crop(left_right: list, top_bottom: list, vmin_vmax: list, data_type: str) -> Tuple[int, int, int, int]:
             """
@@ -153,16 +157,21 @@ class Crop(Parent):
             top: int = top_bottom[0]
             bottom: int = top_bottom[1]
 
-            vmin: float = vmin_vmax[0]
-            vmax: float = vmin_vmax[1]
+            if (data_type != self.mean_or_min) or (vmin_vmax != self.vmin_vmax):
+                self.mean_or_min = data_type
+                self.vmin_vmax = vmin_vmax
 
-            if data_type == "Min":
-                integrated: NDArray[np.generic] = integrated_min
-            else:
-                integrated: NDArray[np.generic] = integrated_mean
+                vmin: float = vmin_vmax[0]
+                vmax: float = vmin_vmax[1]
 
-            # img = self.axs.imshow(integrated, vmin=vmin, vmax=vmax)
-            self.cbar = plt.colorbar(img, ax=self.axs, shrink=0.5)
+                if data_type == "Min":
+                    integrated: NDArray[np.generic] = integrated_min
+                else:
+                    integrated: NDArray[np.generic] = integrated_mean
+
+                self.img = self.axs.imshow(integrated, vmin=vmin, vmax=vmax)
+            
+            self.cbar = plt.colorbar(self.img, ax=self.axs, shrink=0.5)
 
             crop_width: int = right - left + 1
             crop_height: int = bottom - top + 1

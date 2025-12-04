@@ -80,6 +80,13 @@ class Visualization(Parent):
     fig0 = None  # Placeholder for matplotlib figure
     axs = None  # Placeholder for matplotlib axes
 
+    axs_before = None
+    axs_after = None
+    img_before = None
+    img_after = None
+    cbar_before = None
+    cbar_after = None
+
     def how_to_visualize(self, data_type: DataType = DataType.raw) -> None:
         """
         Display visualization mode selection interface.
@@ -343,27 +350,45 @@ class Visualization(Parent):
                 if vmax_after is None:
                     vmax_after = np.max(data_after)
 
+                self.fig0, self.axs = plt.subplots(nrows=2, ncols=1, 
+                                                   figsize=(5, 10),
+                                                   num="Visualization")
+                self.img_before = self.axs[0].imshow(data_before[0],
+                                              vmin=vmin_before, 
+                                              vmax=vmax_before)
+                self.cbar_before = plt.colorbar(self.img_before, ax=self.axs[0], shrink=0.5)
+                self.axs[0].set_title(label_before)
+                
+                self.img_after = self.axs[1].imshow(data_after[0],
+                                             vmin=vmin_after, 
+                                             vmax=vmax_after)
+                self.cbar_after = plt.colorbar(self.img_after, ax=self.axs[1], shrink=0.5)
+                self.axs[1].set_title(label_after)
+
                 def plot_norm(image_index=0, 
                               v_before=None, 
                               v_after=None
                               ):
 
+                    if self.cbar_before is not None:
+                        self.cbar_before.remove()
+                        self.cbar_after.remove()
+
                     vmin_before, vmax_before = v_before
                     vmin_after, vmax_after = v_after
-
-                    fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
 
                     _norm_data = data_after[image_index]
                     # _run_number = list_of_images[image_index]
                     _raw_data = data_before[image_index]
 
-                    im0 = axs[0].imshow(_raw_data, vmin=vmin_before, vmax=vmax_before)
-                    axs[0].set_title(label_before)
-                    plt.colorbar(im0, ax=axs[0], shrink=0.5)
-
-                    im1 = axs[1].imshow(_norm_data, vmin=vmin_after, vmax=vmax_after)
-                    axs[1].set_title(label_after)
-                    plt.colorbar(im1, ax=axs[1], shrink=0.5)
+                    im0 = self.axs[0].imshow(_raw_data, vmin=vmin_before, vmax=vmax_before)
+                    self.cbar_before = plt.colorbar(im0, ax=self.axs[0], shrink=0.5)
+                    
+                    # axs[0].set_title(label_before)
+   
+                    im1 = self.axs[1].imshow(_norm_data, vmin=vmin_after, vmax=vmax_after)
+                    # self.axs[1].set_title(label_after)
+                    self.cbar_after = plt.colorbar(im1, ax=self.axs[1], shrink=0.5)
             
                     # fig.set_title(f"{_run_number}")
                     
@@ -564,7 +589,9 @@ class Visualization(Parent):
         self.vmin = vmin
         self.vmax = vmax
 
-        self.fig0, self.axs = plt.subplots(nrows=1, ncols=1, figsize=(7, 7))
+        self.fig0, self.axs = plt.subplots(nrows=1, ncols=1, 
+                                           figsize=(7, 7),
+                                           num="Visualization")
         im = self.axs.imshow(data[0], vmin=self.vmin, vmax=self.vmax)
         self.axs.set_title(title)
         self.cbar = plt.colorbar(im, ax=self.axs, shrink=0.5)

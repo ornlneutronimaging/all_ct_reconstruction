@@ -75,6 +75,9 @@ class ChipsCorrection(Parent):
         visualize_chips_correction(): Interactive comparison of before/after images
     """
 
+    cbar_corrected = None
+    cbar_uncorrected = None
+
     def run(self) -> None:
         """
         Execute chip alignment correction on normalized projection images.
@@ -156,104 +159,110 @@ class ChipsCorrection(Parent):
             filled_value = weight * region_1 + (1-weight) * region_2
             where weights vary linearly across the gap
         """
-        # Get the offsets
-        x_offset: int = offsets[0]
-        y_offset: int = offsets[1]
+        
+        #TODO: Implement the chip alignment correction logic here
+        
+        return unaligned_image
+        
+        
+        # # Get the offsets
+        # x_offset: int = offsets[0]
+        # y_offset: int = offsets[1]
 
-        # Get the center
-        if center is not None:
-            center_x: int = center[0]
-            center_y: int = center[1]
+        # # Get the center
+        # if center is not None:
+        #     center_x: int = center[0]
+        #     center_y: int = center[1]
 
-            # Check if the unaligned image contains the alignment center along both axes
-            if (center_x < 0) or (center_x > unaligned_image.shape[1]):
-                center_x = unaligned_image.shape[1] // 2
-                x_offset = 0
-            if (center_y < 0) or (center_y > unaligned_image.shape[0]):
-                center_y = unaligned_image.shape[0] // 2
-                y_offset = 0
+        #     # Check if the unaligned image contains the alignment center along both axes
+        #     if (center_x < 0) or (center_x > unaligned_image.shape[1]):
+        #         center_x = unaligned_image.shape[1] // 2
+        #         x_offset = 0
+        #     if (center_y < 0) or (center_y > unaligned_image.shape[0]):
+        #         center_y = unaligned_image.shape[0] // 2
+        #         y_offset = 0
 
-        else:
-            center_x: int = unaligned_image.shape[1] // 2
-            center_y: int = unaligned_image.shape[0] // 2
+        # else:
+        #     center_x: int = unaligned_image.shape[1] // 2
+        #     center_y: int = unaligned_image.shape[0] // 2
 
-        # Return the original image if both the offset values are zero
-        if (x_offset == 0) and (y_offset == 0):
-            warning_message: str = "Alignment correction not performed as both the offset values are zero."
-            logging.info(warning_message)
+        # # Return the original image if both the offset values are zero
+        # if (x_offset == 0) and (y_offset == 0):
+        #     warning_message: str = "Alignment correction not performed as both the offset values are zero."
+        #     logging.info(warning_message)
 
-            return unaligned_image
+        #     return unaligned_image
 
-        # Get the chips
-        chip_1: NDArray[np.floating] = unaligned_image[:center_y, :center_x]
-        chip_2: NDArray[np.floating] = unaligned_image[:center_y, center_x:]
-        chip_3: NDArray[np.floating] = unaligned_image[center_y:, :center_x]
-        chip_4: NDArray[np.floating] = unaligned_image[center_y:, center_x:]
+        # # Get the chips
+        # chip_1: NDArray[np.floating] = unaligned_image[:center_y, :center_x]
+        # chip_2: NDArray[np.floating] = unaligned_image[:center_y, center_x:]
+        # chip_3: NDArray[np.floating] = unaligned_image[center_y:, :center_x]
+        # chip_4: NDArray[np.floating] = unaligned_image[center_y:, center_x:]
 
-        # Move the chips and create aligned image
-        moved_image: NDArray[np.floating] = np.zeros((unaligned_image.shape[0] + y_offset,
-                                unaligned_image.shape[1] + x_offset,
-                                unaligned_image.shape[2]))
+        # # Move the chips and create aligned image
+        # moved_image: NDArray[np.floating] = np.zeros((unaligned_image.shape[0] + y_offset,
+        #                         unaligned_image.shape[1] + x_offset,
+        #                         unaligned_image.shape[2]))
 
-        moved_image[:center_y, :center_x] = chip_1
-        moved_image[:center_y, center_x + x_offset:] = chip_2
-        moved_image[center_y + y_offset:, :center_x] = chip_3
-        moved_image[center_y + y_offset:, center_x + x_offset:] = chip_4
+        # moved_image[:center_y, :center_x] = chip_1
+        # moved_image[:center_y, center_x + x_offset:] = chip_2
+        # moved_image[center_y + y_offset:, :center_x] = chip_3
+        # moved_image[center_y + y_offset:, center_x + x_offset:] = chip_4
 
-        if fill_gap is True:
-            num_wave: int = unaligned_image.shape[2]
-            filled_image: NDArray[np.floating] = np.copy(moved_image)
+        # if fill_gap is True:
+        #     num_wave: int = unaligned_image.shape[2]
+        #     filled_image: NDArray[np.floating] = np.copy(moved_image)
 
-            # Fill gaps along y-axis
-            if y_offset > 0:
-                y_upper_bound: int = unaligned_image.shape[0] - num_pix_unused - num_pix_neighbor
-                y_lower_bound: int = num_pix_unused + num_pix_neighbor
-                if y_upper_bound > center_y >= y_lower_bound:
-                    y0_up: int = center_y - num_pix_unused - num_pix_neighbor
-                    y1_up: int = center_y - num_pix_unused
-                    region_up: NDArray[np.floating] = np.expand_dims(np.mean(filled_image[y0_up:y1_up], axis=0), axis=0)
+        #     # Fill gaps along y-axis
+        #     if y_offset > 0:
+        #         y_upper_bound: int = unaligned_image.shape[0] - num_pix_unused - num_pix_neighbor
+        #         y_lower_bound: int = num_pix_unused + num_pix_neighbor
+        #         if y_upper_bound > center_y >= y_lower_bound:
+        #             y0_up: int = center_y - num_pix_unused - num_pix_neighbor
+        #             y1_up: int = center_y - num_pix_unused
+        #             region_up: NDArray[np.floating] = np.expand_dims(np.mean(filled_image[y0_up:y1_up], axis=0), axis=0)
 
-                    y0_down: int = center_y + y_offset + num_pix_unused
-                    y1_down: int = center_y + y_offset + num_pix_unused + num_pix_neighbor
-                    region_down: NDArray[np.floating] = np.expand_dims(np.mean(filled_image[y0_down:y1_down], axis=0), axis=0)
+        #             y0_down: int = center_y + y_offset + num_pix_unused
+        #             y1_down: int = center_y + y_offset + num_pix_unused + num_pix_neighbor
+        #             region_down: NDArray[np.floating] = np.expand_dims(np.mean(filled_image[y0_down:y1_down], axis=0), axis=0)
 
-                    weights_y: NDArray[np.floating] = np.expand_dims(np.linspace(0, 1, y_offset + 2 * num_pix_unused), axis=1)
+        #             weights_y: NDArray[np.floating] = np.expand_dims(np.linspace(0, 1, y_offset + 2 * num_pix_unused), axis=1)
 
-                    for wave in range(num_wave):
-                        filled_image[center_y - num_pix_unused:center_y + y_offset + num_pix_unused, :, wave] = \
-                            weights_y[::-1] @ region_up[:, :, wave] + weights_y @ region_down[:, :, wave]
+        #             for wave in range(num_wave):
+        #                 filled_image[center_y - num_pix_unused:center_y + y_offset + num_pix_unused, :, wave] = \
+        #                     weights_y[::-1] @ region_up[:, :, wave] + weights_y @ region_down[:, :, wave]
 
-                else:
-                    warning_message: str = "Couldn't fill gaps along y-axis as the center is close to border."
-                    logging.info(warning_message)
+        #         else:
+        #             warning_message: str = "Couldn't fill gaps along y-axis as the center is close to border."
+        #             logging.info(warning_message)
 
-            # Fill gaps along x-axis
-            if x_offset > 0:
-                x_upper_bound: int = unaligned_image.shape[1] - num_pix_unused - num_pix_neighbor
-                x_lower_bound: int = num_pix_unused + num_pix_neighbor
-                if x_upper_bound > center_x >= x_lower_bound:
-                    x0_left: int = center_x - num_pix_unused - num_pix_neighbor
-                    x1_left: int = center_x - num_pix_unused
-                    region_left: NDArray[np.floating] = np.expand_dims(np.mean(filled_image[:, x0_left:x1_left], axis=1), axis=1)
+        #     # Fill gaps along x-axis
+        #     if x_offset > 0:
+        #         x_upper_bound: int = unaligned_image.shape[1] - num_pix_unused - num_pix_neighbor
+        #         x_lower_bound: int = num_pix_unused + num_pix_neighbor
+        #         if x_upper_bound > center_x >= x_lower_bound:
+        #             x0_left: int = center_x - num_pix_unused - num_pix_neighbor
+        #             x1_left: int = center_x - num_pix_unused
+        #             region_left: NDArray[np.floating] = np.expand_dims(np.mean(filled_image[:, x0_left:x1_left], axis=1), axis=1)
 
-                    x0_right: int = center_x + x_offset + num_pix_unused
-                    x1_right: int = center_x + x_offset + num_pix_unused + num_pix_neighbor
-                    region_right: NDArray[np.floating] = np.expand_dims(np.mean(filled_image[:, x0_right:x1_right], axis=1), axis=1)
+        #             x0_right: int = center_x + x_offset + num_pix_unused
+        #             x1_right: int = center_x + x_offset + num_pix_unused + num_pix_neighbor
+        #             region_right: NDArray[np.floating] = np.expand_dims(np.mean(filled_image[:, x0_right:x1_right], axis=1), axis=1)
 
-                    weights_x: NDArray[np.floating] = np.expand_dims(np.linspace(0, 1, x_offset + 2 * num_pix_unused), axis=0)
+        #             weights_x: NDArray[np.floating] = np.expand_dims(np.linspace(0, 1, x_offset + 2 * num_pix_unused), axis=0)
 
-                    for wave in range(num_wave):
-                        filled_image[:, center_x - num_pix_unused:center_x + x_offset + num_pix_unused, wave] = \
-                            region_left[:, :, wave] @ weights_x[:, ::-1] + region_right[:, :, wave] @ weights_x
+        #             for wave in range(num_wave):
+        #                 filled_image[:, center_x - num_pix_unused:center_x + x_offset + num_pix_unused, wave] = \
+        #                     region_left[:, :, wave] @ weights_x[:, ::-1] + region_right[:, :, wave] @ weights_x
 
-                else:
-                    warning_message: str = "Couldn't fill gaps along x-axis as the center is close to border."
-                    logging.info(warning_message)
+        #         else:
+        #             warning_message: str = "Couldn't fill gaps along x-axis as the center is close to border."
+        #             logging.info(warning_message)
 
-            return filled_image
+        #     return filled_image
 
-        else:
-            return moved_image
+        # else:
+        #     return moved_image
         
     def visualize_chips_correction(self) -> None:
         """
@@ -285,24 +294,38 @@ class ChipsCorrection(Parent):
         # list_of_runs_to_use = self.parent.list_of_runs_to_use[DataType.sample]
         normalized_images: NDArray[np.floating] = self.parent.normalized_images
 
+        self.fig, self.axs = plt.subplots(nrows=2, ncols=1, figsize=(5, 10),
+                                          num="Chips Correction Visualization")
+        self.img_uncorrected = self.axs[0].imshow(normalized_images[0], vmin=0, vmax=1)
+        self.cbar_uncorrected = plt.colorbar(self.img_uncorrected, ax=self.axs[0], shrink=0.5)
+        self.axs[0].set_title("Chips uncorrected")
+        
+        self.img_corrected = self.axs[1].imshow(corrected_images[0], vmin=0, vmax=1)
+        self.cbar_corrected = plt.colorbar(self.img_corrected, ax=self.axs[1], shrink=0.5)
+        self.axs[1].set_title('Chips corrected')
+
         def plot_norm(image_index: int = 0, vmin_vmax: list[float] = None) -> None:
             """Plot comparison of uncorrected vs corrected chip alignment."""
 
+            if self.cbar_uncorrected is not None:
+                self.cbar_uncorrected.remove()
+                self.cbar_corrected.remove()
+
             vmin, vmax = vmin_vmax
 
-            fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
+            # fig, axs = plt.subplots(nrows=2, ncols=1, figsize=(5, 10))
 
             _norm_data: NDArray[np.floating] = corrected_images[image_index]
             # _run_number = list_of_runs_to_use[image_index]
             _raw_data: NDArray[np.floating] = normalized_images[image_index]
 
-            im0 = axs[0].imshow(_raw_data, vmin=vmin, vmax=vmax)
-            axs[0].set_title("Chips uncorrected")
-            plt.colorbar(im0, ax=axs[0], shrink=0.5)
+            im0 = self.axs[0].imshow(_raw_data, vmin=vmin, vmax=vmax)
+            self.axs[0].set_title("Chips uncorrected")
+            self.cbar_uncorrected = plt.colorbar(im0, ax=self.axs[0], shrink=0.5)
 
-            im1 = axs[1].imshow(_norm_data, vmin=vmin, vmax=vmax)
-            axs[1].set_title('Chips corrected')
-            plt.colorbar(im1, ax=axs[1], shrink=0.5)
+            im1 = self.axs[1].imshow(_norm_data, vmin=vmin, vmax=vmax)
+            self.axs[1].set_title('Chips corrected')
+            self.cbar_corrected = plt.colorbar(im1, ax=self.axs[1], shrink=0.5)
     
             # fig.set_title(f"{_run_number}")
             
@@ -314,8 +337,8 @@ class ChipsCorrection(Parent):
                                                                 max=len(corrected_images) -1,
                                                                 layout=widgets.Layout(width='50%'),
                                                                 value=0),
-                                                                v_range=widgets.FloatRangeSlider(min=0.0, max=10.0, value=[0.0, 1.0], step=0.01,
-                                                                                                 layout=widgets.Layout(width='50%')),
+                                  vmin_vmax=widgets.FloatRangeSlider(min=0.0, max=10.0, value=[0.0, 1.0], step=0.01,
+                                                                    layout=widgets.Layout(width='50%')),
         )
 
         display(display_plot)

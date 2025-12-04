@@ -875,6 +875,10 @@ class Step1PrepareTimePixImages:
             )
 
         else:
+            if self.before_rebinning is None:
+                display(HTML("No rebinning performed!"))
+                return
+            
             data_after = self.normalized_images
             data_before = self.before_rebinning
             vmin = 0
