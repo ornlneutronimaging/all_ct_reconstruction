@@ -76,6 +76,9 @@ class Visualization(Parent):
     """
 
     mode: str = 'raw'  # 'cleaned'
+    
+    fig0 = None  # Placeholder for matplotlib figure
+    axs = None  # Placeholder for matplotlib axes
 
     def how_to_visualize(self, data_type: DataType = DataType.raw) -> None:
         """
@@ -561,17 +564,23 @@ class Visualization(Parent):
         self.vmin = vmin
         self.vmax = vmax
 
+        self.fig0, self.axs = plt.subplots(nrows=1, ncols=1, figsize=(7, 7))
+        im = self.axs.imshow(data[0], vmin=self.vmin, vmax=self.vmax)
+        self.axs.set_title(title)
+        self.cbar = plt.colorbar(im, ax=self.axs, shrink=0.5)
+
         def plot_images(index=0):
-            fig, axs = plt.subplots(nrows=1, ncols=1, figsize=(7, 7))
+            
+            self.cbar.remove()
 
             if self.vmin is None:
                 self.vmin = np.min(data[index])
             if self.vmax is None:
                 self.vmax = np.max(data[index])
 
-            im = axs.imshow(data[index], vmin=self.vmin, vmax=self.vmax)
-            axs.set_title(title)
-            plt.colorbar(im, ax=axs, shrink=0.5)
+            im = self.axs.imshow(data[index], vmin=self.vmin, vmax=self.vmax)
+            self.axs.set_title(title)
+            self.cbar = plt.colorbar(im, ax=self.axs, shrink=0.5)
 
             plt.tight_layout()
             
@@ -579,6 +588,7 @@ class Visualization(Parent):
                                 index=widgets.IntSlider(min=0,
                                                         layout=widgets.Layout(width='80%'),
                                                         max=len(data)-1,
+                                                        continuous_update=False,
                                                         value=0),
         )
         display(_display_plot_images)

@@ -55,6 +55,7 @@ class Crop(Parent):
     """
 
     before_normalization: bool = False
+    rectangle = None
 
     def set_region(self, before_normalization: bool = False) -> None:
         """
@@ -121,6 +122,11 @@ class Crop(Parent):
         else:
             vmax_default_value = 1
 
+        integrated: NDArray[np.generic] = integrated_min
+        self.fig, self.axs = plt.subplots(figsize=(7,7)) 
+        img = self.axs.imshow(integrated, vmin=0, vmax=vmax_default_value)
+        self.cbar = plt.colorbar(img, ax=self.axs, shrink=0.5)
+
         def plot_crop(left_right: list, top_bottom: list, vmin_vmax: list, data_type: str) -> Tuple[int, int, int, int]:
             """
             Inner function to plot the crop region visualization.
@@ -137,6 +143,10 @@ class Crop(Parent):
                 Tuple of (left, right, top, bottom) crop boundaries
             """
 
+            self.cbar.remove()
+            if self.rectangle is not None:
+                self.rectangle.remove()
+
             left: int = left_right[0]
             right: int = left_right[1]
 
@@ -151,21 +161,22 @@ class Crop(Parent):
             else:
                 integrated: NDArray[np.generic] = integrated_mean
 
-            fig, axs = plt.subplots(figsize=(7,7)) 
-            img = axs.imshow(integrated, vmin=vmin, vmax=vmax)
-            plt.colorbar(img, ax=axs, shrink=0.5)
+            # img = self.axs.imshow(integrated, vmin=vmin, vmax=vmax)
+            self.cbar = plt.colorbar(img, ax=self.axs, shrink=0.5)
 
             crop_width: int = right - left + 1
             crop_height: int = bottom - top + 1
 
-            axs.add_patch(Rectangle((left, top), crop_width, crop_height,
+            self.rectangle = Rectangle((left, top), crop_width, crop_height,
                                             edgecolor='yellow',
                                             facecolor='green',
                                             fill=True,
                                             lw=2,
                                             alpha=0.3,
-                                            ),
-                )     
+                                            )
+            self.axs.add_patch(self.rectangle)
+            # self.fig.canvas.draw_idle()
+            # plt.show() 
 
             return left, right, top, bottom            
         

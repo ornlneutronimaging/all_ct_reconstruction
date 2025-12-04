@@ -18,7 +18,7 @@ from __code import DetectorType, OperatingMode, DataType
 from __code.utilities.system import get_user_name
 
 # Debug and development settings
-debugging: bool = False
+debugging: bool = True
 verbose: bool = True
 debugger_username: str = 'j35'
 imaging_team: List[str] = ["j35", "gxt"]
@@ -145,7 +145,7 @@ debug_folder: Dict[DetectorType, Dict[OperatingMode, Dict[DataType, str]]] = {
     },
     DetectorType.tpx1: {
         OperatingMode.tof: {
-            DataType.sample: "/SNS/VENUS/IPTS-33531/shared/Shimin_save/new_data_structure_replica/images/tpx1/raw/ct/20241122_CrashRingB_hyperCT_2_500C_1_800AngsMin",
+            DataType.sample: "/SNS/VENUS/IPTS-33531/shared/Shimin_save/new_data_structure_replica/images/tpx1/raw/ct/20241122_CrashRingB_hyperCT_2_500C_1_800AngsMin_light",
             DataType.ob: "/SNS/VENUS/IPTS-33531/shared/Shimin_save/new_data_structure_replica/images/tpx1/ob/20241122_CrashRingB_hyperCT_2_500C_1_800AngsMin",
             DataType.cleaned_images: '/SNS/VENUS/IPTS-33531/shared/jean',
             DataType.normalized: '/SNS/VENUS/IPTS-33531/shared/jean',
