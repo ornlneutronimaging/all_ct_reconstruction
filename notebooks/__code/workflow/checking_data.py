@@ -31,6 +31,7 @@ Created: Part of CT reconstruction development workflow
 from typing import Optional, Dict, List, Any, Tuple, Union
 import logging
 import os
+import glob
 import re
 import matplotlib.pyplot as plt
 import numpy as np
@@ -42,8 +43,8 @@ import ipywidgets as widgets
 from __code.parent import Parent
 from __code.config import PROTON_CHARGE_TOLERANCE_C
 from __code import DataType, DetectorType, Run
-from __code.utilities.files import retrieve_list_of_runs, retrieve_list_of_tif, get_angle_value
-from __code.utilities.nexus import get_proton_charge, get_frame_number
+from __code.utilities.files import retrieve_list_of_runs, retrieve_list_of_tif, get_angle_value, load_spectra_file
+from __code.utilities.nexus import get_proton_charge, get_frame_number, get_detector_offset
 from __code.utilities.math import calculate_most_dominant_int_value_from_list, calculate_most_dominant_float_value_from_list
 
 
@@ -128,10 +129,16 @@ class CheckingData(Parent):
         # check empty runs
         self.reject_empty_runs()
 
-        # # retrieve proton charge of runs
+        # retrieve proton charge of runs
         self.retrieve_proton_charge()
 
-        # # retrieve rotation angle
+        # retrieve spectra files
+        self.retrieve_spectra_file()
+
+        # retrieve detector offset
+        self.retrieve_detector_offset()
+
+        # retrieve rotation angle
         self.retrieve_rotation_angle()
 
         # retrieve frame number
@@ -406,6 +413,51 @@ class CheckingData(Parent):
         self.min_proton_charge_c = min_proton_charge_c
         self.max_proton_charge_c = max_proton_charge_c
         self.parent.at_lest_one_proton_charge_not_found = at_lest_one_proton_charge_not_found
+  
+    def retrieve_spectra_file(self) -> None:
+        logging.info(f"retrieve_spectra_file")
+        list_of_sample_runs: Dict[str, Any] = self.parent.list_of_runs[DataType.sample]
+        list_of_runs = list(list_of_sample_runs.keys())
+        first_run = list_of_runs[0]
+        full_path = list_of_sample_runs[first_run][Run.full_path]
+        list_spectra_files_in_that_folder = glob.glob(os.path.join(full_path, "*_Spectra.txt"))
+        if list_spectra_files_in_that_folder:
+            first_spectra_file = list_spectra_files_in_that_folder[0]
+            logging.info(f"\t first_spectra_file: {first_spectra_file}")
+            tof_array = load_spectra_file(first_spectra_file)
+        else:
+            tof_array = None
+        
+        self.parent.tof_array = tof_array
+   
+    def retrieve_detector_offset(self) -> None:
+        """
+        Retrieve detector offset from the first sample run.
+        
+        Extracts the detector offset value from the NeXus file of the
+        first sample run. This offset is used for time-of-flight (TOF)
+        calculations and data normalization in neutron tomography.
+        
+        Notes
+        -----
+        - Identifies the first sample run from the list of runs
+        - Reads the NeXus file to extract detector offset metadata
+        - Updates parent.detector_offset attribute with extracted value
+        - Logs progress and results for debugging
+        
+        Side Effects
+        ------------
+        Sets parent.detector_offset with extracted offset value
+        """
+        logging.info(f"Retrieving detector offset from first sample run ...")
+        list_of_runs = list(self.parent.list_of_runs[DataType.sample].keys())
+        first_run = list_of_runs[0]
+        nexus_path = self.parent.list_of_runs[DataType.sample][first_run][Run.nexus]
+        logging.info(f"\t nexus_path: {nexus_path}")
+        detector_offset, detector_offset_units = get_detector_offset(nexus_path)
+        logging.info(f"\t detector_offset: {detector_offset} {detector_offset_units}")
+        self.parent.detector_offset = detector_offset
+        self.parent.detector_offset_units = detector_offset_units
   
     def display_graph(self) -> None:
         """

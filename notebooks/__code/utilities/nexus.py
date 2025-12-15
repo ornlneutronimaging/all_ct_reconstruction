@@ -17,10 +17,11 @@ Dependencies:
 Author: CT Reconstruction Development Team
 """
 
+from charset_normalizer import detect
 import h5py
 import os
 import logging
-from typing import Optional, Union
+from typing import Optional, Tuple, Union
 
 
 def get_proton_charge(nexus: Optional[str], units: str = 'pc') -> Optional[float]:
@@ -96,4 +97,31 @@ def get_frame_number(nexus: Optional[str]) -> Optional[int]:
             return frame_number
     except KeyError:
         return None
+    
+
+def get_detector_offset(nexus: Optional[str]) -> Optional[Tuple[float, str]]:
+    """
+    Extract detector offset from NeXus file.
+    
+    Reads the detector offset value from the NeXus file, which is important
+    for accurate time-of-flight calculations in neutron CT reconstruction.
+    
+    Args:
+        nexus: Path to NeXus file, or None
+    """
+    
+    if nexus is None:
+        return None, None
+
+    if os.path.exists(nexus) is False:
+        logging.error(f"NeXus file {nexus} does not exist!")
+        return None, None
+
+    try:
+        with h5py.File(nexus, 'r') as hdf5_data:
+            detector_offset = hdf5_data["entry"]['DASlogs']['BL10:Det:TH:DSPT1:TIDelay']['average_value'][0]
+            detector_offset_units = hdf5_data["entry"]['DASlogs']['BL10:Det:TH:DSPT1:TIDelay']['average_value'].attrs.get("units").decode('utf-8')
+            return detector_offset, detector_offset_units
+    except KeyError:
+        return None, None
     

@@ -15,6 +15,8 @@ import glob
 import os
 import json
 import shutil
+import pandas as pd
+import numpy as np
 from typing import List, Optional, Union, Any
 
 from __code import DetectorType
@@ -225,3 +227,27 @@ def _get_angle_value_tpx1_and_tpx3(run_full_path: Optional[str] = None) -> Optio
     logging.info(f"\t about to return {int(list_part[-3]):03d}.{int(list_part[-2]):03d}")
 
     return f"{int(list_part[-3]):03d}.{int(list_part[-2]):03d}"
+
+
+def load_spectra_file(spectra_file: str) -> Optional[Any]:
+    """
+    Load spectra data from a spectra file.
+    
+    Args:
+        spectra_file: Path to the spectra file to load 
+        
+    Returns:
+        Parsed spectra data if file exists, None otherwise
+        """
+    if not os.path.exists(spectra_file):
+        logging.warning(f"Spectra file does not exist: {spectra_file}")
+        return None
+
+    logging.info(f"Loading spectra file: {spectra_file}")
+    pd_array = pd.read_csv(spectra_file, delimiter=",")
+    logging.info(f"{pd_array =}")
+
+    shutter_time = np.array(pd_array['shutter_time'])
+    logging.info(f"{shutter_time = }")
+    
+    return shutter_time

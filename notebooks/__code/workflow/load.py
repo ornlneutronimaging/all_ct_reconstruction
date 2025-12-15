@@ -732,7 +732,7 @@ class Load(Parent):
         else:
             time_spectra_file = ""
         self.parent.spectra_file_full_path = time_spectra_file
-        
+
     def how_to_integrate(self):
         # select a random projection and load it
         logging.info(f"Selecting a random projection to display profile to select range of TOF  ...")
@@ -748,17 +748,67 @@ class Load(Parent):
         logging.info(f"\tshort name of random run: {_short_name_of_random_run}")
         _profile = np.sum(_random_data, axis=(1, 2))
         
+        # in order to display the x-axis as TOF as well, we need the distance source to detector 
+        # and the detector offset
+        detector_offset, detector_offset_units = self.parent.detector_offset, self.parent.detector_offset_units
+        if detector_offset is None:
+            disabled = False
+        else:
+            disabled = True
+            
+        if self.parent.tof_array is not None:
+            
+            # display widget to enter detector offset
+            detector_offset = 0.0
+            detector_offset_units = u"\u00b5s" # micros
+            label = widgets.Label("Detector offset:",
+                                layout=widgets.Layout(width='150px'))
+            self.detector_offset_widget = widgets.FloatText(
+                value=detector_offset,
+                description='',
+                disabled=disabled,
+                layout=widgets.Layout(width='100px'))
+            units_label = widgets.Label(detector_offset_units)
+            display(widgets.HBox([label, self.detector_offset_widget, units_label]))
+        
+            # detector distance
+            detector_distance = self.parent.default_distance_source_detector
+            label_distance = widgets.Label("Detector distance:",
+                                        layout=widgets.Layout(width='150px'))
+            label_value = widgets.FloatText(
+                value=detector_distance,
+                description='',
+                disabled=True,
+                layout=widgets.Layout(width='100px'))
+            units_distance = widgets.Label("m")
+            display(widgets.HBox([label_distance, label_value, units_distance]))
+            
+            tof_array = self.parent.tof_array * 1e6  # convert to microseconds
+            detector_offset = self.detector_offset_widget.value
+            tof_array += detector_offset
+            logging.info(f"{tof_array = }")
+            
+            display(widgets.HTML("<hr>"))     
+        
+        file_index_array = np.arange(len(_profile))
+        logging.info(f"{file_index_array = }")
+                
         def display_profile(tof_range):
             left_tof, right_tof = tof_range
 
-            fig, ax = plt.subplots(figsize=(8, 5))
-            ax.plot(_profile, marker='o', linestyle='-')
-            ax.axvspan(left_tof, right_tof, color='green', alpha=0.3)
-
-            ax.set_title(f"{_short_name_of_random_run}")
-            ax.set_xlabel("File index")
-            ax.set_ylabel("Sum of counts over all pixels")
-
+            fig, ax1 = plt.subplots(figsize=(8, 5))
+            ax1.plot(file_index_array, _profile, marker='o', linestyle='-')
+            ax1.axvspan(left_tof, right_tof, color='green', alpha=0.3)
+            # ax1.set_title(f"{_short_name_of_random_run}")
+            ax1.set_xlabel("File index")
+            ax1.set_ylabel("Sum of counts over all pixels")
+            ax1.legend(loc='upper right')
+     
+            if tof_array is not None:
+                ax2 = ax1.twiny()
+                ax2.plot(tof_array, _profile, marker=None, linestyle='None')
+                ax2.set_xlabel("Time-of-Flight (µs)")
+   
             plt.show()
 
             self.parent.tof_integration_range = tof_range
@@ -774,10 +824,6 @@ class Load(Parent):
                                                                               style={'description_width': 'initial'}
                                              ))
         display(display_profile_widget)
-
-
-
-
 
     # def list_of_images_to_exclude(self):
     #     """List of images to exclude from the reconstruction."""

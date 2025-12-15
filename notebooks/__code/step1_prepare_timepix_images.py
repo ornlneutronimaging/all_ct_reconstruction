@@ -67,7 +67,7 @@ from IPython.display import HTML
 from __code import DataType, OperatingMode, DEFAULT_OPERATING_MODE, DetectorType
 from __code.utilities.logging import setup_logging
 from __code.utilities.configuration_file import Configuration
-from __code.config import DEBUG, default_detector_type
+from __code.config import DEBUG, default_detector_type, DISTANCE_SOURCE_DETECTOR
 
 from __code.workflow.load import Load
 from __code.workflow.checking_data import CheckingData
@@ -242,6 +242,9 @@ class Step1PrepareTimePixImages:
 
     at_least_one_frame_number_not_found: bool = False
     at_lest_one_proton_charge_not_found: bool = False
+
+    default_distance_source_detector: float = DISTANCE_SOURCE_DETECTOR
+    tof_array = None
 
     def __init__(self, system: Optional[Any] = None) -> None:
         """
