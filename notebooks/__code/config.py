@@ -87,6 +87,7 @@ chips_offset: List[int] = [2, 2]  # X and Y axis offsets for detector chips
 NUM_THREADS: int = 60
 SVMBIR_LIB_PATH: str = "/fastdata/"
 SVMBIR_LIB_PATH_BACKUP: str = "/SNS/VENUS/shared/fastdata/"
+SVMBIR_LIB_PATH_BACKUP_2: str = "/tmp/"
 
 # Image processing thresholds
 TOMOPY_REMOVE_OUTLIER_THRESHOLD_RATIO: float = 0.1  # Outlier threshold percentage
