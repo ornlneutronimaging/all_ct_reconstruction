@@ -32,3 +32,4 @@ neutompy = { git = "https://github.com/ornlneutronimaging/NeuTomPy-toolbox.git",
 mkl-fft = ">=2.0.0, <3"
 all-ct-reconstruction-code = { path = "notebooks/__code", editable = true }
 mbirjax = { version = ">=0.6.7, <0.7", extras = ["cuda12"] }
+timepix-geometry-correction = { git = "https://github.com/ornlneutronimaging/timepix_geometry_correction.git", branch="main"}

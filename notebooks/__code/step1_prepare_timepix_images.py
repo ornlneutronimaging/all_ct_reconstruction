@@ -467,7 +467,7 @@ class Step1PrepareTimePixImages:
         # self.combine_images()
         if self.minimum_requirements_met:           
             o_combine = CombineTof(parent=self)
-            o_combine.load_data()
+            o_combine.load_data(detector_type=self.detector_type)
         else:
             self.o_check.minimum_requirement_not_met()
 
@@ -758,30 +758,30 @@ class Step1PrepareTimePixImages:
         """
         self.o_norm.export_images()
 
-    # chips correction
-    def chips_correction(self) -> None:
-        """
-        Apply TimePix detector chip-specific corrections.
+    # # chips correction
+    # def chips_correction(self) -> None:
+    #     """
+    #     Apply TimePix detector chip-specific corrections.
         
-        Performs comprehensive corrections specific to TimePix detector
-        characteristics including additional outlier removal and chip-specific
-        gain corrections. Essential for high-quality TimePix reconstruction.
+    #     Performs comprehensive corrections specific to TimePix detector
+    #     characteristics including additional outlier removal and chip-specific
+    #     gain corrections. Essential for high-quality TimePix reconstruction.
         
-        The correction process:
-        1. Removes outliers from normalized images using ImagesCleaner
-        2. Applies TimePix chip-specific corrections via ChipsCorrection
+    #     The correction process:
+    #     1. Removes outliers from normalized images using ImagesCleaner
+    #     2. Applies TimePix chip-specific corrections via ChipsCorrection
         
-        Side Effects:
-            - Removes outliers from normalized_images using ImagesCleaner
-            - Applies chip-specific corrections using ChipsCorrection
-            - Updates normalized_images with corrected data
-            - Logs correction progress and effectiveness metrics
-        """
-        o_clean = ImagesCleaner(parent=self)
-        self.normalized_images = o_clean.remove_outliers(self.normalized_images[:])
+    #     Side Effects:
+    #         - Removes outliers from normalized_images using ImagesCleaner
+    #         - Applies chip-specific corrections using ChipsCorrection
+    #         - Updates normalized_images with corrected data
+    #         - Logs correction progress and effectiveness metrics
+    #     """
+    #     o_clean = ImagesCleaner(parent=self)
+    #     self.normalized_images = o_clean.remove_outliers(self.normalized_images[:])
 
-        o_chips = ChipsCorrection(parent=self)
-        o_chips.run()
+    #     o_chips = ChipsCorrection(parent=self)
+    #     o_chips.run()
 
     def visualize_chips_correction(self) -> None:
         """

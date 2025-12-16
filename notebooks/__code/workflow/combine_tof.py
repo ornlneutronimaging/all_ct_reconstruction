@@ -48,7 +48,10 @@ from tqdm import tqdm
 from typing import Dict, List, Optional, Tuple, Union, Any
 from numpy.typing import NDArray
 
-from __code import OperatingMode
+from timepix_geometry_correction.correct import TimepixGeometryCorrection
+
+from __code.config import default_config_timepix1, default_config_timepix3
+from __code import OperatingMode, DetectorType
 from __code.parent import Parent
 from __code import DataType, Run
 from __code.utilities.load import load_list_of_tif, load_data_using_multithreading
@@ -146,13 +149,17 @@ class CombineTof(Parent):
 
         self.parent.list_of_runs = list_of_runs
 
-    def load_data(self) -> None:
+    def load_data(self, detector_type=DetectorType.tpx1_legacy) -> None:
         """
         Load and organize TOF data for all selected runs by angular position.
+        The timepix chips gaps will be auto-correctred during loading if needed.
         
         Loads TOF neutron imaging data for all non-rejected runs, organizing
         them by angular position for proper tomographic reconstruction. Handles
         both sample and open beam data with progress tracking and logging.
+       
+        Params:
+            detector_type: Type of detector used for data acquisition
        
         Returns:
             None: Updates parent object with loaded and organized data
@@ -169,11 +176,13 @@ class CombineTof(Parent):
             2. Load and combine TOF data for each accepted run
             3. Process open beam data with similar methodology
             4. Create master arrays and finalize data organization
+            5. Correct timepix chip gaps if detector_type requires it
             
         Notes:
             - Uses multi-threaded loading for performance
             - Combines TOF channels during loading process
             - Maintains correspondence between angles and runs
+            - correct timepix chip gaps if needed using https://github.com/ornlneutronimaging/timepix_geometry_correction
         """
 
         logging.info(f"loading data ...")
@@ -206,7 +215,8 @@ class CombineTof(Parent):
                     logging.info(f"\twe keep that runs!")
                     list_of_angles_of_runs_to_keep.add(_angle)
                     logging.info(f"\tloading run {_run} ...")
-                    _data: NDArray[np.floating] = self.load_data_for_a_run(run=_run)
+                    _data: NDArray[np.floating] = self.load_data_for_a_run(run=_run,
+                                                                           detector_type=detector_type,)
                     logging.info(f"\t{_data.shape}")
                     # # combine all tof
                     # _data = np.sum(_data, axis=0)
@@ -231,7 +241,9 @@ class CombineTof(Parent):
             if use_it:
                 logging.info(f"\twe keep that runs!")
                 logging.info(f"\tloading run {_run} ...")
-                _data: NDArray[np.floating] = self.load_data_for_a_run(run=_run, data_type=DataType.ob)
+                _data: NDArray[np.floating] = self.load_data_for_a_run(run=_run,
+                                                                       detector_type=detector_type, 
+                                                                       data_type=DataType.ob)
                 logging.info(f"\t{_data.shape}")
                 list_ob_data.append(_data)
                 final_list_of_runs[DataType.ob].append(_runs)
@@ -253,7 +265,9 @@ class CombineTof(Parent):
         logging.info(f"{self.parent.final_list_of_angles_rad = }")
         logging.info(f"{self.parent.list_of_images = }")
 
-    def load_data_for_a_run(self, run: Optional[str] = None, data_type: DataType = DataType.sample) -> NDArray[np.floating]:
+    def load_data_for_a_run(self, run: Optional[str] = None, 
+                            detector_type: DetectorType = DetectorType.tpx1_legacy,
+                            data_type: DataType = DataType.sample) -> NDArray[np.floating]:
         """
         Load TOF data for a specific run with spectral combination.
         
@@ -285,6 +299,19 @@ class CombineTof(Parent):
                                                                     combine_tof=True, 
                                                                     tof_integration_range=self.parent.tof_integration_range)
 
+        if detector_type in [DetectorType.tpx1, DetectorType.tpx1_legacy]:
+            config = default_config_timepix1
+        else:
+            config = default_config_timepix3 
+            
+        # correct timepix chip gaps
+        o_corrector = TimepixGeometryCorrection(raw_images=data, config=config)
+        data = o_corrector.correct()
+        
+        # remove useless dimension
+        data = np.array([np.squeeze(d) for d in data])
+        data = np.squeeze(data)
+        
         return data
     
     # def combine_tof_data_range(self, master_3d_data_array):
