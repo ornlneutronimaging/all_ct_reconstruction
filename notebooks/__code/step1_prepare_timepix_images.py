@@ -997,6 +997,9 @@ class Step1PrepareTimePixImages:
             - Logs array information for quality monitoring
             - Prepares data for optimal reconstruction performance
         """
+        # apply a tiny offset to avoid log(0)
+        self.normalized_images[:] += 1e-6
+        
         normalized_images_log = log_conversion(self.normalized_images[:])
         o_cleaner = ImagesCleaner(parent=self)
         normalized_images_log = o_cleaner.remove_outliers(normalized_images_log[:])
