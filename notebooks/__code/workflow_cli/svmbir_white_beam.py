@@ -117,6 +117,14 @@ class SvmbirCliHandler:
         for _index, _image in enumerate(corrected_array_log):
             logging.info(f"\tImage #{_index}: nan={np.isnan(_image).sum()}, zeros={(_image == 0).sum()}, min={np.nanmin(_image)}, max={np.nanmax(_image)}, mean={np.nanmean(_image)}")
       
+        logging.info(f"Replace NaN by zeros ...")
+        corrected_array_log = np.nan_to_num(corrected_array_log, nan=0.0)
+        logging.info(f"Replace NaN by zeros ... done")
+      
+        logging.info(f"Checking statistics of loaded data again after removing nans ...")
+        for _index, _image in enumerate(corrected_array_log):
+            logging.info(f"\tImage #{_index}: nan={np.isnan(_image).sum()}, zeros={(_image == 0).sum()}, min={np.nanmin(_image)}, max={np.nanmax(_image)}, mean={np.nanmean(_image)}")
+      
         logging.info(f"when to remove stripes: {config['when_to_remove_stripes']}")
 
         # this is where we will apply the strip removal algorithms if requested
