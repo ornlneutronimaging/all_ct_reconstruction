@@ -41,6 +41,7 @@ import time
 import jax.numpy as jnp
 import mbirjax as mj
 from numpy.typing import NDArray
+from xarray import corr
 
 from __code import WhenToRemoveStripes
 from __code.workflow.export import Export
@@ -111,6 +112,10 @@ class SvmbirCliHandler:
         corrected_array_log = load_list_of_tif(list_tiff, dtype=np.float32)
         print(f"done!")
         logging.info(f"loading {len(list_tiff)} images ... done")
+      
+        logging.info(f"Checking statistics of loaded data ...")
+        for _index, _image in enumerate(corrected_array_log):
+            logging.info(f"\tImage #{_index}: nan={np.isnan(_image).sum()}, zeros={(_image == 0).sum()}, min={np.nanmin(_image)}, max={np.nanmax(_image)}, mean={np.nanmean(_image)}")
       
         logging.info(f"when to remove stripes: {config['when_to_remove_stripes']}")
 
