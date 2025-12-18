@@ -152,16 +152,17 @@ class Normalization(Parent):
         integrated_images = np.mean(sample_images, axis=0)
         height, width = np.shape(integrated_images)
 
-        self.fig, self.axs = plt.subplots(nrows=1, ncols=1, figsize=(7,7), 
-                                          num="Normalization ROI Selection")
-        self.img = self.axs.imshow(integrated_images)
-        self.cbar = plt.colorbar(self.img, ax=self.axs, shrink=0.5)
+        # self.fig, self.axs = plt.subplots(nrows=1, ncols=1, figsize=(7,7), 
+        #                                   num="Normalization ROI Selection")
+        # self.img = self.axs.imshow(integrated_images)
+        # self.cbar = plt.colorbar(self.img, ax=self.axs, shrink=0.5)
 
         def plot_roi(left_right, top_bottom):
 
-            self.cbar.remove()
-            if self.rectangle is not None:
-                self.rectangle.remove()
+            self.fig, self.axs = plt.subplots(nrows=1, ncols=1, figsize=(7,7), 
+                                            num="Normalization ROI Selection")
+            self.img = self.axs.imshow(integrated_images)
+            self.cbar = plt.colorbar(self.img, ax=self.axs, shrink=0.5)
 
             left, right = left_right
             top, bottom = top_bottom
@@ -169,7 +170,6 @@ class Normalization(Parent):
             height = np.abs(bottom - top) + 1
             width = np.abs(right - left) + 1
 
-            self.cbar = plt.colorbar(self.img, ax=self.axs, shrink=0.5)
             self.rectangle = Rectangle((left, top), width, height,
                                         edgecolor='yellow',
                                         facecolor='green',

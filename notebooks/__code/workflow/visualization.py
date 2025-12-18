@@ -158,6 +158,8 @@ class Visualization(Parent):
         elif self.what_to_visualize_ui.value == '1 image at a time':
             self.visualize_1_stack(data=self.parent.master_3d_data_array[DataType.sample],
                                    title=f"{self.mode} data")
+        elif self.what_to_visualize_ui.value == 'Integrated intensity vs image index':
+            self.visualize_integrated_intensity_vs_image_index()
 
     def visualize_integrated_intensity_vs_image_index(self):
            
@@ -261,33 +263,6 @@ class Visualization(Parent):
         # axs[1, 2].set_title("Ratio last/first")
         # plt.colorbar(im5, ax=axs[1, 2], shrink=0.5)
         axs[1, 2].axis('off')
-
-
-        # im0 = axs[0, 0].imshow(sample_proj_min, vmin=vmin, vmax=vmax)
-        # axs[0, 0].set_title("Sample (np.min)")
-        # plt.colorbar(im0, ax=axs[0, 0], shrink=0.5)
-
-        # if no_ob_data:
-        #     im1 = axs[0, 1].imshow(ob_proj_min, vmin=vmin, vmax=vmax)   
-        #     axs[0, 1].set_title("OB (np.min)")
-        #     plt.colorbar(im1, ax=axs[0, 1], shrink=0.5)
-
-        # if not no_dc_data:
-        #     im2 = axs[0, 2].imshow(dc_proj_max, vmin=vmin, vmax=vmin+1000)
-        #     axs[0, 2].set_title("DC (np.max)")
-        #     plt.colorbar(im2, ax=axs[0, 2], shrink=0.5)
-
-        # im3 = axs[1, 0].imshow(sample_proj_first, vmin=vmin, vmax=vmax)
-        # axs[1, 0].set_title(f"Sample at angle {list_of_angles[0]}")
-        # plt.colorbar(im3, ax=axs[1, 0], shrink=0.5)
-
-        # im4 = axs[1, 1].imshow(sample_proj_last, vmin=vmin, vmax=vmax)
-        # axs[1, 1].set_title(f"Sample at angle {list_of_angles[-1]}")
-        # plt.colorbar(im4, ax=axs[1, 1], shrink=0.5)
-
-        # im5 = axs[1, 2].imshow(ratio_last_first, vmin=0.9, vmax=1.1)
-        # axs[1, 2].set_title("Ratio last/first")
-        # plt.colorbar(im5, ax=axs[1, 2], shrink=0.5)
    
         if (self.mode == 'cleaned') and (self.parent.histogram_sample_before_cleaning is not None):
 
@@ -350,29 +325,25 @@ class Visualization(Parent):
                 if vmax_after is None:
                     vmax_after = np.max(data_after)
 
-                self.fig0, self.axs = plt.subplots(nrows=2, ncols=1, 
-                                                   figsize=(5, 10),
-                                                   num="Visualization")
-                self.img_before = self.axs[0].imshow(data_before[0],
-                                              vmin=vmin_before, 
-                                              vmax=vmax_before)
-                self.cbar_before = plt.colorbar(self.img_before, ax=self.axs[0], shrink=0.5)
-                self.axs[0].set_title(label_before)
+                # self.fig0, self.axs = plt.subplots(nrows=2, ncols=1, 
+                #                                    figsize=(5, 10),
+                #                                    num="Visualization")
+                # self.img_before = self.axs[0].imshow(data_before[0],
+                #                               vmin=vmin_before, 
+                #                               vmax=vmax_before)
+                # self.cbar_before = plt.colorbar(self.img_before, ax=self.axs[0], shrink=0.5)
+                # self.axs[0].set_title(label_before)
                 
-                self.img_after = self.axs[1].imshow(data_after[0],
-                                             vmin=vmin_after, 
-                                             vmax=vmax_after)
-                self.cbar_after = plt.colorbar(self.img_after, ax=self.axs[1], shrink=0.5)
-                self.axs[1].set_title(label_after)
+                # self.img_after = self.axs[1].imshow(data_after[0],
+                #                              vmin=vmin_after, 
+                #                              vmax=vmax_after)
+                # self.cbar_after = plt.colorbar(self.img_after, ax=self.axs[1], shrink=0.5)
+                # self.axs[1].set_title(label_after)
 
                 def plot_norm(image_index=0, 
                               v_before=None, 
                               v_after=None
                               ):
-
-                    if self.cbar_before is not None:
-                        self.cbar_before.remove()
-                        self.cbar_after.remove()
 
                     vmin_before, vmax_before = v_before
                     vmin_after, vmax_after = v_after
@@ -380,17 +351,22 @@ class Visualization(Parent):
                     _norm_data = data_after[image_index]
                     # _run_number = list_of_images[image_index]
                     _raw_data = data_before[image_index]
-
-                    im0 = self.axs[0].imshow(_raw_data, vmin=vmin_before, vmax=vmax_before)
-                    self.cbar_before = plt.colorbar(im0, ax=self.axs[0], shrink=0.5)
                     
-                    # axs[0].set_title(label_before)
-   
-                    im1 = self.axs[1].imshow(_norm_data, vmin=vmin_after, vmax=vmax_after)
-                    # self.axs[1].set_title(label_after)
-                    self.cbar_after = plt.colorbar(im1, ax=self.axs[1], shrink=0.5)
-            
-                    # fig.set_title(f"{_run_number}")
+                    fig0, axs = plt.subplots(nrows=2, ncols=1, 
+                                                    figsize=(5, 10),
+                                                    num="Visualization")
+                    
+                    img_before = axs[0].imshow(_raw_data,
+                                                vmin=vmin_before, 
+                                                vmax=vmax_before)
+                    plt.colorbar(img_before, ax=axs[0], shrink=0.5)
+                    axs[0].set_title(label_before)
+                    
+                    img_after = axs[1].imshow(_norm_data,
+                                                vmin=vmin_after, 
+                                                vmax=vmax_after)
+                    plt.colorbar(img_after, ax=axs[1], shrink=0.5)
+                    axs[1].set_title(label_after)
                     
                     plt.tight_layout()
                     # plt.show()
@@ -546,45 +522,36 @@ class Visualization(Parent):
         self.vmin_right = vmin_right
         self.vmax_right = vmax_right
 
-        self.fig, self.axs = plt.subplots(nrows=2, ncols=1, figsize=(5, 8), num="Visualization")
+        # self.fig, self.axs = plt.subplots(nrows=2, ncols=1, figsize=(5, 8), num="Visualization")
         
-        self.img_before = m0 = self.axs[0].imshow(left[0], vmin=self.vmin_left, vmax=self.vmax_left)
-        self.axs[0].set_title("normalized")
-        self.cbar_before = plt.colorbar(m0, ax=self.axs[0], shrink=0.5)
+        # self.img_before = m0 = self.axs[0].imshow(left[0], vmin=self.vmin_left, vmax=self.vmax_left)
+        # self.axs[0].set_title("normalized")
+        # self.cbar_before = plt.colorbar(m0, ax=self.axs[0], shrink=0.5)
         
-        self.img_after = m1 = self.axs[1].imshow(right[0], vmin=self.vmin_right, vmax=self.vmax_right)
-        self.axs[1].set_title("log(normalized)")
-        self.cbar_after = plt.colorbar(m1, ax=self.axs[1], shrink=0.5)
+        # self.img_after = m1 = self.axs[1].imshow(right[0], vmin=self.vmin_right, vmax=self.vmax_right)
+        # self.axs[1].set_title("log(normalized)")
+        # self.cbar_after = plt.colorbar(m1, ax=self.axs[1], shrink=0.5)
 
         def plot_images(index=0):
 
-            # fig, axs = plt.subplots(nrows=2, ncols=1, figsize=(5, 8), num="Visualization")
+            fig, axs = plt.subplots(nrows=2, ncols=1, figsize=(5, 8), num="Visualization")
 
-            if self.cbar_before is not None:
-                self.cbar_before.remove()
-                self.cbar_after.remove()
+            vmin_left = np.min(left[index])
+            vmax_left = np.max(left[index])
 
-            if self.vmin_left is None:
-                self.vmin_left = np.min(left[index])
-            if self.vmax_left is None:
-                self.vmax_left = np.max(left[index])
-
-            self.img_before = self.axs[0].imshow(left[index], vmin=self.vmin_left, vmax=self.vmax_left, )
-            # axs[0].set_title("normalized")
-            self.cbar_before = plt.colorbar(self.img_before, ax=self.axs[0], shrink=0.5)
-
-            if self.vmin_right is None:
-                self.vmin_right = np.min(right[index])
-            if self.vmax_right is None:
-                self.vmax_right = np.max(right[index])   
-
-            # im1 = axs[1].imshow(right[index], vmin=self.vmin_right, vmax=self.vmax_right)
-            self.img_after = self.axs[1].imshow(right[index])
-            # self.axs[1].set_title("log(normalized)")
-            self.cbar_after = plt.colorbar(self.img_after, ax=self.axs[1], shrink=0.5)
+            img_before = m0 = axs[0].imshow(left[index], vmin=vmin_left, vmax=vmax_left)
+            axs[0].set_title("normalized")
+            cbar_before = plt.colorbar(m0, ax=axs[0], shrink=0.5)
+             
+            vmin_right = np.min(right[index])
+            vmax_right = np.max(right[index])
+            
+            img_after = m1 = axs[1].imshow(right[index], vmin=vmin_right, vmax=vmax_right)
+            axs[1].set_title("log(normalized)")
+            cbar_after = plt.colorbar(m1, ax=axs[1], shrink=0.5)
 
             plt.tight_layout()
-            plt.show()
+            # plt.show()
 
         display_plot = interactive(plot_images,
                                 index=widgets.IntSlider(min=0,
@@ -603,22 +570,16 @@ class Visualization(Parent):
         self.vmin = vmin
         self.vmax = vmax
 
-        self.fig0, self.axs = plt.subplots(nrows=1, ncols=1, 
-                                           figsize=(7, 7),
-                                           num="Visualization")
-        im = self.axs.imshow(data[0], vmin=self.vmin, vmax=self.vmax)
-        self.axs.set_title(title)
-        self.cbar = plt.colorbar(im, ax=self.axs, shrink=0.5)
-
         def plot_images(index=0):
             
-            self.cbar.remove()
-
             if self.vmin is None:
                 self.vmin = np.min(data[index])
             if self.vmax is None:
                 self.vmax = np.max(data[index])
-
+                
+            self.fig0, self.axs = plt.subplots(nrows=1, ncols=1, 
+                                           figsize=(7, 7),
+                                           num="Visualization")
             im = self.axs.imshow(data[index], vmin=self.vmin, vmax=self.vmax)
             self.axs.set_title(title)
             self.cbar = plt.colorbar(im, ax=self.axs, shrink=0.5)
@@ -633,6 +594,7 @@ class Visualization(Parent):
                                                         value=0),
         )
         display(_display_plot_images)
+
 
     def visualize_timepix_statistics(self):
 

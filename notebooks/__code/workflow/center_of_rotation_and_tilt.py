@@ -210,33 +210,29 @@ class CenterOfRotationAndTilt(Parent):
 
         height, _ = np.shape(self.image_0_degree)
 
-        self.fig, self.ax = plt.subplots(nrows=1, ncols=2, figsize=(10,5))
+        # self.fig, self.ax = plt.subplots(nrows=1, ncols=2, figsize=(10,5))
         
-        self.im0 = self.ax[0].imshow(self.image_0_degree)
-        self.cbar0 = plt.colorbar(self.im0, ax=self.ax[0], shrink=0.5)
-        self.ax[0].set_title(f"theory: 0 degree - measured: {self.real_0_degree_angle} degree")
+        # self.im0 = self.ax[0].imshow(self.image_0_degree)
+        # self.cbar0 = plt.colorbar(self.im0, ax=self.ax[0], shrink=0.5)
+        # self.ax[0].set_title(f"theory: 0 degree - measured: {self.real_0_degree_angle} degree")
         
-        self.im1 = self.ax[1].imshow(self.image_180_degree)
-        self.cbar1 = plt.colorbar(self.im1, ax=self.ax[1], shrink=0.5)
-        self.ax[1].set_title(f"theory: 180 degree - measured: {self.real_180_degree_angle} degree")
+        # self.im1 = self.ax[1].imshow(self.image_180_degree)
+        # self.cbar1 = plt.colorbar(self.im1, ax=self.ax[1], shrink=0.5)
+        # self.ax[1].set_title(f"theory: 180 degree - measured: {self.real_180_degree_angle} degree")
 
         def plot_range(y_range):
 
-            y_top, y_bottom = y_range
-            if self.cbar0 is not None:
-                self.cbar0.remove()
-                self.cbar1.remove()
-            
-            self.ax[0].cla()
-            self.ax[1].cla()
+            fig, self.ax = plt.subplots(nrows=1, ncols=2, figsize=(10,5))
 
-            self.im0 = self.ax[0].imshow(self.image_0_degree)
-            self.cbar0 = plt.colorbar(self.im0, ax=self.ax[0], shrink=0.5)
+            y_top, y_bottom = y_range
+
+            im0 = self.ax[0].imshow(self.image_0_degree)
+            self.cbar0 = plt.colorbar(im0, ax=self.ax[0], shrink=0.5)
             self.ax[0].set_title(f"theory: 0 degree - measured: {self.real_0_degree_angle} degree")
             self.ax[0].axhspan(y_top, y_bottom, color='blue', alpha=0.2)
 
-            self.im1 = self.ax[1].imshow(self.image_180_degree)
-            self.cbar1 = plt.colorbar(self.im1, ax=self.ax[1], shrink=0.5)
+            im1 = self.ax[1].imshow(self.image_180_degree)
+            self.cbar1 = plt.colorbar(im1, ax=self.ax[1], shrink=0.5)
             self.ax[1].set_title(f"theory: 180 degree - measured: {self.real_180_degree_angle} degree")
             self.ax[1].axhspan(y_top, y_bottom, color='blue', alpha=0.2)
 
@@ -335,15 +331,14 @@ class CenterOfRotationAndTilt(Parent):
         vmax = np.max([self.image_0_degree, self.image_180_degree, self.image_360_degree])
         vmax = 4 # debug
                 
-        self.fig, self.axs = plt.subplots(nrows=1, ncols=1, figsize=(7,7))
-        self.center = int(width/2)
+        # self.fig, self.axs = plt.subplots(nrows=1, ncols=1, figsize=(7,7))
+        # self.center = int(width/2)
 
         def plot_images(angles, center, v_range):
 
-            if self.center != center:
-                self.axs.cla()
-                self.center = center
-                self.axs.axvline(center, color='blue', linestyle='--')
+            self.fig, self.axs = plt.subplots(nrows=1, ncols=1, figsize=(7,7))
+
+            self.axs.axvline(center, color='blue', linestyle='--')
                 
             at_least_one_image_selected = False
             list_images = []
@@ -416,35 +411,35 @@ class CenterOfRotationAndTilt(Parent):
         max_value = np.max([image_0_degree, image_180_degree])
         # max_value = 4 # DEBUG
 
-        self.fig, self.axs = plt.subplots(nrows=1, ncols=2, figsize=(10,5), 
-                                          num="Select slice to use to calculate center of rotation")
+        # self.fig, self.axs = plt.subplots(nrows=1, ncols=2, figsize=(10,5), 
+        #                                   num="Select slice to use to calculate center of rotation")
         
-        self.axs[0].imshow(image_0_degree, cmap='viridis', vmin=0, vmax=max_value)
-        self.axs[0].set_title("0 / 0")
-        self.axs[0].axhline(int(height/2), color='blue', linestyle='--')
+        # self.axs[0].imshow(image_0_degree, cmap='viridis', vmin=0, vmax=max_value)
+        # self.axs[0].set_title("0 / 0")
+        # self.axs[0].axhline(int(height/2), color='blue', linestyle='--')
 
-        self.axs[1].imshow(image_180_degree, cmap='viridis', vmin=0, vmax=max_value)
-        self.axs[1].set_title(f"{self.parent.final_list_of_angles[self.index_180_degree]} / 180")
-        self.axs[1].axhline(int(height/2), color='blue', linestyle='--')
+        # self.axs[1].imshow(image_180_degree, cmap='viridis', vmin=0, vmax=max_value)
+        # self.axs[1].set_title(f"{self.parent.final_list_of_angles[self.index_180_degree]} / 180")
+        # self.axs[1].axhline(int(height/2), color='blue', linestyle='--')
 
         self.slice_value = int(height/2)
         
         def plot_images(slice_value=int(height/2), vmin_vmax: list = None):
 
+            fig, axs = plt.subplots(nrows=1, 
+                                    ncols=2, 
+                                    figsize=(10,5), 
+                                num="Select slice to use to calculate center of rotation")
+     
             vmin, vmax = vmin_vmax
             
-            if self.slice_value != slice_value:
-                self.axs[0].cla()
-                self.axs[1].cla()
-                self.slice_value = slice_value
-            
-            self.axs[0].imshow(image_0_degree, cmap='viridis', vmin=vmin, vmax=vmax)
-            self.axs[0].set_title("0 / 0")
-            self.axs[0].axhline(slice_value, color='blue', linestyle='--')
+            axs[0].imshow(image_0_degree, cmap='viridis', vmin=vmin, vmax=vmax)
+            axs[0].set_title("0 / 0")
+            axs[0].axhline(slice_value, color='blue', linestyle='--')
 
-            self.axs[1].imshow(image_180_degree, cmap='viridis', vmin=vmin, vmax=vmax)
-            self.axs[1].set_title(f"{self.parent.final_list_of_angles[self.index_180_degree]} / 180")
-            self.axs[1].axhline(slice_value, color='blue', linestyle='--')
+            axs[1].imshow(image_180_degree, cmap='viridis', vmin=vmin, vmax=vmax)
+            axs[1].set_title(f"{self.parent.final_list_of_angles[self.index_180_degree]} / 180")
+            axs[1].axhline(slice_value, color='blue', linestyle='--')
 
             # axs[2].imshow(image_360_degree, cmap='viridis', vmin=vmin, vmax=vmax)
             # axs[2].set_title(f"{self.parent.final_list_of_angles[self.index_360_degree]} / 360")
@@ -523,21 +518,22 @@ class CenterOfRotationAndTilt(Parent):
         vmax = np.max(combined_images)
         vmin = 0
 
-        self.fig_test, self.axs = plt.subplots(nrows=1, ncols=1, 
-                                               figsize=(7,7), num="Test center of rotation calculated")
-        self.img = self.axs.imshow(combined_images, cmap='viridis', vmin=0, vmax=vmax)
-        self.cbar = plt.colorbar(self.img, ax=self.axs, shrink=0.5)
-        self.axs.axvline(center_of_rotation_calculated, color='blue', linestyle='--')
+        # self.fig_test, self.axs = plt.subplots(nrows=1, ncols=1, 
+        #                                        figsize=(7,7), num="Test center of rotation calculated")
+        # self.img = self.axs.imshow(combined_images, cmap='viridis', vmin=0, vmax=vmax)
+        # self.cbar = plt.colorbar(self.img, ax=self.axs, shrink=0.5)
+        # self.axs.axvline(center_of_rotation_calculated, color='blue', linestyle='--')
                  
         def plot_result(v_range):
             
+            fig_test, axs = plt.subplots(nrows=1, ncols=1, 
+                                               figsize=(7,7), num="Test center of rotation calculated")
+            
             logging.info(f"in test_center_of_rotation_calculated")
-            if self.cbar is not None:
-                self.cbar.remove()
-          
-            self.img = self.axs.imshow(combined_images, cmap='viridis', vmin=v_range[0], vmax=v_range[1])
-            self.cbar = plt.colorbar(self.img, ax=self.axs, shrink=0.5)
-            self.axs.axvline(center_of_rotation_calculated, color='blue', linestyle='--')
+  
+            img = axs.imshow(combined_images, cmap='viridis', vmin=v_range[0], vmax=v_range[1])
+            plt.colorbar(img, ax=axs, shrink=0.5)
+            axs.axvline(center_of_rotation_calculated, color='blue', linestyle='--')
             plt.tight_layout()
             plt.show()
             

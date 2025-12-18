@@ -50,7 +50,10 @@ class TestReconstruction(Parent):
         height, width = normalized_images_log[0].shape
         max_value: float = 4
 
-        def plot_images(image_index: int, slice_1: int, slice_2: int, vmin: float, vmax: float) -> Tuple[int, int]:
+        default_top_value = int(height * 0.1)
+        default_bottom_value = int(height * 0.9)
+
+        def plot_images(image_index: int, slice_1: int, slice_2: int, vrange: Tuple[float, float]) -> Tuple[int, int]:
             """
             Inner function to plot selected image with slice indicators.
             
@@ -66,6 +69,8 @@ class TestReconstruction(Parent):
             """
 
             fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(7, 7))
+
+            vmin, vmax = vrange
 
             im = ax.imshow(normalized_images_log[image_index], cmap='viridis', vmin=vmin, vmax=vmax)
             plt.colorbar(im, ax=ax, shrink=0.5)
@@ -87,27 +92,21 @@ class TestReconstruction(Parent):
                                    slice_1=widgets.IntSlider(min=0, 
                                                              max=height-1, 
                                                              step=1, 
-                                                             value=400, 
+                                                             value=default_top_value, 
                                                              layout=widgets.Layout(width='50%'),
                                                              continuous_update=False),
                                    slice_2=widgets.IntSlider(min=0, 
                                                              max=height-1, 
                                                              step=1, 
-                                                             value=height-800, 
+                                                             value=default_bottom_value, 
                                                              layout=widgets.Layout(width='50%'),
                                                              continuous_update=False),
-                                   vmin=widgets.FloatSlider(min=0, 
-                                                            max=max_value, 
-                                                            step=0.01, 
-                                                            value=0, 
-                                                            layout=widgets.Layout(width='50%'),
-                                                            continuous_update=False),
-                                   vmax=widgets.FloatSlider(min=0, 
-                                                            max=max_value, 
-                                                            step=0.01, 
-                                                            value=max_value, 
-                                                            layout=widgets.Layout(width='50%'),
-                                                            continuous_update=False),
+                                   vrange = widgets.FloatRangeSlider(min=0, 
+                                                                    max=max_value, 
+                                                                    step=0.01, 
+                                                                    value=[0, max_value], 
+                                                                    layout=widgets.Layout(width='50%'),
+                                                                    continuous_update=False),
                 )
                                    
         display(self.display_plot)

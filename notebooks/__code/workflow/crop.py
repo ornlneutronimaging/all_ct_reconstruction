@@ -122,14 +122,14 @@ class Crop(Parent):
         else:
             vmax_default_value = 1
 
-        integrated: NDArray[np.generic] = integrated_min
-        self.fig, self.axs = plt.subplots(figsize=(7,7), num="Select Crop Region") 
-        # self.fig.suptitle("Select Crop Region")
-        self.img = self.axs.imshow(integrated, vmin=0, vmax=vmax_default_value)
-        self.cbar = plt.colorbar(self.img, ax=self.axs, shrink=0.5)
+        # integrated: NDArray[np.generic] = integrated_min
+        # self.fig, self.axs = plt.subplots(figsize=(7,7), num="Select Crop Region") 
+        # # self.fig.suptitle("Select Crop Region")
+        # self.img = self.axs.imshow(integrated, vmin=0, vmax=vmax_default_value)
+        # self.cbar = plt.colorbar(self.img, ax=self.axs, shrink=0.5)
 
-        self.mean_or_min = "Min"
-        self.vmin_vmax = [0, vmax_default_value]
+        # self.mean_or_min = "Min"
+        # self.vmin_vmax = [0, vmax_default_value]
 
         def plot_crop(left_right: list, top_bottom: list, vmin_vmax: list, data_type: str) -> Tuple[int, int, int, int]:
             """
@@ -146,33 +146,28 @@ class Crop(Parent):
             Returns:
                 Tuple of (left, right, top, bottom) crop boundaries
             """
-
-            self.cbar.remove()
-            if self.rectangle is not None:
-                self.rectangle.remove()
-
+            
             left: int = left_right[0]
             right: int = left_right[1]
 
             top: int = top_bottom[0]
             bottom: int = top_bottom[1]
 
-            if (data_type != self.mean_or_min) or (vmin_vmax != self.vmin_vmax):
-                self.mean_or_min = data_type
-                self.vmin_vmax = vmin_vmax
+            vmin: float = vmin_vmax[0]
+            vmax: float = vmin_vmax[1]
 
-                vmin: float = vmin_vmax[0]
-                vmax: float = vmin_vmax[1]
-
-                if data_type == "Min":
-                    integrated: NDArray[np.generic] = integrated_min
-                else:
-                    integrated: NDArray[np.generic] = integrated_mean
-
-                self.img = self.axs.imshow(integrated, vmin=vmin, vmax=vmax)
+            if data_type == "Min":
+                integrated: NDArray[np.generic] = integrated_min
+            else:
+                integrated: NDArray[np.generic] = integrated_mean
             
-            self.cbar = plt.colorbar(self.img, ax=self.axs, shrink=0.5)
+            fig, axs = plt.subplots(figsize=(7,7), num="Select Crop Region") 
+            img = axs.imshow(integrated, vmin=vmin, vmax=vmax)
+            cbar = plt.colorbar(img, ax=axs, shrink=0.5)
 
+            mean_or_min = "Min"
+            vmin_vmax = [0, vmax_default_value]
+    
             crop_width: int = right - left + 1
             crop_height: int = bottom - top + 1
 
@@ -183,9 +178,7 @@ class Crop(Parent):
                                             lw=2,
                                             alpha=0.3,
                                             )
-            self.axs.add_patch(self.rectangle)
-            # self.fig.canvas.draw_idle()
-            # plt.show() 
+            axs.add_patch(self.rectangle)
 
             return left, right, top, bottom            
         

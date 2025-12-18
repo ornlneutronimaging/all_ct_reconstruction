@@ -415,6 +415,9 @@ class Step1PrepareCcdImages:
     def log_conversion_and_cleaning(self):
         """creates: corrected_images_log
         """
+        # apply a tiny offset to avoid log(0)
+        self.normalized_images[:] += 1e-6
+        
         normalized_images_log = log_conversion(self.normalized_images[:])
         o_cleaner = ImagesCleaner(parent=self)
         normalized_images_log = o_cleaner.remove_outliers(normalized_images_log[:])
