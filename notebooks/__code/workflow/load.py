@@ -132,6 +132,12 @@ class Load(Parent):
         logging.info(f"Selecting folder for {data_type} ...")
 
         if DEBUG:
+            
+            logging.info(f"DEBUG MODE: Selecting folder for {data_type} ...")
+            logging.info(f"\t{default_detector_type = }")
+            logging.info(f"\t{self.parent.MODE = }")
+            logging.info(f"\t{debug_folder[default_detector_type][self.parent.MODE] = }")
+            
             self.data_selected(debug_folder[default_detector_type][self.parent.MODE][data_type])
             logging.info(f"{default_detector_type = }")
             self.parent.working_dir[DataType.nexus] = debug_folder[default_detector_type][self.parent.MODE].get(DataType.nexus, None)

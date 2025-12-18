@@ -18,7 +18,7 @@ from __code import DetectorType, OperatingMode, DataType
 from __code.utilities.system import get_user_name
 
 # Debug and development settings
-debugging: bool = True
+debugging: bool = False
 verbose: bool = True
 debugger_username: str = 'j35'
 imaging_team: List[str] = ["j35", "gxt"]
@@ -105,11 +105,11 @@ svmbir_parameters: Dict[str, Union[int, float, bool]] = {
     'verbose': True,
 }
 
-default_detector_type = DetectorType.tpx1
+default_detector_type = DetectorType.tpx1_legacy
 
 # Debug data folder configuration organized by operating mode and data type
-debug_folder: Dict[DetectorType, Dict[OperatingMode, Dict[DataType, str]]] = {
-    
+debug_folder: Dict[DetectorType, Dict[OperatingMode, Dict[DataType, str]]] = {   
+                                                                              
     DetectorType.tpx1_legacy: {
 
         ## old naming convention
@@ -134,14 +134,14 @@ debug_folder: Dict[DetectorType, Dict[OperatingMode, Dict[DataType, str]]] = {
         #     DataType.nexus: '/SNS/VENUS/IPTS-33531/nexus/'
         # },
         OperatingMode.white_beam: {
-            DataType.sample: "/SNS/SNAP/IPTS-34899/shared/CT_by_jean/UTK_ORNL_VENUS_collaboration/UHP_CT_TIF",
-            DataType.ob: "/SNS/SNAP/IPTS-34899/shared/CT_by_jean/UTK_ORNL_VENUS_collaboration//brights_for_CT",
-            DataType.dc: "/SNS/SNAP/IPTS-34899/shared/CT_by_jean/UTK_ORNL_VENUS_collaboration//darks_for_CT",
-            DataType.cleaned_images: '/SNS/SNAP/IPTS-34899/shared/processed_data/jean_test',
-            DataType.normalized: '/SNS/SNAP/IPTS-34899/shared/processed_data/jean_test',
-            DataType.reconstructed: '/SNS/SNAP/IPTS-34899/shared/processed_data/jean_test',
-            DataType.extra: '/SNS/SNAP/IPTS-34899/shared/processed_data/jean_test',
-            DataType.nexus: '/SNS/SNAP/IPTS-34899/nexus',
+            DataType.sample: "/SNS/VENUS/IPTS-34899/shared/jean_test/white_beam_ct_test/UHP_CT_TIF",
+            DataType.ob: "/SNS/VENUS/IPTS-34899/shared/jean_test/white_beam_ct_test/brights_for_CT",
+            DataType.dc: "/SNS/VENUS/IPTS-34899/shared/jean_test/white_beam_ct_test/darks_for_CT",
+            DataType.cleaned_images: '/SNS/VENUS/IPTS-34899/shared/processed_data/jean_test',
+            DataType.normalized: '/SNS/VENUS/IPTS-34899/shared/processed_data/jean_test',
+            DataType.reconstructed: '/SNS/VENUS/IPTS-34899/shared/processed_data/jean_test',
+            DataType.extra: '/SNS/VENUS/IPTS-34899/shared/processed_data/jean_test',
+            # DataType.nexus: '/SNS/VENUS/IPTS-34899/nexus',
         },
     },
     DetectorType.tpx1: {
@@ -162,29 +162,29 @@ debug_folder: Dict[DetectorType, Dict[OperatingMode, Dict[DataType, str]]] = {
         OperatingMode.white_beam: None
     },
 
-    # DetectorType.ccd: {
+    DetectorType.ccd: {
+       OperatingMode.white_beam: {
+            DataType.sample: "/HFIR/CG1D/IPTS-34899/shared/CT_by_jean/UTK_ORNL_VENUS_collaboration/UHP_CT_TIF",
+            DataType.ob: "/HFIR/CG1D/IPTS-34899/shared/CT_by_jean/UTK_ORNL_VENUS_collaboration//brights_for_CT/LiFZnS_OB_1p8A_256x256_best.tif",
+            DataType.dc: "",
+            DataType.cleaned_images: '/HFIR/CG1D/IPTS-34899/shared/jean_test',
+            DataType.normalized: '/HFIR/CG1D/IPTS-34899/shared/processed_data/jean_test',
+            DataType.reconstructed: '/HFIR/CG1D/IPTS-34899/shared/processed_data/jean_test',
+            DataType.extra: '/HFIR/CG1D/IPTS-34899/shared/processed_data/jean_test',
+            # DataType.nexus: '/HFIR/CG1D/IPTS-34899/nexus',
+        },
+
+    #  DetectorType.ccd: {
     #    OperatingMode.white_beam: {
-    #         DataType.sample: "/HFIR/CG1D/IPTS-33767/shared/PSI_files/sample_jean",
-    #         DataType.ob: "/HFIR/CG1D/IPTS-33767/shared/PSI_files/ob_tiff",
-    #         DataType.dc: "/HFIR/CG1D/IPTS-33767/shared/PSI_files/dc_tiff",
+    #         DataType.sample: "/HFIR/CG1D/IPTS-33767/shared/PSI_files/09_nct/09_nct_post_2",
+    #         DataType.ob: "/HFIR/CG1D/IPTS-33767/shared/PSI_files/09_nct/09_nct_ob",
+    #         DataType.dc: "/HFIR/CG1D/IPTS-33767/shared/PSI_files/09_nct/09_nct_dc",
     #         DataType.cleaned_images: '/HFIR/CG1D/IPTS-33767/shared/processed_data/jean_psi_files',
     #         DataType.normalized: '/HFIR/CG1D/IPTS-33767/shared/processed_data/jean_psi_files',
     #         DataType.reconstructed: '/HFIR/CG1D/IPTS-33767/shared/processed_data/jean_psi_files',
     #         DataType.extra: '/HFIR/CG1D/IPTS-33767/shared/processed_data/jean_psi_files',
     #         # DataType.nexus: '/HFIR/CG1D/IPTS-33767/nexus',
     #     },
-
-     DetectorType.ccd: {
-       OperatingMode.white_beam: {
-            DataType.sample: "/HFIR/CG1D/IPTS-33767/shared/PSI_files/09_nct/09_nct_post_2",
-            DataType.ob: "/HFIR/CG1D/IPTS-33767/shared/PSI_files/09_nct/09_nct_ob",
-            DataType.dc: "/HFIR/CG1D/IPTS-33767/shared/PSI_files/09_nct/09_nct_dc",
-            DataType.cleaned_images: '/HFIR/CG1D/IPTS-33767/shared/processed_data/jean_psi_files',
-            DataType.normalized: '/HFIR/CG1D/IPTS-33767/shared/processed_data/jean_psi_files',
-            DataType.reconstructed: '/HFIR/CG1D/IPTS-33767/shared/processed_data/jean_psi_files',
-            DataType.extra: '/HFIR/CG1D/IPTS-33767/shared/processed_data/jean_psi_files',
-            # DataType.nexus: '/HFIR/CG1D/IPTS-33767/nexus',
-        },
     },
 }
 
