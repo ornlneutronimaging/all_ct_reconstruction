@@ -104,6 +104,7 @@ class SvmbirCliHandler:
 
         input_data_folder = config["projections_pre_processing_folder"]
         base_output_folder = config['output_folder']
+        raw_data_base_folder = config['raw_data_base_folder']
 
         list_tiff = glob.glob(os.path.join(input_data_folder, '*.tiff'))
         list_tiff.sort()
@@ -182,12 +183,13 @@ class SvmbirCliHandler:
         logging.info(f"{svmbir_lib_path = }")
         logging.info(f"{input_data_folder = }")
         logging.info(f"{base_output_folder = }")
+        logging.info(f"{raw_data_base_folder = }")
         logging.info(f"{list_of_slices_to_reconstruct = }")
         
         if mbirjax:
-            output_data_folder = os.path.join(base_output_folder, f"mbirjax_reconstructed_data_{get_current_time_in_special_file_name_format()}")
+            output_data_folder = os.path.join(base_output_folder, f"{raw_data_base_folder}_mbirjax_reconstructed_data_{get_current_time_in_special_file_name_format()}")
         else:
-            output_data_folder = os.path.join(base_output_folder, f"svmbir_reconstructed_data_{get_current_time_in_special_file_name_format()}")
+            output_data_folder = os.path.join(base_output_folder, f"{raw_data_base_folder}_svmbir_reconstructed_data_{get_current_time_in_special_file_name_format()}")
         logging.info(f"{output_data_folder = }")
 
         # make_or_reset_folder(output_data_folder)
@@ -301,11 +303,6 @@ class SvmbirCliHandler:
                 logging.info(f"{corrected_array_log.shape = }")
                 logging.info(f"{list_of_angles_rad.shape = }")
                 
-
-
-
-
-
                 reconstruction_array = svmbir.recon(sino=corrected_array_log,
                                                     angles=list_of_angles_rad,
                                                     num_rows = corrected_array_log.shape[2],  # height,

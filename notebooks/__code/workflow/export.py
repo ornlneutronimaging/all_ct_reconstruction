@@ -272,6 +272,7 @@ class ExportExtra(Parent):
 
         # update configuration
         configuration.output_folder = output_folder
+        configuration.raw_data_base_folder = os.path.basename(os.path.abspath(self.parent.working_dir[DataType.sample]))
 
         # center of rotation if manual mode used
         if self.parent.o_center_and_tilt is not None:

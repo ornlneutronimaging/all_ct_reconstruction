@@ -215,7 +215,8 @@ class CheckingData(Parent):
         list_angles_deg_vs_runs_dict: Dict[str, list] = {}
         for _run in list_of_sample_runs.keys():
             if list_of_sample_runs[_run][Run.use_it]:
-                angle_value: str = get_angle_value(run_full_path=list_of_sample_runs[_run][Run.full_path])
+                angle_value: str = get_angle_value(run_full_path=list_of_sample_runs[_run][Run.full_path],
+                                                   detector_type=self.parent.detector_type)
                 if angle_value not in list_angles_deg_vs_runs_dict:
                     list_angles_deg_vs_runs_dict[str(angle_value)] = []
                 list_angles_deg_vs_runs_dict[str(angle_value)].append(_run)
@@ -490,6 +491,8 @@ class CheckingData(Parent):
         default_sample_proton_charge: float = calculate_most_dominant_float_value_from_list(self.list_proton_charge_c[DataType.sample])
         default_ob_proton_charge: float = calculate_most_dominant_float_value_from_list(self.list_proton_charge_c[DataType.ob])
 
+        logging.info(f"-- display graph --")
+
         def plot_proton_charges(sample_proton_charge_value: float, 
                                ob_proton_charge_value: float, 
                                proton_charge_threshold: float) -> Tuple[float, float, float]:
@@ -530,7 +533,7 @@ class CheckingData(Parent):
             axs.axhspan(ob_proton_charge_range[0], 
                         ob_proton_charge_range[1], facecolor='blue', alpha=0.2)
 
-            plt.show()
+            # plt.show()
 
             return sample_proton_charge_value, ob_proton_charge_value, proton_charge_threshold
 

@@ -439,6 +439,7 @@ class Configuration(BaseModel):
     instrument: str = Field(default=Instrument.mars, description="Instrument used for the reconstruction: mars, venus, snap.")
     ipts_number: int = Field(default=27829, description="IPTS number for the experiment.")
 
+    raw_data_base_folder: str = Field(default="raw_data")
     reconstruction_algorithm: List[str] = Field(default=[ReconstructionAlgorithm.algotom_gridrec])
 
     top_folder: TopFolder = Field(default=TopFolder())

@@ -418,8 +418,8 @@ class Step1PrepareTimePixImages:
             o_checking = CheckingData(parent=self)
             o_checking.run()
         except ValueError:
+            display(HTML("<span style='color:red; font-size:16px'>Something went wrong during data checking. Please report issue to j35@ornl.gov!</span>") )
             logging.info("Check the input folders provided !")
-
     def recap_data(self) -> None:
         """
         Generate and display comprehensive TimePix data summary.
