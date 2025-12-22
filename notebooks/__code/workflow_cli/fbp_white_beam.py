@@ -176,6 +176,7 @@ class FbpCliHandler:
 
         input_data_folder = config["projections_pre_processing_folder"]
         base_output_folder = config['output_folder']
+        raw_data_base_folder = config['raw_data_base_folder']
 
         list_tiff = glob.glob(os.path.join(input_data_folder, '*.tiff'))
         list_tiff.sort()
@@ -223,6 +224,7 @@ class FbpCliHandler:
         logging.info(f"{list_of_slices_to_reconstruct = }")
         logging.info(f"{NUM_THREADS = }")
         logging.info(f"{center_of_rotation}")
+        logging.info(f"{raw_data_base_folder = }")
             
         list_algorithm = config['reconstruction_algorithm']
         for _algo in list_algorithm: 
@@ -232,7 +234,7 @@ class FbpCliHandler:
 
             logging.info(f"Reconstruction using {_algo} ...")
             print(f"Reconstruction using {_algo} ...")
-            output_data_folder = os.path.join(base_output_folder, f"{_algo}_reconstructed_data_{get_current_time_in_special_file_name_format()}")
+            output_data_folder = os.path.join(base_output_folder, f"{raw_data_base_folder}_{_algo}_reconstructed_data_{get_current_time_in_special_file_name_format()}")
             logging.info(f"\t{output_data_folder = }")
 
             # make_or_reset_folder(output_data_folder)
