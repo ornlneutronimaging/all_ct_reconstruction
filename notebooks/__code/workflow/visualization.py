@@ -304,8 +304,16 @@ class Visualization(Parent):
 
         if self.display_ui.value == '1 image at a time':
 
+            # if we combine the images, the index of the image before will match the index of the image after after correction
+            nbr_images_before = len(data_before)
+            nbr_images_after = len(data_after)
+            if nbr_images_before != nbr_images_after:
+                coeff = nbr_images_before // nbr_images_after
+            else:
+                coeff = 1
+
             # list_of_images = self.parent.list_of_images[DataType.sample]
-            nbr_images = len(self.parent.master_3d_data_array[DataType.sample])
+            nbr_images = len(data_after)
 
             if turn_on_vrange:
                 
@@ -350,7 +358,7 @@ class Visualization(Parent):
 
                     _norm_data = data_after[image_index]
                     # _run_number = list_of_images[image_index]
-                    _raw_data = data_before[image_index]
+                    _raw_data = data_before[image_index * coeff]
                     
                     fig0, axs = plt.subplots(nrows=2, ncols=1, 
                                                     figsize=(5, 10),
@@ -417,7 +425,7 @@ class Visualization(Parent):
 
                     _norm_data = data_after[image_index]
                     # _run_number = list_of_images[image_index]
-                    _raw_data = data_before[image_index]
+                    _raw_data = data_before[image_index * coeff]
 
                     im0 = axs[0].imshow(_raw_data)
                     axs[0].set_title(label_before)

@@ -25,6 +25,7 @@ ipywidgets = ">=8.1.7,<9"
 ipython = ">=9.4.0,<10"
 ipympl = ">=0.9.7,<0.10"
 loguru = ">=0.7.3,<0.8"
+ruamel = ">=1.0,<2"
 
 [pypi-dependencies]
 neutronbraggedge = ">=2.0.6, <3"

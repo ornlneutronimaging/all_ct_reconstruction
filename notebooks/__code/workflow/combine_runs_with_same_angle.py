@@ -84,7 +84,7 @@ class CombineRunsWithSameAngle(Parent):
                     master_normalized_index += len(list_runs)
                     final_list_of_angles_deg = np.append(final_list_of_angles_deg, np.float32(angle))
 
-            self.parent.normalized_images = combined_normalized_images
+            self.parent.normalized_images = np.array(combined_normalized_images)
             self.parent.list_of_angles_deg = final_list_of_angles_deg
             self.parent.list_of_angles_rad = [np.deg2rad(angle) for angle in final_list_of_angles_deg]
 

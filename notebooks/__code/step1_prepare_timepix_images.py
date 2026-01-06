@@ -997,6 +997,11 @@ class Step1PrepareTimePixImages:
             - Logs array information for quality monitoring
             - Prepares data for optimal reconstruction performance
         """
+        
+        logging.info("Applying log conversion and final cleaning...")
+        logging.info(f"\t{np.shape(self.normalized_images) = }")
+        logging.info(f"\t{type(self.normalized_images) = }")
+        
         # apply a tiny offset to avoid log(0)
         self.normalized_images[:] += 1e-6
         

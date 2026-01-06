@@ -15,6 +15,7 @@ The module uses interactive widgets to allow users to visually select the
 optimal cropping region and immediately see the effects on image visualization.
 """
 
+from matplotlib.pylab import f
 import numpy as np
 import logging
 from neutompy.preproc.preproc import correction_COR
@@ -235,6 +236,9 @@ class Crop(Parent):
         bottom: int
         left, right, top, bottom = self.display_roi.result
         
+        logging.info(f"Crop region selected - Left: {left}, Right: {right}, Top: {top}, Bottom: {bottom}")
+        logging.info(f"\tshape before: {np.shape(self.parent.master_3d_data_array[DataType.sample])}")
+        
         # Store crop region in parent objects
         self.parent.crop_region = {'left': left, 'right': right, 'top': top, 'bottom': bottom}
         self.parent.configuration.crop_region = CropRegion(left=left, right=right, top=top, bottom=bottom)
@@ -254,8 +258,12 @@ class Crop(Parent):
                 self.parent.master_3d_data_array[DataType.dc] = np.array([image[top: bottom+1, left: right+1] 
                                                                           for image in self.parent.master_3d_data_array[DataType.dc]])
 
+            logging.info(f"\tshape after: {np.shape(self.parent.master_3d_data_array[DataType.sample])}")
+        
         else:
             # Crop normalized images
             self.parent.normalized_images = np.array([image[top: bottom+1, left: right+1] 
                                                      for image in self.parent.normalized_images])
+            
+            logging.info(f"\tshape after: {np.shape(self.parent.normalized_images)}")
         
