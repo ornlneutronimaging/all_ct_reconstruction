@@ -167,12 +167,15 @@ class Step2SliceCcdOrTimePixImages:
         left, right, top, bottom = self.display_roi.result
         data: NDArray[np.float32] = self.data[:, top:bottom, left:right]
 
+        master_vmin: float = float(np.min(data))
+        master_vmax: float = float(np.max(data))
+
         nbr_images: int
         height: int
         width: int
         nbr_images, height, width = data.shape
 
-        def plot_images(image_index: int, top_slice: int, bottom_slice: int, nbr: int) -> Tuple[int, int, int]:
+        def plot_images(image_index: int, top_bottom: Tuple[int, int], nbr: int, vrange: Tuple[float, float]) -> Tuple[Tuple[int, int], int]:
             """
             Inner function to plot slice ranges on the selected image.
             
@@ -185,9 +188,16 @@ class Step2SliceCcdOrTimePixImages:
             Returns:
                 Tuple of (top_slice, bottom_slice, nbr)
             """
-            fig, ax = plt.subplots()
-            im = ax.imshow(data[image_index], cmap='jet')
+            
+            vmin: float = vrange[0]
+            vmax: float = vrange[1]
+            
+            fig, ax = plt.subplots(figsize=(7,7))
+            im = ax.imshow(data[image_index], cmap='jet', vmin=vmin, vmax=vmax)
             plt.colorbar(im, ax=ax, shrink=0.5)
+            
+            top_slice: int = top_bottom[0]
+            bottom_slice: int = top_bottom[1]
             
             range_size: int = int((np.abs(top_slice - bottom_slice)) / nbr)
 
@@ -213,13 +223,15 @@ class Step2SliceCcdOrTimePixImages:
         self.display_plot_images = interactive(plot_images,
                                           image_index=widgets.IntSlider(min=0, max=nbr_images-1, step=1, value=0,
                                                                         layout=widgets.Layout(width='50%')),
-                                          top_slice=widgets.IntSlider(min=0, max=height-1, step=1, value=0,
-                                                                      layout=widgets.Layout(width='50%')),
-                                          bottom_slice=widgets.IntSlider(min=0, max=height-1, 
-                                                                         step=1, value=height-1,
-                                                                         layout=widgets.Layout(width='50%')),
+                                          top_bottom=widgets.IntRangeSlider(min=0, max=height-1, step=1, value=[0, height-1],
+                                                                                 layout=widgets.Layout(width='50%')),
                                           nbr=widgets.IntSlider(min=1, max=30, step=1, value=1,
-                                                                          layout=widgets.Layout(width='50%')))
+                                                                          layout=widgets.Layout(width='50%')),
+                                            vrange = widgets.FloatRangeSlider(min=master_vmin,
+                                                                        layout=widgets.Layout(width="50%"),
+                                                                           max=master_vmax,
+                                                                           value=[master_vmin, master_vmax]),
+        )
         display(self.display_plot_images)
 
     def reconstruction_algorithm_selection(self) -> None:
@@ -247,8 +259,8 @@ class Step2SliceCcdOrTimePixImages:
         master_vmin: float = np.min(self.data)
         master_vmax: float = np.max(self.data)
 
-        def plot_crop(image_index: int, left: int, right: int, top: int, bottom: int, 
-                     vmin: float, vmax: float, use_local: bool) -> Tuple[int, int, int, int]:
+        def plot_crop(image_index: int, left_right: Tuple[int, int], top_bottom: Tuple[int, int], 
+                     vrange: Tuple[float, float], use_local: bool) -> Tuple[int, int, int, int]:
             """
             Inner function to plot ROI cropping visualization.
             
@@ -267,12 +279,20 @@ class Step2SliceCcdOrTimePixImages:
             """
             fig0, axs = plt.subplots(figsize=(7,7))
 
+            vmin: float = vrange[0]
+            vmax: float = vrange[1]
+
             if use_local:
                 vmin=np.min(self.data[image_index])
                 vmax = np.max(self.data[image_index])
 
             img = axs.imshow(self.data[image_index], vmin=vmin, vmax=vmax)
             plt.colorbar(img, ax=axs, shrink=0.5)
+
+            left: int = left_right[0]
+            right: int = left_right[1]
+            top: int = top_bottom[0]
+            bottom: int = top_bottom[1]
 
             width = right - left + 1
             height = bottom - top + 1
@@ -292,30 +312,18 @@ class Step2SliceCcdOrTimePixImages:
                                        image_index = widgets.IntSlider(min=0, max=nbr_images-1,
                                                                        value=0,
                                                                        layout=widgets.Layout(width="50%")),
-                                        left=widgets.IntSlider(min=0,
-                                                                max=width-1,
-                                                                layout=widgets.Layout(width="50%"),
-                                                                value=0),
-                                        right=widgets.IntSlider(min=0,
-                                                                layout=widgets.Layout(width="50%"),
-                                                                max=width-1,
-                                                                value=width-1),                      
-                                        top=widgets.IntSlider(min=0,
-                                                                layout=widgets.Layout(width="50%"),
-                                                                max=height-1,
-                                                                value=0),
-                                        bottom=widgets.IntSlider(min=0,
-                                                                layout=widgets.Layout(width="50%"),
-                                                                    max=height-1,
-                                                                    value=height-1),
-                                        vmin=widgets.FloatSlider(min=master_vmin,
-                                                                layout=widgets.Layout(width="50%"),
-                                                                    max=master_vmax,
-                                                                    value=master_vmin),
-                                        vmax=widgets.FloatSlider(min=master_vmin,
-                                                                layout=widgets.Layout(width="50%"),
-                                                                    max=master_vmax,
-                                                                    value=master_vmax),
+                                       left_right = widgets.IntRangeSlider(min=0,
+                                                                           max=width-1,
+                                                                           layout=widgets.Layout(width="50%"),
+                                                                           value=[0, width-1]),
+                                       top_bottom = widgets.IntRangeSlider(min=0,
+                                                                           max=height-1,
+                                                                           layout=widgets.Layout(width="50%"),
+                                                                           value=[0, height-1]),
+                                       vrange = widgets.FloatRangeSlider(min=master_vmin,
+                                                                        layout=widgets.Layout(width="50%"),
+                                                                           max=master_vmax,
+                                                                           value=[master_vmin, master_vmax]),
                                         use_local=widgets.Checkbox(value=False),
                                         )
         display(self.display_roi)
