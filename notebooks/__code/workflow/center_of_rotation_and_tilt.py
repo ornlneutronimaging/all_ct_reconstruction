@@ -220,18 +220,21 @@ class CenterOfRotationAndTilt(Parent):
         # self.cbar1 = plt.colorbar(self.im1, ax=self.ax[1], shrink=0.5)
         # self.ax[1].set_title(f"theory: 180 degree - measured: {self.real_180_degree_angle} degree")
 
-        def plot_range(y_range):
+        vmin: float = np.min([self.image_0_degree, self.image_180_degree])
+        vmax = np.max([self.image_0_degree, self.image_180_degree])
+
+        def plot_range(y_range, vrange):
 
             fig, self.ax = plt.subplots(nrows=1, ncols=2, figsize=(10,5))
 
             y_top, y_bottom = y_range
 
-            im0 = self.ax[0].imshow(self.image_0_degree)
+            im0 = self.ax[0].imshow(self.image_0_degree, vmin=vrange[0], vmax=vrange[1])
             self.cbar0 = plt.colorbar(im0, ax=self.ax[0], shrink=0.5)
             self.ax[0].set_title(f"theory: 0 degree - measured: {self.real_0_degree_angle} degree")
             self.ax[0].axhspan(y_top, y_bottom, color='blue', alpha=0.2)
 
-            im1 = self.ax[1].imshow(self.image_180_degree)
+            im1 = self.ax[1].imshow(self.image_180_degree, vmin=vrange[0], vmax=vrange[1])
             self.cbar1 = plt.colorbar(im1, ax=self.ax[1], shrink=0.5)
             self.ax[1].set_title(f"theory: 180 degree - measured: {self.real_180_degree_angle} degree")
             self.ax[1].axhspan(y_top, y_bottom, color='blue', alpha=0.2)
@@ -246,6 +249,10 @@ class CenterOfRotationAndTilt(Parent):
                                                                         max=height-1, 
                                                                         value=[0, height-1],
                                                                         layout=widgets.Layout(width="50%")),
+                                        vrange = widgets.FloatRangeSlider(min=vmin,
+                                                                          max=vmax,
+                                                                          value=[vmin, vmax],
+                                                                            layout=widgets.Layout(width="50%")),
         )
 
         display(self.display_plot)
