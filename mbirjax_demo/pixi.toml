@@ -1,0 +1,49 @@
+[workspace]
+authors = ["Jean Bilheux <bilheuxjm@ornl.gov>", "Chen Zhang <zhangc@ornl.gov>"]
+channels = ["conda-forge", "nvidia"]
+name = "mbirjax_cuda"
+platforms = ["linux-64"]
+version = "1.0.0"
+description = "Minimal environment for mbirjax with CUDA 12 support for CT reconstruction"
+
+[tasks]
+# Test tasks for deployment verification
+test-cuda = "python tests/test_mbirjax_cuda.py"
+test-notebook = "jupyter nbconvert --to notebook --execute tests/test_mbirjax.ipynb --output test_mbirjax_executed.ipynb"
+lab = "jupyter lab --notebook-dir=tests"
+
+[dependencies]
+# Core Python
+python = ">=3.10,<3.12"
+
+# Scientific computing essentials
+numpy = ">=1.24,<2"
+
+# Jupyter for notebook testing (optional, can be removed for headless deployment)
+jupyterlab = ">=4.0,<5"
+ipykernel = ">=6.0,<7"
+matplotlib = ">=3.7,<4"
+
+[pypi-dependencies]
+# mbirjax with CUDA 12 support
+# This will pull in jax[cuda12] and all required NVIDIA libraries
+mbirjax = { version = ">=0.6.7, <0.7", extras = ["cuda12"] }
+
+# Explicit JAX CUDA dependencies (pulled by mbirjax[cuda12], but listed for clarity)
+# jax-cuda12-plugin includes: nvidia-cublas-cu12, nvidia-cuda-cupti-cu12,
+# nvidia-cuda-nvcc-cu12, nvidia-cuda-nvrtc-cu12, nvidia-cuda-runtime-cu12, nvidia-cudnn-cu12
+
+[feature.headless]
+# For headless deployment without Jupyter
+[feature.headless.dependencies]
+python = ">=3.10,<3.12"
+numpy = ">=1.24,<2"
+
+[feature.headless.pypi-dependencies]
+mbirjax = { version = ">=0.6.7, <0.7", extras = ["cuda12"] }
+
+[environments]
+# Default environment includes Jupyter for interactive testing
+default = { features = [], solve-group = "default" }
+# Headless environment for production deployment without Jupyter
+headless = { features = ["headless"], solve-group = "headless" }
