@@ -1,175 +1,108 @@
-# MBIRJAX CUDA Deployment Tests
+# MBIRJAX CUDA Verification (Minimal Demo)
 
-This directory contains verification tests for the mbirjax CUDA environment deployment.
+This folder contains a minimal CUDA verification workflow for mbirjax using:
+- a command-line script for automated checks
+- a Jupyter notebook for interactive inspection and visualization
 
 ## Purpose
 
-These tests verify that:
-1. mbirjax is correctly installed with CUDA 12 support
-2. JAX can detect and use GPU devices
-3. Actual CT reconstruction works on GPU
-4. GPU performance is within expected range
+The checks confirm that:
+1. mbirjax, JAX, and NumPy import correctly
+2. CUDA-capable GPUs are visible to JAX
+3. JAX computations run on GPU
+4. A synthetic CT reconstruction completes successfully
+5. GPU performance is within a reasonable range
 
 ## Files
 
 | File | Description |
 |------|-------------|
-| `test_mbirjax_cuda.py` | Command-line test script for automated verification |
-| `test_mbirjax.ipynb` | Interactive Jupyter notebook for manual verification |
+| `test_mbirjax_cuda.py` | Command-line verification script |
+| `test_mbirjax.ipynb` | Interactive notebook with plots and summaries |
 | `README.md` | This file |
+| `pixi.toml` | Environment definition and dependencies |
 
-## Prerequisites
+## Environment Setup
 
-The tests require the `pixi_mbirjax.toml` environment to be installed:
+Install the environment defined in [pixi.toml](pixi.toml):
 
 ```bash
-# From the repository root
-pixi install --manifest-path pixi_mbirjax.toml
+pixi install --manifest-path pixi.toml
 ```
 
-## Running the Tests
-
-### Option 1: Command-Line Script (Recommended for CI/CD)
+## Run the Command-Line Script
 
 ```bash
-# Using pixi
-pixi run --manifest-path pixi_mbirjax.toml test-cuda
-
-# Or directly
-pixi run --manifest-path pixi_mbirjax.toml python tests/test_mbirjax_cuda.py
+pixi run --manifest-path pixi.toml python test_mbirjax_cuda.py
 ```
 
 **Exit Codes:**
-- `0` - All tests passed, CUDA backend working
-- `1` - Import errors or missing dependencies
-- `2` - CUDA/GPU not available
-- `3` - Reconstruction test failed
-- `4` - Performance test suggests GPU not being used
+- `0` – all tests passed
+- `1` – import errors or missing dependencies
+- `2` – CUDA/GPU not available or not working
+- `3` – reconstruction test failed
+- `4` – GPU performance below expected
 
-### Option 2: Jupyter Notebook (For Interactive Verification)
+## Run the Notebook
 
-```bash
-# Start JupyterLab
-pixi run --manifest-path pixi_mbirjax.toml lab
-
-# Then open tests/test_mbirjax.ipynb
-```
-
-Or execute the notebook non-interactively:
+Start JupyterLab from this folder and open [test_mbirjax.ipynb](test_mbirjax.ipynb):
 
 ```bash
-pixi run --manifest-path pixi_mbirjax.toml test-notebook
+pixi run --manifest-path pixi.toml jupyter lab --notebook-dir=.
 ```
 
-## What the Tests Verify
+The notebook walks through:
+1. Package imports and version checks
+2. GPU device detection
+3. JAX GPU backend verification
+4. Synthetic phantom + sinogram generation
+5. MBIRJAX reconstruction + validation
+6. Visualization of phantom, sinogram, and reconstruction
+7. GPU performance test and summary
 
-### 1. Package Imports
-- `numpy` is available
-- `jax` is available with correct version
-- `mbirjax` is available
+## What the Script Verifies
 
-### 2. CUDA Device Detection
-- JAX can detect GPU devices
-- Reports number and type of available GPUs
+### 1) Package Imports
+- `numpy`, `jax`, `mbirjax`
 
-### 3. JAX GPU Backend
-- Confirms JAX can execute computations on GPU
-- Verifies device placement
+### 2) CUDA Device Detection
+- enumerates JAX devices and reports GPU/CPU counts
 
-### 4. MBIRJAX Reconstruction
-- Creates synthetic CT sinogram data
-- Runs `mj.ParallelBeamModel` reconstruction
-- Verifies output shape, data type, and values (no NaN/Inf)
+### 3) JAX GPU Backend
+- runs a matrix multiply on the GPU and checks device placement
 
-### 5. GPU Performance
-- Runs multiple reconstruction iterations
-- Ensures performance is within expected GPU range
-- Warning if reconstruction seems CPU-bound
+### 4) MBIRJAX Reconstruction
+- generates synthetic sinogram data
+- reconstructs with `mj.ParallelBeamModel`
+- checks shape and that output has no NaN/Inf
 
-## Expected Output (Success)
-
-```
-============================================================
-  MBIRJAX CUDA Installation Verification
-============================================================
-Python version: 3.10.x
-
-============================================================
-  Test 1: Package Imports
-============================================================
-  [✓ PASS] Import mbirjax, jax, numpy
-          numpy version: 1.24.x
-          jax version: 0.4.x
-          mbirjax version: 0.6.x
-
-============================================================
-  Test 2: CUDA Device Detection
-============================================================
-  [✓ PASS] CUDA/GPU devices available
-          Total devices: 2
-          GPU devices: 1
-          CPU devices: 1
-          GPU device info:
-            GPU 0: cuda:0
-
-============================================================
-  Test 3: JAX GPU Backend
-============================================================
-  [✓ PASS] JAX GPU computation
-          Computation device: cuda:0
-          Device platform: gpu
-
-============================================================
-  Test 4: MBIRJAX Reconstruction
-============================================================
-  [✓ PASS] CT reconstruction on synthetic data
-          Sinogram shape: (180, 4, 256)
-          ...
-          Reconstruction time: 0.xxx seconds
-
-============================================================
-  Test 5: GPU Performance Check
-============================================================
-  [✓ PASS] GPU acceleration performance
-
-============================================================
-  SUMMARY
-============================================================
-  All tests PASSED!
-  MBIRJAX is correctly installed with CUDA support.
-  The GPU backend is functional and performing reconstructions.
-
-============================================================
-```
+### 5) GPU Performance
+- runs multiple reconstructions
+- confirms timing is reasonable for the test size
+- ensures computations actually execute on GPU
 
 ## Troubleshooting
 
 ### No GPU Detected
-- Verify NVIDIA drivers are installed: `nvidia-smi`
-- Check CUDA toolkit version matches requirements (CUDA 12.x)
-- Ensure the system has a compatible NVIDIA GPU
+- Confirm NVIDIA drivers are installed (`nvidia-smi`)
+- Verify CUDA 12-compatible GPU and driver stack
 
 ### Import Errors
-- Reinstall the environment: `pixi install --manifest-path pixi_mbirjax.toml --force`
-- Check for version conflicts in pixi.lock
+- Reinstall: `pixi install --manifest-path pixi.toml --force`
+- Check for dependency conflicts in pixi.lock
 
 ### Reconstruction Fails
-- Check GPU memory availability: `nvidia-smi`
-- Try reducing sinogram size in tests
-- Check for CUDA out-of-memory errors in logs
+- Ensure sufficient GPU memory
+- Verify CUDA libraries are accessible in the environment
 
 ### Slow Performance
-- Verify GPU is not thermally throttling
-- Check if other processes are using the GPU
-- Ensure the correct GPU is being used (multi-GPU systems)
+- Check for GPU contention or thermal throttling
+- Confirm computations are placed on the GPU
 
 ## Environment Details
 
-The `pixi_mbirjax.toml` environment includes:
-- Python 3.10-3.11
+[pixi.toml](pixi.toml) defines the minimal CUDA-enabled stack, including:
+- Python >= 3.12
 - NumPy
-- mbirjax with cuda12 extras (pulls in jax[cuda12])
-- JupyterLab (for notebook testing)
-- matplotlib (for visualization)
-
-See `pixi_mbirjax.toml` for exact version specifications.
+- mbirjax with `cuda12` extras (pulls JAX CUDA runtime)
+- JupyterLab + matplotlib for notebook usage
