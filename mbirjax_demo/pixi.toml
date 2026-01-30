@@ -14,14 +14,14 @@ lab = "jupyter lab --notebook-dir=tests"
 
 [dependencies]
 # Core Python
-python = ">=3.10,<3.12"
+python = ">=3.12"
 
 # Scientific computing essentials
-numpy = ">=1.24,<2"
+numpy = "*"
 
 # Jupyter for notebook testing (optional, can be removed for headless deployment)
 jupyterlab = ">=4.0,<5"
-ipykernel = ">=6.0,<7"
+ipython = ">=9.4.0,<10"
 matplotlib = ">=3.7,<4"
 
 [pypi-dependencies]
@@ -36,8 +36,8 @@ mbirjax = { version = ">=0.6.7, <0.7", extras = ["cuda12"] }
 [feature.headless]
 # For headless deployment without Jupyter
 [feature.headless.dependencies]
-python = ">=3.10,<3.12"
-numpy = ">=1.24,<2"
+python = ">=3.12"
+numpy = "*"
 
 [feature.headless.pypi-dependencies]
 mbirjax = { version = ">=0.6.7, <0.7", extras = ["cuda12"] }
