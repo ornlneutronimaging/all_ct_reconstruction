@@ -187,7 +187,7 @@ def _get_angle_value_tpx1_legacy(run_full_path: Optional[str] = None) -> Optiona
     """
     Extract rotation angle value for TPX1_legacy from TIFF file names.
     Parses file names with format:
-    Run_####_20240927_date_..._148_443_######_<file_index>.tif
+    Run_####/Run_####_20240927_date_..._148_443_######_<file_index>.tif
 
     Args:
         run_full_path: Path to folder containing TIFF files
@@ -195,14 +195,16 @@ def _get_angle_value_tpx1_legacy(run_full_path: Optional[str] = None) -> Optiona
     Returns:
         Angle value as string in format "148.443", or None if no files found
     """
-    logging.info(f"\t get angle for tpix1 legacy")
+    logging.info(f"\t get angle for tpix1 legacy of folder: {run_full_path}")
     list_tiff: List[str] = retrieve_list_of_tif(run_full_path)
     if len(list_tiff) == 0:
         return None
     
     first_tiff: str = list_tiff[0]
+    # logging.info(f"\t\t {first_tiff = }")
     list_part: List[str] = first_tiff.split("_")
-    return f"{list_part[-4]:3d}.{list_part[-3]:3d}"
+    # logging.info(f"\t\t {list_part = }")
+    return f"{int(list_part[-4]):03d}.{int(list_part[-3]):03d}"
 
 
 def _get_angle_value_tpx1_and_tpx3(run_full_path: Optional[str] = None) -> Optional[str]:

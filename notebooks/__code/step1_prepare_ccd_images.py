@@ -255,6 +255,7 @@ class Step1PrepareCcdImages:
         
     # visualization
     def how_to_visualize(self):
+        self.o_vizu = None
         self.o_vizu = Visualization(parent=self)
         self.o_vizu.how_to_visualize()
 
@@ -300,11 +301,12 @@ class Step1PrepareCcdImages:
         self.o_clean.cleaning()
 
     def how_to_visualize_after_cleaning(self):
-        self.o_vizu = Visualization(parent=self)
-        self.o_vizu.how_to_visualize(data_type=DataType.cleaned_images)
+        self.o_vizu2 = None
+        self.o_vizu2 = Visualization(parent=self)
+        self.o_vizu2.how_to_visualize(data_type=DataType.cleaned_images)
 
     def visualize_cleaned_data(self):
-        self.o_vizu.visualize_according_to_selection(mode='cleaned')
+        self.o_vizu2.visualize_according_to_selection(mode='cleaned')
  
     # normalization
     def normalization_settings(self):
@@ -321,6 +323,7 @@ class Step1PrepareCcdImages:
         self.o_norm.normalize()
 
     def visualization_normalization_settings(self):
+        self.o_vizu = None
         self.o_vizu = Visualization(parent=self)
         self.o_vizu.settings()
 

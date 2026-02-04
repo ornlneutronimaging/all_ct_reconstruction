@@ -272,6 +272,7 @@ class Load(Parent):
                 selected_list_of_angles_rad = self.parent.temp_final_list_of_angles_rad
                 ax.plot(selected_list_of_angles_rad, np.ones(len(selected_list_of_angles_rad))*2, marker='o', linestyle='None', color='green', markersize=10, label='Selected Angles')
                 ax.legend()
+                plt.show()
             
             return slider_index
         

@@ -110,6 +110,10 @@ class Visualization(Parent):
         ------------
         Creates and displays what_to_visualize_ui widget
         """
+        self.fig0 = None
+        self.axs = None
+        
+        
         display(HTML(f"<h2>How to visualize the {data_type} data?</h2>"))
         self.what_to_visualize_ui = widgets.ToggleButtons(options=['All images', 
                                                                    '1 image at a time',
@@ -360,7 +364,7 @@ class Visualization(Parent):
                     # _run_number = list_of_images[image_index]
                     _raw_data = data_before[image_index * coeff]
                     
-                    fig0, axs = plt.subplots(nrows=2, ncols=1, 
+                    self.fig0, axs = plt.subplots(nrows=2, ncols=1, 
                                                     figsize=(5, 10),
                                                     num="Visualization")
                     
@@ -376,8 +380,8 @@ class Visualization(Parent):
                     plt.colorbar(img_after, ax=axs[1], shrink=0.5)
                     axs[1].set_title(label_after)
                     
-                    plt.tight_layout()
-                    # plt.show()
+                    # plt.tight_layout()
+                    plt.show()
 
                 display_plot = interactive(plot_norm,
                                         image_index=widgets.IntSlider(min=0,
@@ -558,8 +562,8 @@ class Visualization(Parent):
             axs[1].set_title("log(normalized)")
             cbar_after = plt.colorbar(m1, ax=axs[1], shrink=0.5)
 
-            plt.tight_layout()
-            # plt.show()
+            # plt.tight_layout()
+            plt.show()
 
         display_plot = interactive(plot_images,
                                 index=widgets.IntSlider(min=0,
@@ -578,6 +582,7 @@ class Visualization(Parent):
         self.vmin = vmin
         self.vmax = vmax
 
+
         def plot_images(index=0):
             
             if self.vmin is None:
@@ -585,14 +590,15 @@ class Visualization(Parent):
             if self.vmax is None:
                 self.vmax = np.max(data[index])
                 
-            self.fig0, self.axs = plt.subplots(nrows=1, ncols=1, 
+            fig, axs = plt.subplots(nrows=1, ncols=1, 
                                            figsize=(7, 7),
                                            num="Visualization")
-            im = self.axs.imshow(data[index], vmin=self.vmin, vmax=self.vmax)
-            self.axs.set_title(title)
-            self.cbar = plt.colorbar(im, ax=self.axs, shrink=0.5)
+            
+            im = axs.imshow(data[index], vmin=self.vmin, vmax=self.vmax)
+            axs.set_title(title)
+            self.cbar = plt.colorbar(im, ax=axs, shrink=0.5)
+            plt.show()
 
-            plt.tight_layout()
             
         _display_plot_images = interactive(plot_images,
                                 index=widgets.IntSlider(min=0,
