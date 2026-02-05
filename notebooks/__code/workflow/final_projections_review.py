@@ -88,7 +88,7 @@ class FinalProjectionsReview(Parent):
     
     list_runs_with_infos: Optional[List[str]] = None
 
-    def run(self, array: Optional[NDArray[np.floating]] = None) -> None:
+    def run(self, array: Optional[NDArray[np.floating]] = None, auto_vrange: bool = True) -> None:
         """
         Create multi-panel grid visualization of all projections for quality review.
         
@@ -98,6 +98,7 @@ class FinalProjectionsReview(Parent):
         
         Args:
             array: Array of projection images to display (n_projections, height, width)
+            auto_vrange: Flag to enable automatic intensity range calculation
             
         Returns:
             None: Displays matplotlib figure with projection grid
@@ -130,6 +131,13 @@ class FinalProjectionsReview(Parent):
                                 figsize=(nbr_cols*2,nbr_rows*2))
         flat_axs = axs.flatten()
 
+        if auto_vrange:
+            vmin: float = np.min(array)
+            vmax: float = np.max(array)
+        else:
+            vmin = 0.0
+            vmax = 1.0
+
         _index: int = 0
         # list_runs_with_infos = []
         for _row in np.arange(nbr_rows):
@@ -140,7 +148,7 @@ class FinalProjectionsReview(Parent):
                 # title = f"{list_runs[_index]}, {list_angles[_index]}"
                 # list_runs_with_infos.append(title)
                 # flat_axs[_index].set_title(title)
-                im1 = flat_axs[_index].imshow(array[_index], vmin=0, vmax=1)
+                im1 = flat_axs[_index].imshow(array[_index], vmin=vmin, vmax=vmax)
                 plt.colorbar(im1, ax=flat_axs[_index], shrink=0.5)
            
         for _row in np.arange(nbr_rows):

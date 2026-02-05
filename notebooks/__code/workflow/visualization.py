@@ -460,7 +460,8 @@ class Visualization(Parent):
 
         else:
             o_review = FinalProjectionsReview(parent=self.parent)
-            o_review.run(array=data_after)
+            o_review.run(array=data_after,
+                         auto_vrange=True)
 
     def visualize_all_images_at_once(self):
         
@@ -649,21 +650,22 @@ class Visualization(Parent):
 
         fig0, axs0 = plt.subplots(nrows=1, ncols=2, figsize=(15, 7))
 
-        im0 = axs0[0].imshow(sample_proj_min, vmin=vmin, vmax=vmax)
+
+        im0 = axs0[0].imshow(sample_proj_min)
         axs0[0].set_title("Sample (np.min)")
         plt.colorbar(im0, ax=axs0[0], shrink=0.5)
 
-        im1 = axs0[1].imshow(ob_proj_min, vmin=vmin, vmax=vmax)   
+        im1 = axs0[1].imshow(ob_proj_min)
         axs0[1].set_title("OB (np.min)")
         plt.colorbar(im1, ax=axs0[1], shrink=0.5)
 
         fig1, axs1 = plt.subplots(nrows=1, ncols=3, figsize=(15, 7))
 
-        im3 = axs1[0].imshow(sample_proj_first, vmin=vmin, vmax=vmax)
+        im3 = axs1[0].imshow(sample_proj_first)
         axs1[0].set_title(f"Sample at angle {list_of_angles[0]}")
         plt.colorbar(im3, ax=axs1[0], shrink=0.5)
 
-        im4 = axs1[1].imshow(sample_proj_last, vmin=vmin, vmax=vmax)
+        im4 = axs1[1].imshow(sample_proj_last)
         axs1[1].set_title(f"Sample at angle {list_of_angles[-1]}")
         plt.colorbar(im4, ax=axs1[1], shrink=0.5)
 
