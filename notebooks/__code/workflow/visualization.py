@@ -114,13 +114,18 @@ class Visualization(Parent):
         self.axs = None
         
         
+        
         display(HTML(f"<h2>How to visualize the {data_type} data?</h2>"))
+        display(HTML(f"<b>Choose one of the following options and then execute the next cell to display:</b>"))
+        
         self.what_to_visualize_ui = widgets.ToggleButtons(options=['All images', 
                                                                    '1 image at a time',
                                                                    'Statistics',
                                                                    'Integrated intensity vs image index'],
                                                           value='Statistics')
         display(self.what_to_visualize_ui)
+        
+        
 
     def visualize_according_to_selection(self, mode: str = 'cleaned') -> None:
         """

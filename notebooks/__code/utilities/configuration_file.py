@@ -284,9 +284,13 @@ class HistogramCleaningSettings(BaseModel):
     Attributes:
         nbr_bins: Number of histogram bins for analysis (default: 10)
         bins_to_exclude: Number of extreme bins to exclude (default: 1)
+        bins_to_exclude_left: Bins to exclude on left side (default: 1)
+        bins_to_exclude_right: Bins to exclude on right side (default: 1
     """
     nbr_bins: int = 10
-    bins_to_exclude: int = 1
+    # bins_to_exclude: int = 1
+    bins_to_exclude_left: int = 1
+    bins_to_exclude_right: int = 1
 
 
 class TopFolder(BaseModel):

@@ -41,6 +41,7 @@ Author: CT Reconstruction Pipeline Team
 Created: Part of CT reconstruction development workflow
 """
 
+from operator import not_
 import numpy as np
 from tqdm import tqdm
 import os
@@ -188,7 +189,7 @@ class ImagesCleaner(Parent):
                 nrows = 2
             
             display(HTML("<h2> Histogram settings </h2>"))
-            def plot_histogram(nbr_bins=100, nbr_exclude=1):
+            def plot_histogram(nbr_bins=100, nbr_exclude_left=1, nbr_exclude_right=1):
             
                 fig, axs = plt.subplots(nrows=nrows, ncols=1)
                 
@@ -202,16 +203,16 @@ class ImagesCleaner(Parent):
                 axs0.hist(sample_histogram.flatten(), bins=nbr_bins)
                 axs0.set_title('sample histogram')
                 axs0.set_yscale('log')
-                axs0.axvspan(sample_bin_edges[0], sample_bin_edges[nbr_exclude], facecolor='red', alpha=0.2)
-                axs0.axvspan(sample_bin_edges[-nbr_exclude-1], sample_bin_edges[-1], facecolor='red', alpha=0.2)
+                axs0.axvspan(sample_bin_edges[0], sample_bin_edges[nbr_exclude_left], facecolor='red', alpha=0.2)
+                axs0.axvspan(sample_bin_edges[-nbr_exclude_right-1], sample_bin_edges[-1], facecolor='red', alpha=0.2)
                 
                 if not self.ignore_ob:
                     _, ob_bin_edges = np.histogram(ob_histogram.flatten(), bins=nbr_bins, density=False)
                     axs1.hist(ob_histogram.flatten(), bins=nbr_bins)
                     axs1.set_title('ob histogram')
                     axs1.set_yscale('log')
-                    axs1.axvspan(ob_bin_edges[0], ob_bin_edges[nbr_exclude], facecolor='red', alpha=0.2)
-                    axs1.axvspan(ob_bin_edges[-nbr_exclude-1], ob_bin_edges[-1], facecolor='red', alpha=0.2)
+                    axs1.axvspan(ob_bin_edges[0], ob_bin_edges[nbr_exclude_left], facecolor='red', alpha=0.2)
+                    axs1.axvspan(ob_bin_edges[-nbr_exclude_right-1], ob_bin_edges[-1], facecolor='red', alpha=0.2)
                     plt.tight_layout()
                     plt.show()
 
@@ -225,7 +226,7 @@ class ImagesCleaner(Parent):
                 #     plt.tight_layout()
                 #     plt.show()
 
-                return nbr_bins, nbr_exclude
+                return nbr_bins, nbr_exclude_left, nbr_exclude_right
 
             self.parent.display_histogram = interactive(plot_histogram,
                                                         nbr_bins = widgets.IntSlider(min=10,
@@ -234,13 +235,16 @@ class ImagesCleaner(Parent):
                                                                                     description='Nbr bins',
                                                                                     layout=widgets.Layout(width='50%'),
                                                                                     continuous_update=False),
-                                                        nbr_exclude = widgets.IntSlider(min=0,
-                                                                                        max=10,
-                                                                                        value=1,
-                                                                                        description='Bins to excl.',
-                                                                                        layout=widgets.Layout(width='50%'),
-                                                                                        continuous_update=False,
-                                                                                        ),
+                                                        nbr_exclude_left = widgets.IntText(value=1,
+                                                                                           description='Bins to excl. (left)',
+                                                                                             layout=widgets.Layout(width='350px'),
+                                                                                                style={'description_width': '150px'},
+                                                        ),
+                                                        nbr_exclude_right = widgets.IntText(value=1,
+                                                                                           description='Bins to excl. (right)',
+                                                                                             layout=widgets.Layout(width='350px'),
+                                                                                                style={'description_width': '150px'},
+                                                        ),
                                                         )
             display(self.parent.display_histogram)
 
@@ -358,21 +362,28 @@ class ImagesCleaner(Parent):
             return
 
         logging.info(f"cleaning by histogram ...")
-        self.nbr_bins, nbr_bins_to_exclude = self.parent.display_histogram.result
+        self.nbr_bins, nbr_bins_to_exclude_left, nbr_bins_to_exclude_right = self.parent.display_histogram.result
 
         # update configuration
         self.parent.configuration.histogram_cleaning_settings.nbr_bins = self.nbr_bins
-        self.parent.configuration.histogram_cleaning_settings.bins_to_exclude = nbr_bins_to_exclude
-
+        self.parent.configuration.histogram_cleaning_settings.bins_to_exclude_left = nbr_bins_to_exclude_left
+        self.parent.configuration.histogram_cleaning_settings.bins_to_exclude_right = nbr_bins_to_exclude_right
         sample_data = self.parent.master_3d_data_array[DataType.sample]
         ob_data = self.parent.master_3d_data_array[DataType.ob]
         # dc_data = self.parent.master_3d_data_array[DataType.dc]
 
-        if nbr_bins_to_exclude == 0:
+        sample_histogram_before = sample_data.sum(axis=0)[self.edge_nbr_pixels: -self.edge_nbr_pixels,
+                                                self.edge_nbr_pixels: -self.edge_nbr_pixels]
+        
+        if not ignore_ob:
+            ob_histogram_before = ob_data.sum(axis=0)[self.edge_nbr_pixels: -self.edge_nbr_pixels,
+                                                self.edge_nbr_pixels: -self.edge_nbr_pixels]        
+
+        if nbr_bins_to_exclude_left == 0 and nbr_bins_to_exclude_right == 0:
             logging.info(f"0 bin selected, the raw data will be used!")
 
         else:         
-            logging.info(f"user selected {nbr_bins_to_exclude} bins to exclude")
+            logging.info(f"user selected {nbr_bins_to_exclude_left} bins to exclude on the left and {nbr_bins_to_exclude_right} bins to exclude on the right")
           
             logging.info(f"\t {np.shape(sample_data) = }")
             logging.info(f"\t {np.shape(ob_data) = }")
@@ -383,8 +394,8 @@ class ImagesCleaner(Parent):
             for _data in tqdm(sample_data):
                 cleaned_im = replace_pixels(im=_data.copy(),
                                             nbr_bins=self.nbr_bins,
-                                            low_gate=nbr_bins_to_exclude,
-                                            high_gate=self.nbr_bins - nbr_bins_to_exclude,
+                                            low_gate=nbr_bins_to_exclude_left,
+                                            high_gate=self.nbr_bins - nbr_bins_to_exclude_right,
                                             correct_radius=self.r)
                 cleaned_sample_data.append(cleaned_im)          
             self.parent.master_3d_data_array[DataType.sample] = np.array(cleaned_sample_data)
@@ -398,8 +409,8 @@ class ImagesCleaner(Parent):
                 for _data in tqdm(ob_data):
                     cleaned_im = replace_pixels(im=_data.copy(),
                                                 nbr_bins=self.nbr_bins,
-                                                low_gate=nbr_bins_to_exclude,
-                                                high_gate=self.nbr_bins - nbr_bins_to_exclude,
+                                                low_gate=nbr_bins_to_exclude_left,
+                                                high_gate=self.nbr_bins - nbr_bins_to_exclude_right,
                                                 correct_radius=self.r)
                     cleaned_ob_data.append(cleaned_im)          
                 self.parent.master_3d_data_array[DataType.ob] = np.array(cleaned_ob_data)
@@ -425,26 +436,34 @@ class ImagesCleaner(Parent):
             nrows = 1
         else:
             nrows = 2
-        fig, axs = plt.subplots(nrows=nrows, ncols=1)
-
-        if ignore_ob:
-            axs0 = axs
-        else:
-            axs0 = axs[0]
-            axs1 = axs[1]
+        fig, axs_sample = plt.subplots(nrows=1, ncols=1)
 
         flatten_sample_histogram = sample_histogram.flatten()
         _, sample_bin_edges = np.histogram(flatten_sample_histogram, bins=nbr_bins, density=False)
-        axs0.hist(flatten_sample_histogram, bins=nbr_bins)
-        axs0.set_title('cleaned sample histogram')
-        axs0.set_yscale('log')
+        axs_sample.hist(flatten_sample_histogram, bins=nbr_bins, label='after cleaning')
+        
+        flatten_sample_histogram_before = sample_histogram_before.flatten()
+        _, sample_bin_edges_before = np.histogram(flatten_sample_histogram_before, bins=nbr_bins, density=False)
+        axs_sample.hist(flatten_sample_histogram_before, bins=sample_bin_edges_before, alpha=0.5, label='before cleaning')
+
+        axs_sample.set_title('Sample: before and after cleaning')
+        axs_sample.set_yscale('log')
+        axs_sample.legend()
 
         if not ignore_ob:
+            
+            fig, axs_ob = plt.subplots(nrows=1, ncols=1)
             flatten_ob_histogram = ob_histogram.flatten()
             _, ob_bin_edges = np.histogram(flatten_ob_histogram, bins=nbr_bins, density=False)
-            axs1.hist(flatten_ob_histogram, bins=nbr_bins)
-            axs1.set_title('cleaned ob histogram')
-            axs1.set_yscale('log')
+            axs_ob.hist(flatten_ob_histogram, bins=nbr_bins, label='after cleaning')
+            
+            flatten_ob_histogram_before = ob_histogram_before.flatten()
+            _, ob_bin_edges_before = np.histogram(flatten_ob_histogram_before, bins=nbr_bins, density=False)
+            axs_ob.hist(flatten_ob_histogram_before, bins=ob_bin_edges_before, alpha=0.5, label='before cleaning')
+            
+            axs_ob.set_title('OB: before and after cleaning')
+            axs_ob.set_yscale('log')
+            axs_ob.legend()
             plt.tight_layout()
             plt.show()
 

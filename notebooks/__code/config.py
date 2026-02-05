@@ -75,7 +75,7 @@ clean_paras: Dict[str, Union[bool, int]] = {
     'if_save_clean': False, 
     'low_gate': 1, 
     'high_gate': 9, 
-    'correct_radius': 1,
+    'correct_radius': 2,
     'edge_nbr_pixels': 10,
     'nbr_bins': 10
 }
