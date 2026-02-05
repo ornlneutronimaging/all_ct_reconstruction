@@ -28,6 +28,7 @@ loguru = ">=0.7.3,<0.8"
 ruamel = ">=1.0,<2"
 "ruamel.yaml" = ">=0.19.1,<0.20"
 jax = ">=0.7.0,<0.8"
+plotly = ">=6.5.2,<7"
 
 [pypi-dependencies]
 neutronbraggedge = ">=2.0.6, <3"

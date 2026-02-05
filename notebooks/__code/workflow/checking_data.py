@@ -33,7 +33,8 @@ import logging
 import os
 import glob
 import re
-import matplotlib.pyplot as plt
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 import numpy as np
 from numpy.typing import NDArray
 from ipywidgets import interactive
@@ -492,7 +493,8 @@ class CheckingData(Parent):
         default_ob_proton_charge: float = calculate_most_dominant_float_value_from_list(self.list_proton_charge_c[DataType.ob])
 
         logging.info(f"-- display graph --")
-
+        self.output = widgets.Output()
+        
         def plot_proton_charges(sample_proton_charge_value: float, 
                                ob_proton_charge_value: float, 
                                proton_charge_threshold: float) -> Tuple[float, float, float]:
@@ -513,29 +515,87 @@ class CheckingData(Parent):
             Tuple[float, float, float]
                 Sample proton charge, OB proton charge, threshold values
             """
-            fig, axs = plt.subplots(nrows=1, ncols=1)
-            axs.set_title("Proton charge (C) of selected runs")
-            axs.plot(self.list_proton_charge_c[DataType.sample], 'g+', label=DataType.sample)
-            axs.plot(self.list_proton_charge_c[DataType.ob], 'bo', label=DataType.ob)
-            axs.set_xlabel("file index")
-            axs.set_ylabel("proton charge (C)")
-            axs.legend()
-    
-            axs.axhline(sample_proton_charge_value, linestyle='--', color='green')
-            sample_proton_charge_range: List[float] = [sample_proton_charge_value + proton_charge_threshold,
-                                                      sample_proton_charge_value - proton_charge_threshold]
-            axs.axhspan(sample_proton_charge_range[0], 
-                        sample_proton_charge_range[1], facecolor='green', alpha=0.2)
+            # Create figure
+            with self.output:
+                self.output.clear_output()
+                
+                fig = go.Figure()
+                
+                # Sample data points
+                sample_indices = list(range(len(self.list_proton_charge_c[DataType.sample])))
+                fig.add_trace(go.Scatter(
+                    x=sample_indices,
+                    y=self.list_proton_charge_c[DataType.sample],
+                    mode='markers',
+                    marker=dict(symbol='cross', size=10, color='green'),
+                    name=DataType.sample
+                ))
+                
+                # OB data points
+                ob_indices = list(range(len(self.list_proton_charge_c[DataType.ob])))
+                fig.add_trace(go.Scatter(
+                    x=ob_indices,
+                    y=self.list_proton_charge_c[DataType.ob],
+                    mode='markers',
+                    marker=dict(symbol='circle', size=8, color='blue'),
+                    name=DataType.ob
+                ))
+                
+                # Sample proton charge target line
+                fig.add_hline(
+                    y=sample_proton_charge_value,
+                    line=dict(color='green', dash='dash'),
+                    annotation_text=f'Sample target: {sample_proton_charge_value:.4f}',
+                    annotation_position='right'
+                )
+                
+                # Sample tolerance band
+                sample_proton_charge_range = [
+                    sample_proton_charge_value + proton_charge_threshold,
+                    sample_proton_charge_value - proton_charge_threshold
+                ]
+                fig.add_hrect(
+                    y0=sample_proton_charge_range[1],
+                    y1=sample_proton_charge_range[0],
+                    fillcolor='green',
+                    opacity=0.2,
+                    line_width=0
+                )
+                
+                # OB proton charge target line
+                fig.add_hline(
+                    y=ob_proton_charge_value,
+                    line=dict(color='blue', dash='dash'),
+                    annotation_text=f'OB target: {ob_proton_charge_value:.4f}',
+                    annotation_position='right'
+                )
+                
+                # OB tolerance band
+                ob_proton_charge_range = [
+                    ob_proton_charge_value + proton_charge_threshold,
+                    ob_proton_charge_value - proton_charge_threshold
+                ]
+                fig.add_hrect(
+                    y0=ob_proton_charge_range[1],
+                    y1=ob_proton_charge_range[0],
+                    fillcolor='blue',
+                    opacity=0.2,
+                    line_width=0
+                )
+                
+                # Update layout
+                fig.update_layout(
+                    title="Proton charge (C) of selected runs",
+                    xaxis_title="file index",
+                    yaxis_title="proton charge (C)",
+                    showlegend=True,
+                    hovermode='closest'
+                )
+                
+                fig.show()
+                
 
-            axs.axhline(ob_proton_charge_value, linestyle='--', color='blue')
-            ob_proton_charge_range: List[float] = [ob_proton_charge_value + proton_charge_threshold,
-                                                  ob_proton_charge_value - proton_charge_threshold]
-            axs.axhspan(ob_proton_charge_range[0], 
-                        ob_proton_charge_range[1], facecolor='blue', alpha=0.2)
-
-            # plt.show()
-
-            return sample_proton_charge_value, ob_proton_charge_value, proton_charge_threshold
+                return sample_proton_charge_value, ob_proton_charge_value, proton_charge_threshold
 
         self.parent.selection_of_pc = interactive(plot_proton_charges,
                             sample_proton_charge_value = widgets.FloatSlider(min=self.min_proton_charge_c[DataType.sample],
@@ -555,8 +615,11 @@ class CheckingData(Parent):
                                                                         value=PROTON_CHARGE_TOLERANCE_C,
                                                                         continuous_update=True),
                                                                         )
-        display(self.parent.selection_of_pc)
 
+        
+        display(self.parent.selection_of_pc)
+        display(self.output)
+        
     def checking_minimum_requirements(self) -> None:
         """
         Validate minimum data requirements for CT reconstruction.

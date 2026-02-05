@@ -40,6 +40,7 @@ import ipywidgets as widgets
 from PIL import Image
 import random
 import matplotlib.pyplot as plt
+import plotly.graph_objects as go
 from ipywidgets import interactive
 
 from __code import DataType, Run, OperatingMode
@@ -763,20 +764,22 @@ class Load(Parent):
         else:
             disabled = True
             
+        tof_options_enabled = False
         if self.parent.tof_array is not None:
             
             # display widget to enter detector offset
             detector_offset = 0.0
-            detector_offset_units = u"\u00b5s" # micros
-            label = widgets.Label("Detector offset:",
-                                layout=widgets.Layout(width='150px'))
-            self.detector_offset_widget = widgets.FloatText(
-                value=detector_offset,
-                description='',
-                disabled=disabled,
-                layout=widgets.Layout(width='100px'))
-            units_label = widgets.Label(detector_offset_units)
-            display(widgets.HBox([label, self.detector_offset_widget, units_label]))
+            tof_options_enabled = True
+            # detector_offset_units = u"\u00b5s" # micros
+            # label = widgets.Label("Detector offset:",
+            #                     layout=widgets.Layout(width='150px'))
+            # self.detector_offset_widget = widgets.FloatText(
+            #     value=detector_offset,
+            #     description='',
+            #     disabled=disabled,
+            #     layout=widgets.Layout(width='100px'))
+            # units_label = widgets.Label(detector_offset_units)
+            # display(widgets.HBox([label, self.detector_offset_widget, units_label]))
         
             # detector distance
             detector_distance = self.parent.default_distance_source_detector
@@ -790,33 +793,72 @@ class Load(Parent):
             units_distance = widgets.Label("m")
             display(widgets.HBox([label_distance, label_value, units_distance]))
             
-            tof_array = self.parent.tof_array * 1e6  # convert to microseconds
-            detector_offset = self.detector_offset_widget.value
-            tof_array += detector_offset
-            logging.info(f"{tof_array = }")
-            
+            self.tof_array = self.parent.tof_array * 1e6  # convert to microseconds
+            logging.info(f"Without detector offset: {self.tof_array = }")
             display(widgets.HTML("<hr>"))     
-        
+            
         file_index_array = np.arange(len(_profile))
         logging.info(f"{file_index_array = }")
                 
-        def display_profile(tof_range):
+        def display_profile(tof_range, detector_offset):
+            
+            if tof_options_enabled:
+                self.tof_array = self.parent.tof_array * 1e6 + detector_offset
+            
             left_tof, right_tof = tof_range
 
-            fig, ax1 = plt.subplots(figsize=(8, 5))
-            ax1.plot(file_index_array, _profile, marker='o', linestyle='-')
-            ax1.axvspan(left_tof, right_tof, color='green', alpha=0.3)
-            # ax1.set_title(f"{_short_name_of_random_run}")
-            ax1.set_xlabel("File index")
-            ax1.set_ylabel("Sum of counts over all pixels")
-            ax1.legend(loc='upper right')
-     
-            if tof_array is not None:
-                ax2 = ax1.twiny()
-                ax2.plot(tof_array, _profile, marker=None, linestyle='None')
-                ax2.set_xlabel("Time-of-Flight (µs)")
-   
-            plt.show()
+            tick_step = 250
+
+            fig = go.Figure()
+            fig.add_trace(
+                go.Scatter(
+                    x=file_index_array,
+                    y=_profile,
+                    mode='lines+markers',
+                    name='Total counts vs file index'
+                )
+            )
+
+            fig.add_vrect(
+                x0=left_tof,
+                x1=right_tof,
+                fillcolor='green',
+                opacity=0.3,
+                line_width=0
+            )
+
+            fig.update_layout(
+                xaxis=dict(
+                    title="File index",
+                    tickmode="linear",
+                    dtick=tick_step
+                ),
+                yaxis_title="Sum of counts over all pixels",
+                showlegend=True,
+                width=1000
+            )
+
+            if self.tof_array is not None:
+                fig.add_trace(
+                    go.Scatter(
+                        x=self.tof_array,
+                        y=_profile,
+                        mode='markers',
+                        name='Total counts vs Time-of-Flight',
+                        xaxis='x2',
+                        showlegend=False,
+                        
+                    )
+                )
+                fig.update_layout(
+                    xaxis2=dict(
+                        title="Time-of-Flight (µs)",
+                        overlaying='x',
+                        side='top',
+                    )
+                )
+
+            fig.show()
 
             self.parent.tof_integration_range = tof_range
 
@@ -829,7 +871,13 @@ class Load(Parent):
                                                                               continuous_update=False,
                                                                               layout=widgets.Layout(width='80%'),
                                                                               style={'description_width': 'initial'}
-                                             ))
+                                             ),
+                                             detector_offset = widgets.FloatText(value=detector_offset,
+                                                                                 description='Detector offset (µs):',
+                                                                                 layout=widgets.Layout(width='250px'),
+                                                                                 disabled=not tof_options_enabled,
+                                                                                 style={'description_width': '150px'}
+                                                                                 ))
         display(display_profile_widget)
 
     # def list_of_images_to_exclude(self):
