@@ -742,7 +742,8 @@ class Step1PrepareTimePixImages:
             - Launches folder browser for normalized TimePix data export
         """
         o_select = Load(parent=self)
-        o_select.select_folder(data_type=DataType.normalized)
+        o_select.select_folder(data_type=DataType.normalized,
+                               output_flag=True)
 
     def export_normalized_images(self) -> None:
         """
