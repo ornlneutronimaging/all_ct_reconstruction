@@ -894,7 +894,7 @@ class Step1PrepareTimePixImages:
                             label_before='raw',
                             label_after='rebinned',
                             data_before=data_before,
-                            turn_on_vrange=True,
+                            turn_on_vrange=False,
                             vmin=vmin,
                             vmax=vmax,
                             vmin_after=vmin_after,
