@@ -1037,7 +1037,7 @@ class Step1PrepareTimePixImages:
                                   vmax_right=None,)
 
     # strips removal
-    def select_range_of_data_to_test_stripes_removal(self) -> None:
+    def select_region_to_test_stripes_removal(self) -> None:
         """
         Select data range for testing strip removal algorithms on TimePix data.
         
@@ -1052,7 +1052,7 @@ class Step1PrepareTimePixImages:
             - Launches data range selection interface
         """
         self.o_remove = RemoveStrips(parent=self)
-        self.o_remove.select_range_of_data_to_test_stripes_removal()
+        self.o_remove.select_region_to_test_stripes_removal()
 
     def select_remove_strips_algorithms(self) -> None:
         """

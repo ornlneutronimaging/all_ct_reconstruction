@@ -55,6 +55,7 @@ from tomopy.prep import stripe
 import logging
 from tqdm import tqdm
 import matplotlib.pyplot as plt
+import plotly.graph_objects as go
 from ipywidgets import interactive
 import webbrowser
 from matplotlib.patches import Rectangle
@@ -242,7 +243,7 @@ class RemoveStrips:
         self.parent = parent
         self.define_default_lists()
 
-    def select_range_of_data_to_test_stripes_removal(self):
+    def select_region_to_test_stripes_removal(self):
         normalized_images = self.parent.normalized_images_log
         nbr_projections, height, width = np.shape(normalized_images)
 
@@ -252,10 +253,6 @@ class RemoveStrips:
         default_left_slice = width//2 - width//4
         default_right_slice = width//2 + width//4
 
-        self.fig, self.ax = plt.subplots(figsize=(5, 5), 
-                                         num="Select range of data to test stripes removal")
-        self.img = self.ax.imshow(normalized_images[0])
-        self.cbar = plt.colorbar(self.img, ax=self.ax, shrink=0.5)
         self.image_index = 0
 
         def select_range_of_data(left_right=[default_left_slice, default_right_slice], 
@@ -264,31 +261,38 @@ class RemoveStrips:
                 
             left_slice, right_slice = left_right
             top_slice, bottom_slice = top_bottom
-                
-            if self._roi is not None:
-                self._roi.remove()
             
-            if self.image_index != image_index:
-                
-                if self.cbar is not None:
-                    self.cbar.remove()
-                
-                self.image_index = image_index
+            # Create the plotly figure
+            fig = go.Figure()
             
-                self.img = self.ax.imshow(normalized_images[image_index])
-                self.cbar = plt.colorbar(self.img, ax=self.ax, shrink=0.5)
-
-            width = right_slice - left_slice
-            height = bottom_slice - top_slice
-
-            self._roi = Rectangle((left_slice, top_slice), width, height,
-                                                edgecolor='yellow',
-                                                facecolor='green',
-                                                fill=True,
-                                                lw=2,
-                                                alpha=0.3,
-                                                )
-            self.ax.add_patch(self._roi)
+            # Add the heatmap
+            fig.add_trace(go.Heatmap(
+                z=normalized_images[image_index],
+                colorscale='Viridis',
+                showscale=True
+            ))
+            
+            # Add rectangle for ROI
+            fig.add_shape(
+                type="rect",
+                x0=left_slice,
+                y0=top_slice,
+                x1=right_slice,
+                y1=bottom_slice,
+                line=dict(color="yellow", width=2),
+                fillcolor="green",
+                opacity=0.3
+            )
+            
+            # Update layout
+            fig.update_layout(
+                title="Select region of data to test stripes removal",
+                width=600,
+                height=600,
+                yaxis=dict(autorange='reversed')  # Flip y-axis to match imshow convention
+            )
+            
+            fig.show()
             
             return left_slice, right_slice, top_slice, bottom_slice
 
