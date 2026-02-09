@@ -412,15 +412,8 @@ class CenterOfRotationAndTilt(Parent):
         _, width = np.shape(self.image_0_degree)
         vmax = np.max([self.image_0_degree, self.image_180_degree, self.image_360_degree])
         vmax = 4 # debug
-                
-        # self.fig, self.axs = plt.subplots(nrows=1, ncols=1, figsize=(7,7))
-        # self.center = int(width/2)
 
         def plot_images(angles, center, v_range):
-
-            self.fig, self.axs = plt.subplots(nrows=1, ncols=1, figsize=(7,7))
-
-            self.axs.axvline(center, color='blue', linestyle='--')
                 
             at_least_one_image_selected = False
             list_images = []
@@ -442,8 +435,27 @@ class CenterOfRotationAndTilt(Parent):
             else:
                 final_image = list_images[0]
 
-            self.axs.imshow(final_image, vmin=v_range[0], vmax=v_range[1], cmap='viridis')
-            # self.axs.axvline(center, color='blue', linestyle='--')
+            fig = go.Figure()
+            
+            fig.add_trace(go.Heatmap(
+                z=final_image,
+                zmin=v_range[0],
+                zmax=v_range[1],
+                colorscale='Viridis',
+                showscale=True
+            ))
+            
+            fig.add_shape(
+                type="line",
+                x0=center, x1=center,
+                y0=0, y1=final_image.shape[0] - 1,
+                line=dict(color="blue", dash="dash"),
+                xref="x", yref="y"
+            )
+            
+            fig.update_yaxes(autorange='reversed')
+            fig.update_layout(width=700, height=700)
+            fig.show()
 
             return center
 
@@ -508,26 +520,42 @@ class CenterOfRotationAndTilt(Parent):
         
         def plot_images(slice_value=int(height/2), vmin_vmax: list = None):
 
-            fig, axs = plt.subplots(nrows=1, 
-                                    ncols=2, 
-                                    figsize=(10,5), 
-                                num="Select slice to use to calculate center of rotation")
-     
             vmin, vmax = vmin_vmax
             
-            axs[0].imshow(image_0_degree, cmap='viridis', vmin=vmin, vmax=vmax)
-            axs[0].set_title("0 / 0")
-            axs[0].axhline(slice_value, color='blue', linestyle='--')
-
-            axs[1].imshow(image_180_degree, cmap='viridis', vmin=vmin, vmax=vmax)
-            axs[1].set_title(f"{self.parent.final_list_of_angles[self.index_180_degree]} / 180")
-            axs[1].axhline(slice_value, color='blue', linestyle='--')
-
-            # axs[2].imshow(image_360_degree, cmap='viridis', vmin=vmin, vmax=vmax)
-            # axs[2].set_title(f"{self.parent.final_list_of_angles[self.index_360_degree]} / 360")
-            # axs[2].axhline(slice_value, color='blue', linestyle='--')
-
-            plt.tight_layout()
+            fig = make_subplots(
+                rows=1, cols=2,
+                subplot_titles=("0 / 0", f"{self.parent.final_list_of_angles[self.index_180_degree]} / 180")
+            )
+            
+            fig.add_trace(
+                go.Heatmap(z=image_0_degree, zmin=vmin, zmax=vmax, colorscale='Viridis'),
+                row=1, col=1
+            )
+            fig.add_trace(
+                go.Heatmap(z=image_180_degree, zmin=vmin, zmax=vmax, colorscale='Viridis'),
+                row=1, col=2
+            )
+            
+            # Add horizontal lines
+            fig.add_shape(
+                type="line",
+                x0=0, x1=image_0_degree.shape[1] - 1,
+                y0=slice_value, y1=slice_value,
+                line=dict(color="blue", dash="dash"),
+                xref="x", yref="y"
+            )
+            fig.add_shape(
+                type="line",
+                x0=0, x1=image_180_degree.shape[1] - 1,
+                y0=slice_value, y1=slice_value,
+                line=dict(color="blue", dash="dash"),
+                xref="x2", yref="y2"
+            )
+            
+            fig.update_yaxes(autorange='reversed', row=1, col=1)
+            fig.update_yaxes(autorange='reversed', row=1, col=2)
+            fig.update_layout(width=1000, height=500)
+            fig.show()
 
             return slice_value
 
@@ -599,25 +627,32 @@ class CenterOfRotationAndTilt(Parent):
         combined_images = 0.5*image_0_degree + 0.5*image_180_degree
         vmax = np.max(combined_images)
         vmin = 0
-
-        # self.fig_test, self.axs = plt.subplots(nrows=1, ncols=1, 
-        #                                        figsize=(7,7), num="Test center of rotation calculated")
-        # self.img = self.axs.imshow(combined_images, cmap='viridis', vmin=0, vmax=vmax)
-        # self.cbar = plt.colorbar(self.img, ax=self.axs, shrink=0.5)
-        # self.axs.axvline(center_of_rotation_calculated, color='blue', linestyle='--')
                  
         def plot_result(v_range):
             
-            fig_test, axs = plt.subplots(nrows=1, ncols=1, 
-                                               figsize=(7,7), num="Test center of rotation calculated")
-            
             logging.info(f"in test_center_of_rotation_calculated")
   
-            img = axs.imshow(combined_images, cmap='viridis', vmin=v_range[0], vmax=v_range[1])
-            plt.colorbar(img, ax=axs, shrink=0.5)
-            axs.axvline(center_of_rotation_calculated, color='blue', linestyle='--')
-            plt.tight_layout()
-            plt.show()
+            fig = go.Figure()
+            
+            fig.add_trace(go.Heatmap(
+                z=combined_images,
+                zmin=v_range[0],
+                zmax=v_range[1],
+                colorscale='Viridis',
+                showscale=True
+            ))
+            
+            fig.add_shape(
+                type="line",
+                x0=center_of_rotation_calculated, x1=center_of_rotation_calculated,
+                y0=0, y1=combined_images.shape[0] - 1,
+                line=dict(color="blue", dash="dash"),
+                xref="x", yref="y"
+            )
+            
+            fig.update_yaxes(autorange='reversed')
+            fig.update_layout(width=700, height=700, title="Test center of rotation calculated")
+            fig.show()
             
         manual_center_selection = interactive(plot_result,
                                     v_range = widgets.FloatRangeSlider(min=vmin,
