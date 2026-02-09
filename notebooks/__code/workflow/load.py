@@ -800,12 +800,13 @@ class Load(Parent):
         file_index_array = np.arange(len(_profile))
         logging.info(f"{file_index_array = }")
                 
-        def display_profile(tof_range, detector_offset):
+        def display_profile(index_range, detector_offset):
             
             if tof_options_enabled:
                 self.tof_array = self.parent.tof_array * 1e6 + detector_offset
             
-            left_tof, right_tof = tof_range
+            left_tof, right_tof = self.tof_array[index_range[0]], self.tof_array[index_range[1]]
+            left_index, right_index = index_range
 
             tick_step = 250
 
@@ -820,8 +821,8 @@ class Load(Parent):
             )
 
             fig.add_vrect(
-                x0=left_tof,
-                x1=right_tof,
+                x0=left_index,
+                x1=right_index,
                 fillcolor='green',
                 opacity=0.3,
                 line_width=0
@@ -831,44 +832,62 @@ class Load(Parent):
                 xaxis=dict(
                     title="File index",
                     tickmode="linear",
-                    dtick=tick_step
+                    dtick=tick_step,
+                    range=[0, len(_profile)-1],
                 ),
                 yaxis_title="Sum of counts over all pixels",
                 showlegend=True,
                 width=1000
             )
-
+            fig.show()
+            
             if self.tof_array is not None:
-                fig.add_trace(
+                
+                tick_step = (self.tof_array[-1] - self.tof_array[0]) // 20 
+                
+                fig2 = go.Figure()
+                fig2.add_trace(
                     go.Scatter(
                         x=self.tof_array,
                         y=_profile,
                         mode='markers',
                         name='Total counts vs Time-of-Flight',
-                        xaxis='x2',
                         showlegend=False,
-                        
                     )
                 )
-                fig.update_layout(
-                    xaxis2=dict(
+                
+                fig2.add_vrect(
+                    x0=left_tof,
+                    x1=right_tof,
+                    fillcolor='green',
+                    opacity=0.3,
+                    line_width=0
+                )
+                 
+                fig2.update_layout(
+                    xaxis=dict(
                         title="Time-of-Flight (µs)",
-                        overlaying='x',
-                        side='top',
-                    )
+                        tickmode="linear",
+                        dtick=tick_step,
+                        range=[0, float(np.max(self.tof_array))],
+                    ),
+                    yaxis_title="Sum of counts over all pixels",
+                    showlegend=True,
+                    width=1000
                 )
+                fig2.show()
 
-            fig.show()
-
-            self.parent.tof_integration_range = tof_range
+            # self.parent.tof_integration_range = 
+            self.parent.index_integration_range = (left_index, right_index)
 
         display_profile_widget = interactive(display_profile,
-                                             tof_range=widgets.IntRangeSlider(value=[0, len(_profile)-1],
+                                             index_range=widgets.IntRangeSlider(value=[0, len(_profile)-1],
                                                                               min=0,
                                                                               max=len(_profile)-1,
                                                                               step=1,
-                                                                              description='File index Range:',
+                                                                              description='Range:',
                                                                               continuous_update=False,
+                                                                              readout=False,
                                                                               layout=widgets.Layout(width='80%'),
                                                                               style={'description_width': 'initial'}
                                              ),

@@ -144,19 +144,30 @@ debug_folder: Dict[DetectorType, Dict[OperatingMode, Dict[DataType, str]]] = {
             # DataType.nexus: '/SNS/VENUS/IPTS-34899/nexus',
         },
     },
+    # DetectorType.tpx1: {
+    #     OperatingMode.tof: {
+    #         DataType.sample: "/SNS/VENUS/IPTS-33531/shared/Shimin_save/new_data_structure_replica/images/tpx1/raw/ct/20241122_CrashRingB_hyperCT_2_500C_1_800AngsMin_light",
+    #         DataType.ob: "/SNS/VENUS/IPTS-33531/shared/Shimin_save/new_data_structure_replica/images/tpx1/ob/20241122_CrashRingB_hyperCT_2_500C_1_800AngsMin",
+    #         DataType.cleaned_images: '/SNS/VENUS/IPTS-33531/shared/jean',
+    #         DataType.normalized: '/SNS/VENUS/IPTS-33531/shared/jean',
+    #         DataType.reconstructed: '/SNS/VENUS/IPTS-33531/shared/jean',
+    #         DataType.extra: '/SNS/VENUS/IPTS-33531/shared/jean',
+    #         DataType.nexus: '/SNS/VENUS/IPTS-33531/nexus/'
+    #     },
+    #     OperatingMode.white_beam: None,
+    # },
     DetectorType.tpx1: {
         OperatingMode.tof: {
-            DataType.sample: "/SNS/VENUS/IPTS-33531/shared/Shimin_save/new_data_structure_replica/images/tpx1/raw/ct/20241122_CrashRingB_hyperCT_2_500C_1_800AngsMin_light",
-            DataType.ob: "/SNS/VENUS/IPTS-33531/shared/Shimin_save/new_data_structure_replica/images/tpx1/ob/20241122_CrashRingB_hyperCT_2_500C_1_800AngsMin",
-            DataType.cleaned_images: '/SNS/VENUS/IPTS-33531/shared/jean',
-            DataType.normalized: '/SNS/VENUS/IPTS-33531/shared/jean',
-            DataType.reconstructed: '/SNS/VENUS/IPTS-33531/shared/jean',
-            DataType.extra: '/SNS/VENUS/IPTS-33531/shared/jean',
-            DataType.nexus: '/SNS/VENUS/IPTS-33531/nexus/'
+            DataType.sample: "/SNS/VENUS/IPTS-35945/shared/autoreduce/images/tpx1/raw/ct/20251007_CuFeCT__1_250C_1_900AngsMin",
+            DataType.ob: "/SNS/VENUS/IPTS-35945/shared/autoreduce/images/tpx1/ob/20251007_OB__1_250C_1_900AngsMin",
+            DataType.cleaned_images: '/SNS/VENUS/IPTS-35945/shared/jean',
+            DataType.normalized: '/SNS/VENUS/IPTS-35945/shared/jean',
+            DataType.reconstructed: '/SNS/VENUS/IPTS-35945/shared/jean',
+            DataType.extra: '/SNS/VENUS/IPTS-35945/shared/jean',
+            DataType.nexus: '/SNS/VENUS/IPTS-35945/nexus/'
         },
         OperatingMode.white_beam: None,
     },
-
     DetectorType.tpx3: {
         OperatingMode.tof: None,
         OperatingMode.white_beam: None

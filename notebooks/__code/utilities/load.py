@@ -37,7 +37,7 @@ def _worker(fl: str) -> NDArray[np.floating]:
 
 def load_data_using_multithreading(list_tif: List[str], 
                                    combine_tof: bool = False, 
-                                   tof_integration_range: Optional[List[int]] = None) -> NDArray[np.floating]:
+                                   index_integration_range: Optional[List[int]] = None) -> NDArray[np.floating]:
     """
     Load TIFF images using multiprocessing for improved performance.
     
@@ -57,11 +57,11 @@ def load_data_using_multithreading(list_tif: List[str],
 
     logging.info(f"load_data_using_multithreading: loaded {len(data)} images of shape {data[0].shape}:")
     if combine_tof:
-        if tof_integration_range is not None:
-            logging.info(f"\tsumming data from ToF range: {tof_integration_range[0]} to {tof_integration_range[1]}")
-            left_tof = tof_integration_range[0]
-            right_tof = tof_integration_range[1] + 1  # inclusive range
-            return np.array(data[left_tof:right_tof]).sum(axis=0)
+        if index_integration_range is not None:
+            logging.info(f"\tsumming data from ToF range: {index_integration_range[0]} to {index_integration_range[1]}")
+            left_index = index_integration_range[0]
+            right_index = index_integration_range[1] + 1  # inclusive range
+            return np.array(data[left_index:right_index]).sum(axis=0)
         else:
             logging.info(f"\tsumming all ToF data")
             return np.array(data).sum(axis=0)

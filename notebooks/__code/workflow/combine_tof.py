@@ -297,7 +297,7 @@ class CombineTof(Parent):
         # data = load_list_of_tif(list_tif)
         data: NDArray[np.floating] = load_data_using_multithreading(list_tif, 
                                                                     combine_tof=True, 
-                                                                    tof_integration_range=self.parent.tof_integration_range)
+                                                                    index_integration_range=self.parent.index_integration_range)
 
         if detector_type in [DetectorType.tpx1, DetectorType.tpx1_legacy]:
             config = default_config_timepix1
