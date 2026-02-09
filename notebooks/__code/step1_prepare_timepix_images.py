@@ -1175,7 +1175,7 @@ class Step1PrepareTimePixImages:
         self.o_tilt = CenterOfRotationAndTilt(parent=self)
         self.o_tilt.select_range()
 
-    def perform_tilt_correction(self) -> None:
+    def test_tilt_correction(self) -> None:
         """
         Execute tilt correction on TimePix log-converted data.
         
@@ -1188,8 +1188,13 @@ class Step1PrepareTimePixImages:
             - Updates normalized_images_log with tilt-corrected data
             - Logs tilt correction parameters and results
         """
-        self.o_tilt.run_tilt_correction()
-
+        self.o_tilt.test_tilt_correction()
+        display(HTML("<hr>"))
+        self.o_tilt.display_before_after_tilt_correction()
+        
+    def validate_tilt_correction(self) -> None:
+        self.o_tilt.validate_tilt_correction()
+        
     # calcualte center of rotation
     def center_of_rotation_settings(self) -> None:
         """

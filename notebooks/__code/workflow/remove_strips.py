@@ -56,6 +56,7 @@ import logging
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 from ipywidgets import interactive
 import webbrowser
 from matplotlib.patches import Rectangle
@@ -617,56 +618,61 @@ class RemoveStrips:
         # final_list_of_runs = self.parent.list_of_runs_to_use[DataType.sample]
         final_list_of_runs = self.parent.final_list_of_runs[DataType.sample]
 
-        self.fig, self.axs1 = plt.subplots(nrows=1, ncols=2, figsize=(7, 5), 
-                                         num="Comparison before and after stripes removal")
-        self.axs1[0].imshow(normalized_images_before[0], vmin=0, vmax=1)
-        self.axs1[0].set_title("Before correction")
-        self.axs1[0].axhline(0, color='red', linestyle='--')
-        
-        self.axs1[1].imshow(normalized_images_after[0], vmin=0, vmax=1)
-        self.axs1[1].set_title("After correction")
-        self.axs1[1].axhline(0, color='red', linestyle='--')
-        
-        self.fig2, self.axs2 = plt.subplots(nrows=1, ncols=3, figsize=(7, 5),
-                                            num="Sinogram comparison before and after stripes removal")
-
-        self.axs2[0].imshow(sinogram_before[0], vmin=0, vmax=1)
-        self.axs2[0].set_title("Before correction")
-        self.axs2[1].imshow(sinogram_after[0], vmin=0, vmax=1)
-        self.axs2[1].set_title("After correction")
-        self.axs2[2].imshow(sinogram_before[0] - sinogram_after[0])
-        self.axs2[2].set_title("Difference (before - after)")
-
-        self.slice_index = 0
-
         def plot_result(image_index, slice_index):
-
-            if self.slice_index != slice_index:
-                self.slice_index = slice_index
-                self.axs1[0].cla()
-                self.axs1[1].cla()
-
+            title_text = None
+            height, width = np.shape(normalized_images_after[0])
             if self.parent.MODE == OperatingMode.tof:
-                self.fig.suptitle(f"Run: {final_list_of_runs[image_index]}, Angle: {final_list_of_angles[image_index]}")
+                title_text = f"Run: {final_list_of_runs[image_index]}, Angle: {final_list_of_angles[image_index]}"
 
-            self.axs1[0].imshow(normalized_images_before[image_index], vmin=0, vmax=1)
-            self.axs1[0].set_title("Before correction")
-            self.axs1[0].axhline(slice_index, color='red', linestyle='--')
+            fig_images = make_subplots(rows=1, cols=2, subplot_titles=("Before correction", "After correction"))
+            fig_images.add_trace(
+                go.Heatmap(z=normalized_images_before[image_index], zmin=0, zmax=1, colorscale='Viridis'),
+                row=1, col=1
+            )
+            fig_images.add_trace(
+                go.Heatmap(z=normalized_images_after[image_index], zmin=0, zmax=1, colorscale='Viridis'),
+                row=1, col=2
+            )
+            fig_images.add_shape(
+                type="line",
+                x0=0, x1=width - 1,
+                y0=slice_index, y1=slice_index,
+                line=dict(color="red", dash="dash"),
+                xref="x", yref="y"
+            )
+            fig_images.add_shape(
+                type="line",
+                x0=0, x1=width - 1,
+                y0=slice_index, y1=slice_index,
+                line=dict(color="red", dash="dash"),
+                xref="x2", yref="y2"
+            )
+            fig_images.update_yaxes(autorange='reversed', row=1, col=1)
+            fig_images.update_yaxes(autorange='reversed', row=1, col=2)
+            fig_images.update_layout(title_text=title_text, width=900, height=450)
+            fig_images.show()
 
-            self.axs1[1].imshow(normalized_images_after[image_index], vmin=0, vmax=1)
-            self.axs1[1].set_title("After correction")
-            self.axs1[1].axhline(slice_index, color='red', linestyle='--')
-
-            self.axs2[0].imshow(sinogram_before[slice_index], vmin=0, vmax=1)
-            self.axs2[0].set_title("Before correction")
-            self.axs2[1].imshow(sinogram_after[slice_index], vmin=0, vmax=1)
-            
-            self.axs2[1].set_title("After correction")
-            self.axs2[2].imshow(sinogram_before[slice_index] - sinogram_after[slice_index])
-            self.axs2[2].set_title("Difference (before - after)")
-
-            plt.tight_layout()
-            plt.show()
+            fig_sino = make_subplots(
+                rows=1, cols=3,
+                subplot_titles=("Before correction", "After correction", "Difference (before - after)")
+            )
+            fig_sino.add_trace(
+                go.Heatmap(z=sinogram_before[slice_index], zmin=0, zmax=1, colorscale='Viridis'),
+                row=1, col=1
+            )
+            fig_sino.add_trace(
+                go.Heatmap(z=sinogram_after[slice_index], zmin=0, zmax=1, colorscale='Viridis'),
+                row=1, col=2
+            )
+            fig_sino.add_trace(
+                go.Heatmap(z=sinogram_before[slice_index] - sinogram_after[slice_index], colorscale='Viridis'),
+                row=1, col=3
+            )
+            fig_sino.update_yaxes(autorange='reversed', row=1, col=1)
+            fig_sino.update_yaxes(autorange='reversed', row=1, col=2)
+            fig_sino.update_yaxes(autorange='reversed', row=1, col=3)
+            fig_sino.update_layout(width=1100, height=450)
+            fig_sino.show()
 
         display_plot = interactive(plot_result,
                                    image_index=widgets.IntSlider(min=0,

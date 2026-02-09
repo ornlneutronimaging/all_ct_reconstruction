@@ -38,6 +38,8 @@ from IPython.display import display, HTML
 import ipywidgets as widgets
 from skimage.transform import rotate
 from algotom.prep.calculation import find_center_vo, find_center_360
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
 # from imars3d.backend.diagnostics.rotation import find_rotation_center
 
@@ -258,9 +260,81 @@ class CenterOfRotationAndTilt(Parent):
         display(self.display_plot)
 
     # ---- tilt correction ----
-    def run_tilt_correction(self):
+    def test_tilt_correction(self):
        # self.calculate_tilt_using_neutompy()
         self.calculate_and_apply_tilt_using_neutompy()
+
+    def display_before_after_tilt_correction(self):
+                
+        height, width = np.shape(self.parent.normalized_images_log[0])
+                
+        def plot_before_after_tilt_correction(image_index, vertical_guide, vrange):
+            image_before = self.parent.normalized_images_log[image_index]
+            image_after = self.parent.temporary_normalized_images_log[image_index]
+
+            vmax = vrange[1]
+            vmin = vrange[0]
+
+            fig = make_subplots(
+                rows=1, cols=2,
+                subplot_titles=("Before tilt correction", "After tilt correction")
+            )
+            
+            fig.add_trace(
+                go.Heatmap(z=image_before, zmin=vmin, zmax=vmax, colorscale='Viridis'),
+                row=1, col=1
+            )
+            fig.add_trace(
+                go.Heatmap(z=image_after, zmin=vmin, zmax=vmax, colorscale='Viridis'),
+                row=1, col=2
+            )
+            
+            # Add vertical lines
+            fig.add_shape(
+                type="line",
+                x0=vertical_guide, x1=vertical_guide,
+                y0=0, y1=height - 1,
+                line=dict(color="red", dash="dash"),
+                xref="x", yref="y"
+            )
+            fig.add_shape(
+                type="line",
+                x0=vertical_guide, x1=vertical_guide,
+                y0=0, y1=height - 1,
+                line=dict(color="red", dash="dash"),
+                xref="x2", yref="y2"
+            )
+            
+            fig.update_yaxes(autorange='reversed', row=1, col=1)
+            fig.update_yaxes(autorange='reversed', row=1, col=2)
+            fig.update_layout(width=1000, height=500)
+            fig.show()
+        
+        self.display_before_after_tilt_correction = interactive(plot_before_after_tilt_correction,
+                                                                image_index=widgets.IntSlider(min=0, 
+                                                                                              max=len(self.parent.normalized_images_log)-1, 
+                                                                                              value=0,
+                                                                                              style={'description_width': '150px'},
+                                                                                              layout=widgets.Layout(width="50%")),
+                                                                vertical_guide=widgets.IntSlider(min=0,
+                                                                                                 max=width-1,
+                                                                                                 value=int(width/2),
+                                                                                                 layout=widgets.Layout(width="50%"),
+                                                                                                 style={'description_width': '150px'},
+                                                                                                 ),
+                                                                vrange=widgets.FloatRangeSlider(min=0,
+                                                                                                max=np.max(self.parent.normalized_images_log),
+                                                                                                value=[0, np.max(self.parent.normalized_images_log)],
+                                                                                                style={'description_width': '150px'},
+                                                                                                layout=widgets.Layout(width="50%")),
+        )
+        display(self.display_before_after_tilt_correction)
+        
+    def validate_tilt_correction(self):
+        self.parent.normalized_images_log = self.parent.temporary_normalized_images_log.copy()
+        self.parent.temporary_normalized_images_log = None
+        logging.info(f"tilt correction applied to normalized_images_log")
+        display(HTML("<font color='blue'>Tilt correction applied to normalized_images_log!</font>"))
 
     def calculate_tilt_using_neutompy(self):
         logging.info(f"calculate tilt correction:")
@@ -302,9 +376,10 @@ class CenterOfRotationAndTilt(Parent):
                        theta=None,
                        rois=rois)
         logging.info(f"{np.shape(normalized_images) =}")
-        self.parent.normalized_images_log = normalized_images
+        # self.parent.normalized_images_log = normalized_images
+        self.parent.temporary_normalized_images_log = normalized_images
 
-        logging_3d_array_infos(message="after tilt correction", array=self.parent.normalized_images_log)
+        logging_3d_array_infos(message="after tilt correction", array=self.parent.temporary_normalized_images_log)
 
     #  ---- center of rotation -----
     def center_of_rotation_settings(self):
