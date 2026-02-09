@@ -746,7 +746,13 @@ class Load(Parent):
         logging.info(f"Selecting a random projection to display profile to select range of TOF  ...")
         list_of_runs = list(self.parent.list_of_runs[DataType.sample].keys())
         logging.info(f"\tList of runs to use: {list_of_runs}")
-        random_run = random.choice(list_of_runs)
+        
+        use_it = False
+        while not use_it:
+            # we need to do this as some runs might be marked as not to be used (empty for example)
+            random_run = random.choice(list_of_runs)
+            use_it = self.parent.list_of_runs[DataType.sample][random_run][Run.use_it]
+        
         full_path = self.parent.list_of_runs[DataType.sample][random_run][Run.full_path]
         logging.info(f"\tRandom run selected: {random_run} with full path: {full_path}")
         list_tif = retrieve_list_of_tif(full_path)

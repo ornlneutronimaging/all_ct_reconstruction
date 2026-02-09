@@ -1275,6 +1275,16 @@ class Step1PrepareTimePixImages:
         self.o_test = TestReconstruction(parent=self)
         self.o_test.select_slices()
 
+    def algorithms_to_use_for_test(self) -> None:
+        """
+        Select reconstruction algorithms for test reconstruction on TimePix slices.
+        
+        Provides interface for choosing which reconstruction algorithms to
+        apply during the test reconstruction phase on the selected TimePix
+        slices. Allows comparison of different algorithms before full processing.
+        """
+        self.o_test.select_algorithms()
+
     def run_reconstruction_of_slices_to_test(self) -> None:
         """
         Execute test reconstruction on selected TimePix slices.
