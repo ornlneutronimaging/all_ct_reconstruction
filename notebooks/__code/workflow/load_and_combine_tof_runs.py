@@ -7,7 +7,7 @@ wavelength channels, and this module handles the selection, filtering, and combi
 of runs based on angular positions and data quality criteria.
 
 Key Classes:
-    - CombineTof: Main class for TOF data combination operations
+    - LoadAndCombineTofRuns: Main class for TOF data combination operations
 
 Key Features:
     - Selective run inclusion/exclusion based on quality criteria
@@ -58,7 +58,7 @@ from __code.utilities.load import load_list_of_tif, load_data_using_multithreadi
 from __code.utilities.files import retrieve_list_of_tif
 
 
-class CombineTof(Parent):
+class LoadAndCombineTofRuns(Parent):
     """
     Handles combination and organization of time-of-flight neutron CT data.
     
@@ -149,7 +149,7 @@ class CombineTof(Parent):
 
         self.parent.list_of_runs = list_of_runs
 
-    def load_data(self, detector_type=DetectorType.tpx1_legacy) -> None:
+    def load_data(self, detector_type=DetectorType.tpx1_legacy, combine_runs_with_same_angle=False) -> None:
         """
         Load and organize TOF data for all selected runs by angular position.
         The timepix chips gaps will be auto-correctred during loading if needed.
@@ -160,6 +160,7 @@ class CombineTof(Parent):
        
         Params:
             detector_type: Type of detector used for data acquisition
+            combine_runs_with_same_angle: Whether to combine data from runs with the same angle
        
         Returns:
             None: Updates parent object with loaded and organized data
@@ -186,6 +187,8 @@ class CombineTof(Parent):
         """
 
         logging.info(f"loading data ...")
+        logging.info(f"\t{detector_type = }")
+        logging.info(f"\t{combine_runs_with_same_angle = }")
 
         # for sample
         logging.info(f"\tworking with sample")
@@ -244,7 +247,7 @@ class CombineTof(Parent):
                 _data: NDArray[np.floating] = self.load_data_for_a_run(run=_run,
                                                                        detector_type=detector_type, 
                                                                        data_type=DataType.ob)
-                logging.info(f"\t{_data.shape}")
+                logging.info(f"\t{_data.shape =}")
                 list_ob_data.append(_data)
                 final_list_of_runs[DataType.ob].append(_runs)
 

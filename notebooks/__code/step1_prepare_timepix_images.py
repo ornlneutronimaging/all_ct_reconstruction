@@ -72,7 +72,7 @@ from __code.config import DEBUG, default_detector_type, DISTANCE_SOURCE_DETECTOR
 from __code.workflow.load import Load
 from __code.workflow.checking_data import CheckingData
 from __code.workflow.recap_data import RecapData
-from __code.workflow.combine_tof import  CombineTof
+from __code.workflow.load_and_combine_tof_runs import  LoadAndCombineTofRuns
 from __code.workflow.images_cleaner import ImagesCleaner
 from __code.workflow.normalization import Normalization
 from __code.workflow.chips_correction import ChipsCorrection
@@ -449,15 +449,15 @@ class Step1PrepareTimePixImages:
             - Creates Load workflow object for integration configuration
             - Launches TimePix-optimized integration parameter interface
         """
-        o_check = CheckingData(parent=self)
-        o_check.checking_minimum_requirements()
+        self.o_check = CheckingData(parent=self)
+        self.o_check.checking_minimum_requirements()
         if self.minimum_requirements_met:           
-            o_combine = CombineTof(parent=self)
+            o_combine = LoadAndCombineTofRuns(parent=self)
             o_combine.update_list_of_runs_status()
             self.o_load = Load(parent=self)
             self.o_load.how_to_integrate()
         else:
-            o_check.minimum_requirement_not_met()
+            self.o_check.minimum_requirement_not_met()
 
     # def checkin_data_entries(self):
     #     o_check = CheckingData(parent=self)
@@ -465,42 +465,43 @@ class Step1PrepareTimePixImages:
 
     def load_images(self) -> None:
         # self.combine_images()
-        if self.minimum_requirements_met:           
-            o_combine = CombineTof(parent=self)
-            o_combine.load_data(detector_type=self.detector_type)
-        else:
-            self.o_check.minimum_requirement_not_met()
+        # if self.minimum_requirements_met:           
+        o_combine = LoadAndCombineTofRuns(parent=self)
+        o_combine.load_data(detector_type=self.detector_type,
+                            combine_runs_with_same_angle=self.how_to_treat_duplicate_angles_ui.value)
+        # else:
+        #     self.o_check.minimum_requirement_not_met()
 
-    # combine images
-    def combine_images(self) -> None:
-        """
-        Combine and organize TimePix images for reconstruction preparation.
+    # # combine images
+    # def combine_images(self) -> None:
+    #     """
+    #     Combine and organize TimePix images for reconstruction preparation.
         
-        Validates minimum requirements and combines multi-run TimePix imaging
-        data into organized 3D arrays suitable for CT reconstruction. Creates
-        master data structures with proper angular organization and metadata.
+    #     Validates minimum requirements and combines multi-run TimePix imaging
+    #     data into organized 3D arrays suitable for CT reconstruction. Creates
+    #     master data structures with proper angular organization and metadata.
         
-        This method:
-        - Checks minimum data requirements for reconstruction
-        - Combines TOF data from multiple runs
-        - Creates master_3d_data_array with organized imaging data
-        - Establishes final_list_of_runs and final_list_of_angles
-        - Organizes angular positions for proper CT geometry
+    #     This method:
+    #     - Checks minimum data requirements for reconstruction
+    #     - Combines TOF data from multiple runs
+    #     - Creates master_3d_data_array with organized imaging data
+    #     - Establishes final_list_of_runs and final_list_of_angles
+    #     - Organizes angular positions for proper CT geometry
         
-        Side Effects:
-            - Creates master_3d_data_array for sample and open beam data
-            - Populates final_list_of_runs with validated run information
-            - Establishes final_list_of_angles for reconstruction geometry
-            - Sets minimum_requirements_met flag based on data validation
-            - Displays requirement error if insufficient data available
-        """
-        o_check = CheckingData(parent=self)
-        o_check.checking_minimum_requirements()
-        if self.minimum_requirements_met:           
-            o_combine = CombineTof(parent=self)
-            o_combine.run()
-        else:
-            o_check.minimum_requirement_not_met()
+    #     Side Effects:
+    #         - Creates master_3d_data_array for sample and open beam data
+    #         - Populates final_list_of_runs with validated run information
+    #         - Establishes final_list_of_angles for reconstruction geometry
+    #         - Sets minimum_requirements_met flag based on data validation
+    #         - Displays requirement error if insufficient data available
+    #     """
+    #     o_check = CheckingData(parent=self)
+    #     o_check.checking_minimum_requirements()
+    #     if self.minimum_requirements_met:           
+    #         o_combine = CombineTof(parent=self)
+    #         o_combine.run()
+    #     else:
+    #         o_check.minimum_requirement_not_met()
 
     # visualization
     def how_to_visualize(self) -> None:

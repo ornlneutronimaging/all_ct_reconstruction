@@ -214,7 +214,7 @@ class Normalization(Parent):
                                         
         display(self.display_roi)
       
-    def normalize(self, ignore_dc=False):
+    def normalize(self, ignore_dc=False) -> None:
         master_3d_data = self.parent.master_3d_data_array
         
         if self.parent.master_3d_data_array[DataType.ob] is None:

@@ -266,6 +266,7 @@ class RecapData(Parent):
                     no_duplicate_final_list_of_sample.append(_run)  
             self.parent.list_of_sample_runs_to_reject_ui.value = [run for run in final_list_of_sample if run not in no_duplicate_final_list_of_sample]
             self.parent.list_of_sample_runs_to_reject_ui.disabled = False
+            
         else:
             self.parent.list_of_sample_runs_to_reject_ui.value = []
             self.parent.list_of_sample_runs_to_reject_ui.disabled = True
