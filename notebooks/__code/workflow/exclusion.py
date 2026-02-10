@@ -2,7 +2,8 @@ import logging
 import numpy as np
 from IPython.display import display, HTML
 import ipywidgets as widgets
-import matplotlib.pyplot as plt
+import plotly.graph_objects as go
+from plotly.offline import iplot
 from ipywidgets import interactive
 
 from __code.parent import Parent
@@ -51,20 +52,53 @@ class Exclusion(Parent):
 
         def on_threshold_change(threshold_value):
 
-            fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(7, 5))
-
             list_index_below_threshold = np.where(integrated_intensity < threshold_value)[0].tolist() 
             list_intensity_below_threshold = integrated_intensity[list_index_below_threshold]
 
-            ax.plot(integrated_intensity, 'g*', linestyle=None)
-            ax.plot(list_index_below_threshold, list_intensity_below_threshold, 'ro', linestyle=None)
-            ax.set_title(f"Integrated intensity (full image) vs image index")
-            ax.set_xlabel("Image index")
-            ax.set_ylabel("Integrated intensity (a.u.)")
-            ax.axhline(y=threshold_value, color='b', linestyle='--', label=f'Threshold = {threshold_value:.1f}')
-            ax.legend()
+            # Create plotly figure
+            fig = go.Figure()
 
-            plt.tight_layout()
+            # Add all data points (green stars)
+            fig.add_trace(go.Scatter(
+                x=list(range(len(integrated_intensity))),
+                y=integrated_intensity,
+                mode='markers',
+                marker=dict(color='green', symbol='star', size=8),
+                name='All images',
+                hovertemplate='Index: %{x}<br>Intensity: %{y:.2f}<extra></extra>'
+            ))
+
+            # Add points below threshold (red circles)
+            if list_index_below_threshold:
+                fig.add_trace(go.Scatter(
+                    x=list_index_below_threshold,
+                    y=list_intensity_below_threshold,
+                    mode='markers',
+                    marker=dict(color='red', symbol='circle', size=8),
+                    name='Below threshold',
+                    hovertemplate='Index: %{x}<br>Intensity: %{y:.2f}<extra></extra>'
+                ))
+
+            # Add threshold line
+            fig.add_hline(
+                y=threshold_value,
+                line_dash="dash",
+                line_color="blue",
+                annotation_text=f'Threshold = {threshold_value:.1f}',
+                annotation_position="top right"
+            )
+
+            # Update layout
+            fig.update_layout(
+                title='Integrated intensity (full image) vs image index',
+                xaxis_title='Image index',
+                yaxis_title='Integrated intensity (a.u.)',
+                width=700,
+                height=500,
+                showlegend=True
+            )
+
+            fig.show()
 
             return list_index_below_threshold
 
