@@ -42,7 +42,7 @@ def setup_logging(basename_of_log_file: str = "") -> str:
     if not os.path.exists(default_path):
         os.makedirs(default_path)
 
-    log_file_name: str = os.path.join(default_path, f"{USER_NAME}_{basename_of_log_file}.log")
+    log_file_name: str = os.path.join(default_path, f"{basename_of_log_file}_{USER_NAME}.log")
     logging.basicConfig(filename=log_file_name,
                         filemode='w',
                         format='[%(levelname)s] - %(asctime)s - %(message)s',
