@@ -43,10 +43,18 @@ def setup_logging(basename_of_log_file: str = "") -> str:
         os.makedirs(default_path)
 
     log_file_name: str = os.path.join(default_path, f"{basename_of_log_file}_{USER_NAME}.log")
-    logging.basicConfig(filename=log_file_name,
-                        filemode='w',
-                        format='[%(levelname)s] - %(asctime)s - %(message)s',
-                        level=logging.INFO)
+
+    # Remove existing handlers so we can redirect to a new file
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.INFO)
+    for handler in root_logger.handlers[:]:
+        root_logger.removeHandler(handler)
+        handler.close()
+
+    file_handler = logging.FileHandler(log_file_name, mode='w')
+    file_handler.setFormatter(logging.Formatter('[%(levelname)s] - %(asctime)s - %(message)s'))
+    root_logger.addHandler(file_handler)
+
     logging.info(f"*** Starting a new script {basename_of_log_file} ***")
 
     print(f"logging file: {log_file_name}")

@@ -266,11 +266,11 @@ class Step1PrepareTimePixImages:
         """
 
         self.configuration = Configuration()
-
+        setup_logging(basename_of_log_file=LOG_BASENAME_FILENAME)  
+        
         top_sample_dir = system.System.get_working_dir()
         self.top_sample_dir = top_sample_dir
-        self.instrument = system.System.get_instrument_selected()
-        setup_logging(basename_of_log_file=LOG_BASENAME_FILENAME)        
+        self.instrument = system.System.get_instrument_selected()     
     
         if DEBUG:
             logging.info(f"WARNING!!!! we are running using DEBUG mode!")

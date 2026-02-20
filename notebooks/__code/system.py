@@ -13,7 +13,11 @@ and provides methods for configuring the reconstruction pipeline.
 """
 
 from typing import Optional, List, Dict, ClassVar, Any
+
+from matplotlib.pylab import f
 from __code import config
+from __code.utilities.logging import setup_logging
+import logging
 import getpass
 import glob
 import os
@@ -82,9 +86,14 @@ class System:
             In production mode, an interactive file browser is displayed.
         """
 
+        setup_logging(basename_of_log_file="system")
+        logging.info(f"*** Starting system ***")
+
         try:
 
             debugging = config.debugging
+            logging.info(f"debugging: {debugging}")
+            
             if debugging:
                 print("** Using Debugging Mode! **")
 
@@ -98,12 +107,18 @@ class System:
                        </style>
                        """))
 
+            logging.info(f"facility: {facility}")
+            logging.info(f"instrument: {instrument}")
+            logging.info(f"ipts: {ipts}")
             if ipts:
                 if ipts.startswith('IPTS-'):
                     _, ipts_number = ipts.split('-')
                     cls.ipts_number = ipts_number
+                    logging.info(f"{cls.ipts_number = }")
 
             full_list_instruments = cls.get_full_list_instrument(instrument_to_exclude=instrument_to_exclude)
+            logging.info(f"full_list_instruments: {full_list_instruments}")
+            
             full_list_instruments.sort()
             if instrument in full_list_instruments:
                 default_instrument = instrument
@@ -113,7 +128,8 @@ class System:
             start_path = cls.get_start_path(debugger_folder=debugger_folder,
                                             system_folder=system_folder,
                                             instrument=default_instrument)
-
+            logging.info(f"start_path: {start_path}")
+            
             cls.start_path = start_path
 
             select_instrument_ui = widgets.HBox([widgets.Label("Select Instrument",
@@ -381,12 +397,17 @@ class System:
             In production mode, constructs paths based on facility/instrument structure.
         """
 
+        logging.info(f"Calculating start path with parameters: debugger_folder={debugger_folder}, system_folder={system_folder}, instrument={instrument}")
         facility: str = cls.get_facility_from_instrument(instrument=instrument)
+        logging.info(f"\t{facility = }")
 
         username: str = getpass.getuser()
+        logging.info(f"\tusername: {username}")
 
         debugging: bool = config.debugging
         debugger_username: str = config.debugger_username
+        logging.info(f"\tdebugging: {debugging}")
+        logging.info(f"\tdebugger_username: {debugger_username}")
 
         found_a_folder: bool = False
         if debugger_folder == '':
@@ -397,10 +418,11 @@ class System:
                     break
 
         if not found_a_folder:
+            logging.info(f"\tinside not found a debugger folder, using home folder")
             debugger_folder = './'
 
         if debugging and (username == debugger_username):
-            # print("** Using Debugging Mode! **")
+            logging.info("\t** Using Debugging Mode! **")
 
             # check that in debugging mode, on analysis machine, default folder exists
             import socket
@@ -410,14 +432,20 @@ class System:
                     debugging = False
 
             start_path = debugger_folder
+            logging.info(f"\tdebugger_folder: start_path={start_path}")
+            
         else:
             if system_folder == '':
+                logging.info(f"\t{system_folder} is empty, constructing start path based on facility and instrument")
                 start_path = "/{}/{}/".format(facility, instrument)
+                logging.info(f"\tconstructed start_path: {start_path}")
             else:
                 start_path = system_folder
+                logging.info(f"\tsystem_folder provided: start_path={start_path}")
             import warnings
             warnings.filterwarnings('ignore')
 
+        logging.info(f"Final start_path: {start_path}")
         return start_path
 
     @classmethod
@@ -530,7 +558,10 @@ class System:
             If working_dir is already set, returns that value.
             Otherwise, constructs path from start_path and UI selection.
         """
+        logging.info(f"Getting working directory. Current working_dir: {cls.working_dir}")
         if cls.working_dir:
+            logging.info(f"\tabout to return {cls.working_dir = }")
             return cls.working_dir
         else:
+            logging.info(f"\tabout to start_path: {os.path.join(cls.start_path, cls.working_dir_ui.value) = }")
             return os.path.join(cls.start_path, cls.working_dir_ui.value)
