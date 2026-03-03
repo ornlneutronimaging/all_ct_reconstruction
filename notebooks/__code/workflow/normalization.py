@@ -29,18 +29,20 @@ Author: CT Reconstruction Pipeline Team
 Created: Part of CT reconstruction development workflow
 """
 
-from typing import Optional, Tuple, Any, List, Union
+# from typing import Optional, Tuple, Any, List, Union
 import logging
 import numpy as np
-from numpy.typing import NDArray
+# from numpy.typing import NDArray
 import os
-import matplotlib.pyplot as plt
-from matplotlib.patches import Rectangle
+# import matplotlib.pyplot as plt
+# from matplotlib.patches import Rectangle
 from ipywidgets import interactive
 from IPython.display import display, HTML
 import ipywidgets as widgets
-from scipy.ndimage import median_filter
-import tomopy
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+# from scipy.ndimage import median_filter
+# import tomopy
 from copy import copy
 
 from __code.parent import Parent
@@ -49,7 +51,7 @@ from __code.workflow.load import Load
 from __code.workflow.export import Export
 from __code.utilities.files import make_or_reset_folder
 from __code.utilities.logging import logging_3d_array_infos
-from __code.workflow.final_projections_review import FinalProjectionsReview
+# from __code.workflow.final_projections_review import FinalProjectionsReview
 from __code.config import NUM_THREADS, DEBUG, roi
 
 
@@ -159,26 +161,24 @@ class Normalization(Parent):
 
         def plot_roi(left_right, top_bottom):
 
-            self.fig, self.axs = plt.subplots(nrows=1, ncols=1, figsize=(7,7), 
-                                            num="Normalization ROI Selection")
-            self.img = self.axs.imshow(integrated_images)
-            self.cbar = plt.colorbar(self.img, ax=self.axs, shrink=0.5)
-
             left, right = left_right
             top, bottom = top_bottom
 
-            height = np.abs(bottom - top) + 1
-            width = np.abs(right - left) + 1
+            roi_height = np.abs(bottom - top) + 1
+            roi_width = np.abs(right - left) + 1
 
-            self.rectangle = Rectangle((left, top), width, height,
-                                        edgecolor='yellow',
-                                        facecolor='green',
-                                        fill=True,
-                                        lw=2,
-                                        alpha=0.3,
-                                        )
-            self.axs.add_patch(self.rectangle)
-   
+            fig = make_subplots(rows=1, cols=1, subplot_titles=["Integrated Projections with ROI"])
+            fig.add_trace(go.Heatmap(z=integrated_images, colorscale='Viridis', showscale=True))
+            fig.add_shape(type='rect',
+                          x0=left, x1=left + roi_width,
+                          y0=top, y1=top + roi_height,
+                          line=dict(color='yellow', width=2),
+                          fillcolor='green',
+                          opacity=0.3)
+            fig.update_yaxes(autorange='reversed')
+            fig.update_layout(height=600, width=600, title='Normalization ROI Selection')
+            fig.show()
+
             return left, right, top, bottom                       
     
         if DEBUG:
