@@ -26,6 +26,7 @@ import ipywidgets as widgets
 from matplotlib.patches import Rectangle
 from typing import Tuple, Optional, Dict, Any
 from numpy.typing import NDArray
+import plotly.graph_objects as go
 
 from __code.parent import Parent
 from __code.config import DEBUG
@@ -161,25 +162,22 @@ class Crop(Parent):
                 integrated: NDArray[np.generic] = integrated_min
             else:
                 integrated: NDArray[np.generic] = integrated_mean
-            
-            fig, axs = plt.subplots(figsize=(7,7), num="Select Crop Region") 
-            img = axs.imshow(integrated, vmin=vmin, vmax=vmax)
-            cbar = plt.colorbar(img, ax=axs, shrink=0.5)
 
-            mean_or_min = "Min"
-            vmin_vmax = [0, vmax_default_value]
-    
             crop_width: int = right - left + 1
             crop_height: int = bottom - top + 1
 
-            self.rectangle = Rectangle((left, top), crop_width, crop_height,
-                                            edgecolor='yellow',
-                                            facecolor='green',
-                                            fill=True,
-                                            lw=2,
-                                            alpha=0.3,
-                                            )
-            axs.add_patch(self.rectangle)
+            fig = go.Figure()
+            fig.add_trace(go.Heatmap(z=integrated, colorscale='Viridis',
+                                     zmin=vmin, zmax=vmax, showscale=True))
+            fig.add_shape(type='rect',
+                          x0=left, x1=left + crop_width,
+                          y0=top, y1=top + crop_height,
+                          line=dict(color='yellow', width=2),
+                          fillcolor='green',
+                          opacity=0.3)
+            fig.update_yaxes(autorange='reversed')
+            fig.update_layout(height=600, width=600, title='Select Crop Region')
+            fig.show()
 
             return left, right, top, bottom            
         
