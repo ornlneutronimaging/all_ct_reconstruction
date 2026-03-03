@@ -171,15 +171,18 @@ class Load(Parent):
         try:
 
             if output_flag:
-                o_file_browser = FileFolderBrowser(working_dir=working_dir,
+                self.o_file_browser = FileFolderBrowser(working_dir=working_dir,
                                                 ipts_folder=self.parent.working_dir[DataType.ipts],
                                                 next_function=self.data_selected)
-                o_file_browser.select_output_folder_with_new(instruction=f"Select Top Folder of {data_type}")
+                self.o_file_browser.select_output_folder_with_new(instruction=f"Select Top Folder of {data_type}")
             else:
-                o_file_browser = FileFolderBrowser(working_dir=working_dir,
+                self.o_file_browser = FileFolderBrowser(working_dir=working_dir,
                                                 next_function=self.data_selected)
-                o_file_browser.select_input_folder(instruction=f"Select Top Folder of {data_type}",
+                self.o_file_browser.select_input_folder(instruction=f"Select Top Folder of {data_type}",
                                                 multiple_flag=multiple_flag)
+                
+            self.out = widgets.Output()
+            display(self.out)
 
         except NotADirectoryError as e:
             logging.error(f"Error selecting folder: {e}. You probably forgot to select your IPTS in the first cell!")
@@ -214,9 +217,9 @@ class Load(Parent):
                 
             # working_dir = os.path.abspath(os.path.expanduser("~"))
 
-        o_file_browser = FileFolderBrowser(working_dir=working_dir,
+        self.o_file_browser = FileFolderBrowser(working_dir=working_dir,
                                            next_function=self.images_selected)
-        o_file_browser.select_images_with_search(instruction="Select all images ...",
+        self.o_file_browser.select_images_with_search(instruction="Select all images ...",
                                                  filters={"TIFF": "*.tif*", "FITS": "*.fits*"},
                                                  default_filter="TIFF",)
     
@@ -463,6 +466,11 @@ class Load(Parent):
         display(HTML(f"<font color='green'><b>{self.data_type} folder selected</b>: {top_folder}</font>"))
         # loguru_logging.info(f"{self.data_type} folder selected: {top_folder} via LOGURU"  )
         logging.info(f"{self.data_type} folder selected: {top_folder}")
+
+        try:
+            self.o_file_browser.list_output_folders_ui.shortcut_buttons.close() # close the jump to shared and home buttons 
+        except AttributeError:
+            pass
 
         if self.parent.MODE == OperatingMode.white_beam:
             list_images = glob.glob(os.path.join(top_folder, "*.tif*"))

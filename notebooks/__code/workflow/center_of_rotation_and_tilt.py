@@ -582,14 +582,15 @@ class CenterOfRotationAndTilt(Parent):
         # display(self.cor_selection)
 
     def calculate_center_of_rotation(self):
-        self.calc_cor_with_algotom()
+        continue_flag = self.calc_cor_with_algotom()
+        return continue_flag
 
     def calc_cor_with_algotom(self):
 
         if self.auto_mode_ui.value == "Manual":
             print(f"center of rotation selected: {self.manual_center_selection.result}")
             self.parent.configuration.center_of_rotation = self.manual_center_selection.result
-            return
+            return False
         
         logging.info(f"calculate center of rotation using algotom (auto mode)")
        
@@ -617,6 +618,7 @@ class CenterOfRotationAndTilt(Parent):
        
         logging.info(f"center of rotation = {center_of_rotation}")
         self.parent.configuration.center_of_rotation = center_of_rotation
+        return True
     
     def test_center_of_rotation_calculated(self):
         center_of_rotation_calculated = self.parent.configuration.center_of_rotation

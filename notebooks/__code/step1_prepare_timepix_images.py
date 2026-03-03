@@ -1242,7 +1242,9 @@ class Step1PrepareTimePixImages:
             - Launches center of rotation calculation interface
             - Allows user choice between calculation and manual specification
         """
-        self.o_tilt.calculate_center_of_rotation()
+        continue_flag = self.o_tilt.calculate_center_of_rotation()
+        if continue_flag:
+            self.display_center_of_rotation()
 
     def display_center_of_rotation(self) -> None:
         """

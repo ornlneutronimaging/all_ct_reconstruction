@@ -35,6 +35,8 @@ from ipywidgets import interactive
 import numpy as np
 from numpy.typing import NDArray
 from tomopy.misc.corr import remove_outlier
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
 from __code.parent import Parent
 from __code import DataType
@@ -648,41 +650,33 @@ class Visualization(Parent):
         # ratio firt / last
         ratio_last_first = sample_proj_last / sample_proj_first
 
-        fig0, axs0 = plt.subplots(nrows=1, ncols=2, figsize=(15, 7))
+        # Figure 1: Sample min and OB min side by side
+        fig0 = make_subplots(rows=1, cols=2,
+                             subplot_titles=("Sample (np.min)", "OB (np.min)"))
+        fig0.add_trace(go.Heatmap(z=sample_proj_min, colorscale='Viridis', showscale=True), row=1, col=1)
+        fig0.add_trace(go.Heatmap(z=ob_proj_min, colorscale='Viridis', showscale=True), row=1, col=2)
+        fig0.update_yaxes(autorange='reversed')  # match imshow orientation
+        fig0.update_layout(height=500, width=800)
+        fig0.show()
 
-
-        im0 = axs0[0].imshow(sample_proj_min)
-        axs0[0].set_title("Sample (np.min)")
-        plt.colorbar(im0, ax=axs0[0], shrink=0.5)
-
-        im1 = axs0[1].imshow(ob_proj_min)
-        axs0[1].set_title("OB (np.min)")
-        plt.colorbar(im1, ax=axs0[1], shrink=0.5)
-
-        fig1, axs1 = plt.subplots(nrows=1, ncols=3, figsize=(15, 7))
-
-        im3 = axs1[0].imshow(sample_proj_first)
-        axs1[0].set_title(f"Sample at angle {list_of_angles[0]}")
-        plt.colorbar(im3, ax=axs1[0], shrink=0.5)
-
-        im4 = axs1[1].imshow(sample_proj_last)
-        axs1[1].set_title(f"Sample at angle {list_of_angles[-1]}")
-        plt.colorbar(im4, ax=axs1[1], shrink=0.5)
-
-        im5 = axs1[2].imshow(ratio_last_first, vmin=0.9, vmax=1.1)
-        axs1[2].set_title("Ratio last/first")
-        plt.colorbar(im5, ax=axs1[2], shrink=0.5)
+        # Figure 2: First angle, last angle, and ratio
+        fig1 = make_subplots(rows=1, cols=3,
+                             subplot_titles=(f"Sample at angle {list_of_angles[0]}",
+                                             f"Sample at angle {list_of_angles[-1]}",
+                                             "Ratio last/first"))
+        fig1.add_trace(go.Heatmap(z=sample_proj_first, colorscale='Viridis', showscale=True), row=1, col=1)
+        fig1.add_trace(go.Heatmap(z=sample_proj_last, colorscale='Viridis', showscale=True), row=1, col=2)
+        fig1.add_trace(go.Heatmap(z=ratio_last_first, colorscale='Viridis', showscale=True,
+                                  zmin=0.9, zmax=1.1), row=1, col=3)
+        fig1.update_yaxes(autorange='reversed')
+        fig1.update_layout(height=500, width=1100)
+        fig1.show()
 
         if (self.mode == 'cleaned') and (self.parent.histogram_sample_before_cleaning is not None):
 
             # display histogram of sample before and after
-            fig, axs = plt.subplots(nrows=2, ncols=1)
-            
             flatten_raw_histogram = self.parent.histogram_sample_before_cleaning.flatten()
-            # _, sample_bin_edges = np.histogram(flatten_raw_histogram, bins=100, density=False)
-            axs[0].hist(flatten_raw_histogram, bins=100)
-            axs[0].set_title('raw sample histogram')
-            axs[0].set_yscale('log')
+            raw_counts, raw_bin_edges = np.histogram(flatten_raw_histogram, bins=100)
 
             edge_nbr_pixels = clean_paras['edge_nbr_pixels']
 
@@ -690,9 +684,13 @@ class Visualization(Parent):
             histogram_corrected_data = corrected_data.sum(axis=0)[edge_nbr_pixels: -edge_nbr_pixels,
                                                         edge_nbr_pixels: -edge_nbr_pixels]
             flatten_corrected_histogram = histogram_corrected_data.flatten()
-            axs[1].hist(flatten_corrected_histogram, bins=100)
-            axs[1].set_title('cleaned sample histogram')
-            axs[1].set_yscale('log')
+            cleaned_counts, cleaned_bin_edges = np.histogram(flatten_corrected_histogram, bins=100)
 
-            plt.tight_layout()
-            plt.show()
+            fig_hist = make_subplots(rows=2, cols=1,
+                                    subplot_titles=('raw sample histogram', 'cleaned sample histogram'))
+            fig_hist.add_trace(go.Bar(x=raw_bin_edges[:-1], y=raw_counts, name='raw'), row=1, col=1)
+            fig_hist.add_trace(go.Bar(x=cleaned_bin_edges[:-1], y=cleaned_counts, name='cleaned'), row=2, col=1)
+            fig_hist.update_yaxes(type='log', row=1, col=1)
+            fig_hist.update_yaxes(type='log', row=2, col=1)
+            fig_hist.update_layout(height=600, width=800, showlegend=False)
+            fig_hist.show()
