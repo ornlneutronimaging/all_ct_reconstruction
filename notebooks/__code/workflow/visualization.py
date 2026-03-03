@@ -371,24 +371,18 @@ class Visualization(Parent):
                     # _run_number = list_of_images[image_index]
                     _raw_data = data_before[image_index * coeff]
                     
-                    self.fig0, axs = plt.subplots(nrows=2, ncols=1, 
-                                                    figsize=(5, 10),
-                                                    num="Visualization")
-                    
-                    img_before = axs[0].imshow(_raw_data,
-                                                vmin=vmin_before, 
-                                                vmax=vmax_before)
-                    plt.colorbar(img_before, ax=axs[0], shrink=0.5)
-                    axs[0].set_title(label_before)
-                    
-                    img_after = axs[1].imshow(_norm_data,
-                                                vmin=vmin_after, 
-                                                vmax=vmax_after)
-                    plt.colorbar(img_after, ax=axs[1], shrink=0.5)
-                    axs[1].set_title(label_after)
-                    
-                    # plt.tight_layout()
-                    plt.show()
+                    fig = make_subplots(rows=2, cols=1,
+                                        subplot_titles=(label_before, label_after),
+                                        vertical_spacing=0.08)
+                    fig.add_trace(go.Heatmap(z=_raw_data, colorscale='Viridis',
+                                            zmin=vmin_before, zmax=vmax_before,
+                                            showscale=True), row=1, col=1)
+                    fig.add_trace(go.Heatmap(z=_norm_data, colorscale='Viridis',
+                                            zmin=vmin_after, zmax=vmax_after,
+                                            showscale=True), row=2, col=1)
+                    fig.update_yaxes(autorange='reversed')
+                    fig.update_layout(height=800, width=500)
+                    fig.show()
 
                 display_plot = interactive(plot_norm,
                                         image_index=widgets.IntSlider(min=0,
@@ -432,24 +426,19 @@ class Visualization(Parent):
 
                 def plot_norm(image_index=0):
 
-                    fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
-
                     _norm_data = data_after[image_index]
                     # _run_number = list_of_images[image_index]
                     _raw_data = data_before[image_index * coeff]
 
-                    im0 = axs[0].imshow(_raw_data)
-                    axs[0].set_title(label_before)
-                    plt.colorbar(im0, ax=axs[0], shrink=0.5)
-
-                    im1 = axs[1].imshow(_norm_data)
-                    axs[1].set_title(label_after)
-                    plt.colorbar(im1, ax=axs[1], shrink=0.5)
-            
-                    # fig.set_title(f"{_run_number}")
-                    
-                    plt.tight_layout()
-                    plt.show()
+                    fig = make_subplots(rows=1, cols=2,
+                                        subplot_titles=(label_before, label_after))
+                    fig.add_trace(go.Heatmap(z=_raw_data, colorscale='Viridis',
+                                            showscale=True), row=1, col=1)
+                    fig.add_trace(go.Heatmap(z=_norm_data, colorscale='Viridis',
+                                            showscale=True), row=1, col=2)
+                    fig.update_yaxes(autorange='reversed')
+                    fig.update_layout(height=500, width=1000)
+                    fig.show()
 
                 display_plot = interactive(plot_norm,
                                         image_index=widgets.IntSlider(min=0,

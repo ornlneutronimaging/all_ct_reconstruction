@@ -49,6 +49,8 @@ from IPython.display import HTML
 from ipywidgets import interactive
 from typing import Optional, List, Tuple
 from numpy.typing import NDArray
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
 from __code.parent import Parent
 from __code import DataType
@@ -127,39 +129,38 @@ class FinalProjectionsReview(Parent):
         nbr_cols: int = 5
         nbr_rows: int = int(np.ceil(nbr_images / nbr_cols))
 
-        fig, axs = plt.subplots(nrows=nbr_rows, ncols=nbr_cols,
-                                figsize=(nbr_cols*2,nbr_rows*2))
-        flat_axs = axs.flatten()
-
         if auto_vrange:
-            vmin: float = np.min(array)
-            vmax: float = np.max(array)
+            vmin: float = float(np.min(array))
+            vmax: float = float(np.max(array))
         else:
             vmin = 0.0
             vmax = 1.0
+
+        fig = make_subplots(rows=nbr_rows, cols=nbr_cols,
+                            horizontal_spacing=0.02,
+                            vertical_spacing=0.02)
 
         _index: int = 0
         # list_runs_with_infos = []
         for _row in np.arange(nbr_rows):
             for _col in np.arange(nbr_cols):
                 _index = _col + _row * nbr_cols
-                if _index == (nbr_images):
+                if _index == nbr_images:
                     break
                 # title = f"{list_runs[_index]}, {list_angles[_index]}"
                 # list_runs_with_infos.append(title)
-                # flat_axs[_index].set_title(title)
-                im1 = flat_axs[_index].imshow(array[_index], vmin=vmin, vmax=vmax)
-                plt.colorbar(im1, ax=flat_axs[_index], shrink=0.5)
-           
-        for _row in np.arange(nbr_rows):
-            for _col in np.arange(nbr_cols):
-                _index = _col + _row * nbr_cols
-                flat_axs[_index].axis('off')
+                fig.add_trace(go.Heatmap(z=array[_index],
+                                         colorscale='Viridis',
+                                         zmin=vmin, zmax=vmax,
+                                         showscale=(int(_index) == 0)),
+                              row=int(_row + 1), col=int(_col + 1))
 
         # self.list_runs_with_infos = list_runs_with_infos
 
-        plt.tight_layout()
-        plt.show()
+        fig.update_yaxes(autorange='reversed', showticklabels=False)
+        fig.update_xaxes(showticklabels=False)
+        # fig.update_layout(height=nbr_rows * 200, width=nbr_cols * 200)
+        fig.show()
 
     def single_image(self, image: Optional[NDArray[np.floating]] = None) -> None:
         """
