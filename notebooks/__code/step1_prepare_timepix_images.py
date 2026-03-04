@@ -211,6 +211,8 @@ class Step1PrepareTimePixImages:
     before_rebinning: Optional[NDArray] = None
     instrument: str = "VENUS"
 
+    histogram_sample_before_cleaning = None  # to keep the histogram of the sample before cleaning (to check if we are removing too much pixels during cleaning)
+    
     selection_of_pc: Optional[Any] = None   # plot that allows the user to select the pc for sample and ob and threshold
 
     list_of_sample_runs_to_reject_ui: Optional[Any] = None

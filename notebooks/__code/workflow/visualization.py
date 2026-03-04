@@ -663,24 +663,41 @@ class Visualization(Parent):
 
         # Figure 1: Sample min and OB min side by side
         fig0 = make_subplots(rows=1, cols=2,
+                             horizontal_spacing=0.15,
                              subplot_titles=("Sample (np.min)", "OB (np.min)"))
-        fig0.add_trace(go.Heatmap(z=sample_proj_min, colorscale='Viridis', showscale=True), row=1, col=1)
-        fig0.add_trace(go.Heatmap(z=ob_proj_min, colorscale='Viridis', showscale=True), row=1, col=2)
+        fig0.add_trace(go.Heatmap(z=sample_proj_min, colorscale='Viridis',
+                                  coloraxis='coloraxis1'), row=1, col=1)
+        fig0.add_trace(go.Heatmap(z=ob_proj_min, colorscale='Viridis',
+                                  coloraxis='coloraxis2'), row=1, col=2)
         fig0.update_yaxes(autorange='reversed')  # match imshow orientation
-        fig0.update_layout(height=500, width=800)
+        fig0.update_layout(height=500, width=1000,
+                           coloraxis1=dict(colorscale='Viridis',
+                                           colorbar=dict(x=0.44, len=0.9, thickness=15)),
+                           coloraxis2=dict(colorscale='Viridis',
+                                           colorbar=dict(x=1.0, len=0.9, thickness=15)))
         fig0.show()
 
         # Figure 2: First angle, last angle, and ratio
         fig1 = make_subplots(rows=1, cols=3,
+                             horizontal_spacing=0.15,
                              subplot_titles=(f"Sample at angle {list_of_angles[0]}",
                                              f"Sample at angle {list_of_angles[-1]}",
                                              "Ratio last/first"))
-        fig1.add_trace(go.Heatmap(z=sample_proj_first, colorscale='Viridis', showscale=True), row=1, col=1)
-        fig1.add_trace(go.Heatmap(z=sample_proj_last, colorscale='Viridis', showscale=True), row=1, col=2)
-        fig1.add_trace(go.Heatmap(z=ratio_last_first, colorscale='Viridis', showscale=True,
-                                  zmin=0.9, zmax=1.1), row=1, col=3)
+        fig1.add_trace(go.Heatmap(z=sample_proj_first, colorscale='Viridis',
+                                  coloraxis='coloraxis1'), row=1, col=1)
+        fig1.add_trace(go.Heatmap(z=sample_proj_last, colorscale='Viridis',
+                                  coloraxis='coloraxis2'), row=1, col=2)
+        fig1.add_trace(go.Heatmap(z=ratio_last_first, colorscale='Viridis',
+                                  coloraxis='coloraxis3'), row=1, col=3)
         fig1.update_yaxes(autorange='reversed')
-        fig1.update_layout(height=500, width=1100)
+        fig1.update_layout(height=500, width=1000,
+                           coloraxis1=dict(colorscale='Viridis',
+                                           colorbar=dict(x=0.24, len=0.9, thickness=15)),
+                           coloraxis2=dict(colorscale='Viridis',
+                                           colorbar=dict(x=0.61, len=0.9, thickness=15)),
+                           coloraxis3=dict(colorscale='Viridis',
+                                           cmin=0.9, cmax=1.1,
+                                           colorbar=dict(x=1.0, len=0.9, thickness=15)))
         fig1.show()
 
         if (self.mode == 'cleaned') and (self.parent.histogram_sample_before_cleaning is not None):
