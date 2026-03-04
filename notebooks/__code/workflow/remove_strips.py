@@ -256,8 +256,15 @@ class RemoveStrips:
 
         self.image_index = 0
 
+        default_vmin = float(np.percentile(normalized_images, 2))
+        default_vmax = float(np.percentile(normalized_images, 98))
+        
+        vmin = np.min(normalized_images)
+        vmax = np.max(normalized_images)
+
         def select_range_of_data(left_right=[default_left_slice, default_right_slice], 
                                  top_bottom=[default_top_slice, default_bottom_slice],
+                                 vrange=None,
                                  image_index=0):
                 
             left_slice, right_slice = left_right
@@ -270,7 +277,9 @@ class RemoveStrips:
             fig.add_trace(go.Heatmap(
                 z=normalized_images[image_index],
                 colorscale='Viridis',
-                showscale=True
+                showscale=True,
+                zmin=vrange[0] if vrange else None,
+                zmax=vrange[1] if vrange else None
             ))
             
             # Add rectangle for ROI
@@ -310,6 +319,12 @@ class RemoveStrips:
                                                                                           default_bottom_slice),
                                                                                    description="Top - Bottom",
                                                                                    layout=widgets.Layout(width='50%')),
+                                                vrange = widgets.FloatRangeSlider(min=vmin,
+                                                                                 max=vmax,
+                                                                                 value=(default_vmin, default_vmax),
+                                                                                 description="Data range",
+                                                                                 continuous_update=False,
+                                                                                 layout=widgets.Layout(width='50%')),
                                                 image_index=widgets.IntSlider(min=0,
                                                                                 max=nbr_projections-1,
                                                                                 value=0,

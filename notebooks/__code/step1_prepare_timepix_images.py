@@ -59,6 +59,7 @@ import logging
 import ipywidgets as widgets
 from collections import OrderedDict
 from typing import Optional, Dict, List, Any, Union
+from matplotlib.pylab import f
 import numpy as np
 from numpy.typing import NDArray
 from IPython.display import display
@@ -1003,9 +1004,14 @@ class Step1PrepareTimePixImages:
         logging.info("Applying log conversion and final cleaning...")
         logging.info(f"\t{np.shape(self.normalized_images) = }")
         logging.info(f"\t{type(self.normalized_images) = }")
+        logging.info(f"\t{np.min(self.normalized_images) = }")
+        logging.info(f"\t{np.max(self.normalized_images) = }")
         
         # apply a tiny offset to avoid log(0)
         self.normalized_images[:] += 1e-6
+        
+        # clip values above 1 to 1 to avoid negative values after log conversion
+        self.normalized_images[:] = np.clip(self.normalized_images[:], a_min=None, a_max=1)
         
         normalized_images_log = log_conversion(self.normalized_images[:])
         o_cleaner = ImagesCleaner(parent=self)

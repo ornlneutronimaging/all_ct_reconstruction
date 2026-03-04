@@ -206,7 +206,7 @@ class LoadAndCombineTofRuns(Parent):
         list_sample_data: List[NDArray[np.floating]] = []
         final_list_of_runs: Dict[DataType, List[str]] = {DataType.sample: [], DataType.ob: []}
 
-        for _angle in tqdm(list_angles):
+        for _angle in tqdm(list_angles, desc="Loading samples:"):
             _runs: list = list_angles_deg_vs_runs_dict[_angle]
             logging.info(f"Working with angle {_angle} degrees")
 
@@ -238,7 +238,7 @@ class LoadAndCombineTofRuns(Parent):
 
         list_ob_data: List[NDArray[np.floating]] = []
 
-        for _run in tqdm(list_of_runs[DataType.ob]):
+        for _run in tqdm(list_of_runs[DataType.ob], desc="Loading OB runs:"):
             logging.info(f"Working with run {_run}")
             use_it: bool = list_of_runs[DataType.ob][_run][Run.use_it]
             if use_it:

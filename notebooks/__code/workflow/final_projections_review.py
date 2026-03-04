@@ -190,11 +190,13 @@ class FinalProjectionsReview(Parent):
         if image is None:
             return
 
-        fig, ax = plt.subplots(num="After rotation")
-        im1 = ax.imshow(image, vmin=0, vmax=1)
-        plt.colorbar(im1, ax=ax, shrink=0.5)
-        ax.axis('off')
-        plt.show()
+        fig = go.Figure()
+        fig.add_trace(go.Heatmap(z=image, colorscale='Viridis',
+                                 zmin=0, zmax=1, showscale=True))
+        fig.update_yaxes(autorange='reversed', showticklabels=False)
+        fig.update_xaxes(showticklabels=False)
+        fig.update_layout(height=500, width=500, title='After rotation')
+        fig.show()
 
     def stack_of_images(self, array: Optional[NDArray[np.floating]] = None) -> None:
         """
@@ -230,11 +232,14 @@ class FinalProjectionsReview(Parent):
 
         def plot_images(index: int) -> None:
             """Plot individual projection with rotation axis overlay."""
-            fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(5, 5))
             image: NDArray[np.floating] = array[index]
-            ax.imshow(image, cmap='viridis', vmin=0, vmax=1)
-            ax.axvline(x=horizontal_center, color='red', linestyle='--', label='Rotation Axis')
-            ax.set_title(f"Image {index}")
+            fig = go.Figure()
+            fig.add_trace(go.Heatmap(z=image, colorscale='Viridis',
+                                     zmin=0, zmax=1, showscale=True))
+            fig.add_vline(x=horizontal_center, line=dict(color='red', width=2, dash='dash'))
+            fig.update_yaxes(autorange='reversed')
+            fig.update_layout(height=500, width=500, title=f"Image {index}")
+            fig.show()
 
         display_plot_images = interactive(plot_images, 
                                           index=widgets.IntSlider(min=0, 

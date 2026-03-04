@@ -52,6 +52,8 @@ from functools import partial
 import matplotlib.pyplot as plt
 from typing import Optional, Tuple, Union
 from numpy.typing import NDArray
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
 from __code.parent import Parent
 
@@ -168,17 +170,19 @@ class Rotate(Parent):
         vbox: widgets.VBox = widgets.VBox([title_ui, self.angle_ui])
         display(vbox)
 
-        fig, axs = plt.subplots(nrows=2, ncols=1, figsize=(5, 10), num="Rotation Preview")
-
         image_normal: NDArray[np.floating] = self.parent.normalized_images[0]
-        #image_rot_plut_90 = transform.rotate(self.parent.normalized_images[0], +90)
         image_rot_plus_90: NDArray[np.floating] = self.parent.normalized_images[0].swapaxes(-2, -1)[..., ::-1]
 
-        axs[0].imshow(image_normal, cmap='viridis', vmin=0, vmax=1)
-        axs[0].set_title('0 degree')
-
-        axs[1].imshow(image_rot_plus_90, cmap='viridis', vmin=0, vmax=1)
-        axs[1].set_title('+90 degrees')
+        fig = make_subplots(rows=2, cols=1,
+                            subplot_titles=('0 degree', '+90 degrees'),
+                            vertical_spacing=0.08)
+        fig.add_trace(go.Heatmap(z=image_normal, colorscale='Viridis',
+                                 zmin=0, zmax=1, showscale=True), row=1, col=1)
+        fig.add_trace(go.Heatmap(z=image_rot_plus_90, colorscale='Viridis',
+                                 zmin=0, zmax=1, showscale=True), row=2, col=1)
+        fig.update_yaxes(autorange='reversed')
+        fig.update_layout(height=800, width=500, title='Rotation Preview')
+        fig.show()
 
     def _worker(self, _data: NDArray[np.floating], angle_value: float) -> NDArray[np.floating]:
         """

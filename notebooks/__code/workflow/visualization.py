@@ -526,47 +526,69 @@ class Visualization(Parent):
                            left=None, vmin_left=None, vmax_left=None, 
                            right=None, vmin_right=None, vmax_right=None):
 
+        if vmin_left is None:
+            vmin_left = np.min(left)
+        if vmax_left is None:             
+            vmax_left = np.max(left)
+        if vmin_right is None:
+            vmin_right = np.min(right)
+        if vmax_right is None:
+            vmax_right = np.max(right)
+
         self.vmin_left = vmin_left
         self.vmax_left = vmax_left
         self.vmin_right = vmin_right
         self.vmax_right = vmax_right
-
-        # self.fig, self.axs = plt.subplots(nrows=2, ncols=1, figsize=(5, 8), num="Visualization")
         
-        # self.img_before = m0 = self.axs[0].imshow(left[0], vmin=self.vmin_left, vmax=self.vmax_left)
-        # self.axs[0].set_title("normalized")
-        # self.cbar_before = plt.colorbar(m0, ax=self.axs[0], shrink=0.5)
+        # get default vleft and vright ranges        
+        default_vmin_left = float(np.percentile(left, 2))
+        default_vmax_left = float(np.percentile(left, 98))
+        default_vmin_right = float(np.percentile(right, 2))
+        default_vmax_right = float(np.percentile(right, 98))
         
-        # self.img_after = m1 = self.axs[1].imshow(right[0], vmin=self.vmin_right, vmax=self.vmax_right)
-        # self.axs[1].set_title("log(normalized)")
-        # self.cbar_after = plt.colorbar(m1, ax=self.axs[1], shrink=0.5)
+        def plot_images(index=0, vrange_before=None, vrange_after=None):
 
-        def plot_images(index=0):
+            if vrange_before is not None:
+                vmin_left = vrange_before[0]
+                vmax_left = vrange_before[1]
 
-            fig, axs = plt.subplots(nrows=2, ncols=1, figsize=(5, 8), num="Visualization")
+            if vrange_after is not None:
+                vmin_right = vrange_after[0]
+                vmax_right = vrange_after[1]
 
-            vmin_left = np.min(left[index])
-            vmax_left = np.max(left[index])
-
-            img_before = m0 = axs[0].imshow(left[index], vmin=vmin_left, vmax=vmax_left)
-            axs[0].set_title("normalized")
-            cbar_before = plt.colorbar(m0, ax=axs[0], shrink=0.5)
-             
-            vmin_right = np.min(right[index])
-            vmax_right = np.max(right[index])
-            
-            img_after = m1 = axs[1].imshow(right[index], vmin=vmin_right, vmax=vmax_right)
-            axs[1].set_title("log(normalized)")
-            cbar_after = plt.colorbar(m1, ax=axs[1], shrink=0.5)
-
-            # plt.tight_layout()
-            plt.show()
+            fig = make_subplots(rows=2, cols=1,
+                                subplot_titles=("normalized", "log(normalized)"),
+                                vertical_spacing=0.12)
+            fig.add_trace(go.Heatmap(z=left[index], colorscale='Viridis',
+                                     zmin=vmin_left, zmax=vmax_left,
+                                     coloraxis='coloraxis1'), row=1, col=1)
+            fig.add_trace(go.Heatmap(z=right[index], colorscale='Viridis',
+                                     zmin=vmin_right, zmax=vmax_right,
+                                     coloraxis='coloraxis2'), row=2, col=1)
+            fig.update_yaxes(autorange='reversed')
+            fig.update_layout(height=700, width=500,
+                              coloraxis1=dict(colorscale='Viridis', cmin=vmin_left, cmax=vmax_left,
+                                              colorbar=dict(y=0.77, len=0.4)),
+                              coloraxis2=dict(colorscale='Viridis', cmin=vmin_right, cmax=vmax_right,
+                                              colorbar=dict(y=0.23, len=0.4)))
+            fig.show()
 
         display_plot = interactive(plot_images,
                                 index=widgets.IntSlider(min=0,
                                                         max=len(left)-1,
                                                         layout=widgets.Layout(width='50%'),
                                                         value=0),
+                                vrange_before=widgets.FloatRangeSlider(min=vmin_left, 
+                                                                    max=vmax_left, 
+                                                                    value=[default_vmin_left, default_vmax_left],
+                                                                    continuous_update=False,
+                                                                    layout=widgets.Layout(width='50%')),
+                                vrange_after=widgets.FloatRangeSlider(min=vmin_right, 
+                                                                    max=vmax_right,
+                                                                    value=[default_vmin_right, default_vmax_right],
+                                                                    continuous_update=False,
+                                                                    layout=widgets.Layout(width='50%'))     
+                                
         )
         display(display_plot)
 
