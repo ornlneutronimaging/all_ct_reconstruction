@@ -3,6 +3,7 @@ import os
 import astra
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 import ipywidgets as widgets
 from IPython.display import HTML
 from ipywidgets import interactive
@@ -62,6 +63,12 @@ class TestReconstruction(Parent):
 
         default_top_value = int(height * 0.1)
         default_bottom_value = int(height * 0.9)
+
+        vmin = np.min(normalized_images_log)
+        vmax = np.max(normalized_images_log)
+        
+        default_vmin = float(np.percentile(normalized_images_log, 2))
+        default_vmax = float(np.percentile(normalized_images_log, 98))
 
         def plot_images(image_index: int, slice_1: int, slice_2: int, vrange: Tuple[float, float]) -> Tuple[int, int]:
             """
@@ -130,10 +137,10 @@ class TestReconstruction(Parent):
                                                              value=default_bottom_value, 
                                                              layout=widgets.Layout(width='50%'),
                                                              continuous_update=False),
-                                   vrange = widgets.FloatRangeSlider(min=0, 
-                                                                    max=max_value, 
+                                   vrange = widgets.FloatRangeSlider(min=vmin, 
+                                                                    max=vmax, 
                                                                     step=0.01, 
-                                                                    value=[0, max_value], 
+                                                                    value=[default_vmin, default_vmax], 
                                                                     layout=widgets.Layout(width='50%'),
                                                                     continuous_update=False),
                 )
@@ -344,43 +351,39 @@ class TestReconstruction(Parent):
             All images are displayed with 'viridis' colormap and vmin=0.
         """
 
-        fig, axs = plt.subplots(nrows=2, ncols=2, figsize=(10, 10))
+        algorithms = [
+            ('Gridrec', gridrec),
+            ('ASTRA', astra),
+            ('SVMBIR', svmbir),
+            ('MBIRJAX', mbirjax),
+        ]
 
-        if gridrec is None:
-            logging.warning("Gridrec reconstruction is None, skipping display.")
-            axs[0][0].set_visible(False)
-        else:
-            im0 = axs[0][0].imshow(gridrec, cmap='viridis', vmin=0)
-            plt.colorbar(im0, ax=axs[0][0], shrink=0.5)
-            axs[0][0].set_title(f"Slice: {slice} with Gridrec")
-            axs[0][0].axis('off')
+        # Filter out None results
+        available = [(name, data) for name, data in algorithms if data is not None]
+        for name, _ in algorithms:
+            if _ is None:
+                logging.warning(f"{name} reconstruction is None, skipping display.")
 
-        if astra is None:
-            logging.warning("ASTRA reconstruction is None, skipping display.")
-            axs[0][1].set_visible(False)
-        else:
-            im1 = axs[0][1].imshow(astra, cmap='viridis', vmin=0)
-            plt.colorbar(im1, ax=axs[0][1], shrink=0.5)
-            axs[0][1].set_title(f"Slice: {slice} ASTRA")
-            axs[0][1].axis('off')
+        if not available:
+            return
 
-        if svmbir is None:
-            logging.warning("SVMBIR reconstruction is None, skipping display.")
-            axs[1][0].set_visible(False)
-        else:
-            im2 = axs[1][0].imshow(svmbir, cmap='viridis', vmin=0)
-            plt.colorbar(im2, ax=axs[1][0], shrink=0.5)
-            axs[1][0].set_title(f"Slice: {slice} SVMBIR")
-            axs[1][0].axis('off')
+        n = len(available)
+        ncols = min(n, 2)
+        nrows = (n + 1) // 2
 
-        if mbirjax is None:
-            logging.warning("MBIRJAX reconstruction is None, skipping display.")
-            axs[1][1].set_visible(False)
-        else:
-            im3 = axs[1][1].imshow(mbirjax, cmap='viridis', vmin=0)
-            plt.colorbar(im3, ax=axs[1][1], shrink=0.5)
-            axs[1][1].set_title(f"Slice: {slice} MBIRJAX")
-            axs[1][1].axis('off')
+        titles = [f"Slice: {slice} {name}" for name, _ in available]
+        fig = make_subplots(rows=nrows, cols=ncols,
+                            subplot_titles=titles,
+                            horizontal_spacing=0.05,
+                            vertical_spacing=0.08)
 
-        plt.tight_layout()
-        plt.show()
+        for i, (name, data) in enumerate(available):
+            row = i // 2 + 1
+            col = i % 2 + 1
+            fig.add_trace(go.Heatmap(z=np.array(data), colorscale='Viridis',
+                                     zmin=0, showscale=True), row=row, col=col)
+
+        fig.update_yaxes(autorange='reversed', showticklabels=False)
+        fig.update_xaxes(showticklabels=False)
+        fig.update_layout(height=nrows * 450, width=ncols * 450)
+        fig.show()

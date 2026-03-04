@@ -45,6 +45,7 @@ Author: CT Reconstruction Pipeline Team
 Created: Part of CT reconstruction development workflow
 """
 
+import mkl_fft
 import numpy as np
 from IPython.display import display
 import ipywidgets as widgets
@@ -67,6 +68,14 @@ from __code import DataType, RemoveStripeAlgo, OperatingMode, WhenToRemoveStripe
 from __code.utilities import configuration_file
 from __code.utilities.logging import logging_3d_array_infos
 from __code.config import NUM_THREADS
+
+
+# import tomopy.util.misc as _tmisc
+
+# def _patched_fft(x, n=None, axis=-1, overwrite_input=False, extra_info=None):
+#     return mkl_fft.fft(x, n=n, axis=axis)
+
+# _tmisc.fft = _patched_fft
 
 
 class RemoveStrips:
@@ -111,24 +120,9 @@ class RemoveStrips:
     sinogram: Optional[NDArray[np.floating]] = None
     skip_remove_strips: bool = True
 
-    default_list_algo_to_use: List[RemoveStripeAlgo] = [RemoveStripeAlgo.remove_stripe_fw]
+    default_list_algo_to_use: List[RemoveStripeAlgo] = [RemoveStripeAlgo.remove_stripe_sf]
 
-    list_algo: Dict[RemoveStripeAlgo, Dict[str, Any]] = {RemoveStripeAlgo.remove_stripe_fw: {'help': 'Remove horizontal stripes from sinogram using the Fourier-Wavelet (FW) based method',
-                                             'function': stripe.remove_stripe_fw,
-                                             'settings': widgets.VBox([
-                                                            widgets.Text(value="None",
-                                                                            description="level"),
-                                                            widgets.Dropdown(options=['haar', 'db5', 'sym5'],
-                                                                             value='haar',
-                                                                description="wname"
-                                                            ),
-                                                            widgets.FloatText(value=2,
-                                                                            description="sigma"),
-                                                            widgets.Checkbox(value=True,
-                                                                            description='pad')
-                                                        ]),
-                },
-                 RemoveStripeAlgo.remove_stripe_ti: {'help': "Remove horizontal stripes from sinogram using Titarenko's approach [B13]",
+    list_algo: Dict[RemoveStripeAlgo, Dict[str, Any]] = { RemoveStripeAlgo.remove_stripe_ti: {'help': "Remove horizontal stripes from sinogram using Titarenko's approach [B13]",
                                              'function': stripe.remove_stripe_ti,
                                               'settings': widgets.VBox([
                                                                         widgets.IntText(value=0,
@@ -137,6 +131,21 @@ class RemoveStrips:
                                                                             description="alpha"),
                                                         ]),
                  },
+                # RemoveStripeAlgo.remove_stripe_fw: {'help': 'Remove horizontal stripes from sinogram using the Fourier-Wavelet (FW) based method',
+                #                              'function': stripe.remove_stripe_fw,
+                #                              'settings': widgets.VBox([
+                #                                             widgets.Text(value="None",
+                #                                                             description="level"),
+                #                                             widgets.Dropdown(options=['haar', 'db5', 'sym5'],
+                #                                                              value='haar',
+                #                                                 description="wname"
+                #                                             ),
+                #                                             widgets.FloatText(value=2,
+                #                                                             description="sigma"),
+                #                                             widgets.Checkbox(value=True,
+                #                                                             description='pad')
+                #                                         ]),
+                # },
                  RemoveStripeAlgo.remove_stripe_sf: {'help': "Normalize raw projection data using a smoothing filter approach.",
                                              'function': stripe.remove_stripe_sf,
                                               'settings': widgets.VBox([
@@ -639,7 +648,7 @@ class RemoveStrips:
             if self.parent.MODE == OperatingMode.tof:
                 title_text = f"Run: {final_list_of_runs[image_index]}, Angle: {final_list_of_angles[image_index]}"
 
-            fig_images = make_subplots(rows=1, cols=2, subplot_titles=("Before correction", "After correction"))
+            fig_images = make_subplots(rows=1, cols=2, subplot_titles=("Projections before correction", "Projections after correction"))
             fig_images.add_trace(
                 go.Heatmap(z=normalized_images_before[image_index], zmin=0, zmax=1, colorscale='Viridis'),
                 row=1, col=1
@@ -669,7 +678,7 @@ class RemoveStrips:
 
             fig_sino = make_subplots(
                 rows=1, cols=3,
-                subplot_titles=("Before correction", "After correction", "Difference (before - after)")
+                subplot_titles=("Sinogram before correction", "Sinogram after correction", "Difference (before - after)")
             )
             fig_sino.add_trace(
                 go.Heatmap(z=sinogram_before[slice_index], zmin=0, zmax=1, colorscale='Viridis'),

@@ -225,24 +225,33 @@ class CenterOfRotationAndTilt(Parent):
         vmin: float = np.min([self.image_0_degree, self.image_180_degree])
         vmax = np.max([self.image_0_degree, self.image_180_degree])
 
-        def plot_range(y_range, vrange):
+        default_zmin = float(np.percentile(self.image_0_degree, 2))
+        default_zmax = float(np.percentile(self.image_0_degree, 98))
 
-            fig, self.ax = plt.subplots(nrows=1, ncols=2, figsize=(10,5))
+        def plot_range(y_range, vrange):
 
             y_top, y_bottom = y_range
 
-            im0 = self.ax[0].imshow(self.image_0_degree, vmin=vrange[0], vmax=vrange[1])
-            self.cbar0 = plt.colorbar(im0, ax=self.ax[0], shrink=0.5)
-            self.ax[0].set_title(f"theory: 0 degree - measured: {self.real_0_degree_angle} degree")
-            self.ax[0].axhspan(y_top, y_bottom, color='blue', alpha=0.2)
+            fig = make_subplots(rows=1, cols=2,
+                                subplot_titles=(f"theory: 0 degree - measured: {self.real_0_degree_angle} degree",
+                                                f"theory: 180 degree - measured: {self.real_180_degree_angle} degree"))
+            fig.add_trace(go.Heatmap(z=self.image_0_degree, colorscale='Viridis',
+                                     zmin=vrange[0], zmax=vrange[1], showscale=True), row=1, col=1)
+            fig.add_trace(go.Heatmap(z=self.image_180_degree, colorscale='Viridis',
+                                     zmin=vrange[0], zmax=vrange[1], showscale=True), row=1, col=2)
 
-            im1 = self.ax[1].imshow(self.image_180_degree, vmin=vrange[0], vmax=vrange[1])
-            self.cbar1 = plt.colorbar(im1, ax=self.ax[1], shrink=0.5)
-            self.ax[1].set_title(f"theory: 180 degree - measured: {self.real_180_degree_angle} degree")
-            self.ax[1].axhspan(y_top, y_bottom, color='blue', alpha=0.2)
+            # Add horizontal band (y_range selection) on both subplots
+            for xref, yref in [("x", "y"), ("x2", "y2")]:
+                fig.add_shape(type="rect",
+                              x0=0, x1=np.shape(self.image_0_degree)[1],
+                              y0=y_top, y1=y_bottom,
+                              fillcolor='blue', opacity=0.2,
+                              line=dict(width=0),
+                              xref=xref, yref=yref)
 
-            plt.tight_layout()
-            plt.show()
+            fig.update_yaxes(autorange='reversed')
+            fig.update_layout(height=500, width=1000)
+            fig.show()
 
             return y_top, y_bottom
 
@@ -253,7 +262,7 @@ class CenterOfRotationAndTilt(Parent):
                                                                         layout=widgets.Layout(width="50%")),
                                         vrange = widgets.FloatRangeSlider(min=vmin,
                                                                           max=vmax,
-                                                                          value=[vmin, vmax],
+                                                                          value=[default_zmin, default_zmax],
                                                                             layout=widgets.Layout(width="50%")),
         )
 
@@ -267,7 +276,13 @@ class CenterOfRotationAndTilt(Parent):
     def display_before_after_tilt_correction(self):
                 
         height, width = np.shape(self.parent.normalized_images_log[0])
-                
+        
+        vmin = np.min(self.parent.normalized_images_log)
+        vmax = np.max(self.parent.normalized_images_log)
+        
+        default_vmin = float(np.percentile(self.parent.normalized_images_log, 2))
+        default_vmax = float(np.percentile(self.parent.normalized_images_log, 98))
+        
         def plot_before_after_tilt_correction(image_index, vertical_guide, vrange):
             image_before = self.parent.normalized_images_log[image_index]
             image_after = self.parent.temporary_normalized_images_log[image_index]
@@ -322,9 +337,9 @@ class CenterOfRotationAndTilt(Parent):
                                                                                                  layout=widgets.Layout(width="50%"),
                                                                                                  style={'description_width': '150px'},
                                                                                                  ),
-                                                                vrange=widgets.FloatRangeSlider(min=0,
-                                                                                                max=np.max(self.parent.normalized_images_log),
-                                                                                                value=[0, np.max(self.parent.normalized_images_log)],
+                                                                vrange=widgets.FloatRangeSlider(min=vmin,
+                                                                                                max=vmax,
+                                                                                                value=[default_vmin, default_vmax],
                                                                                                 style={'description_width': '150px'},
                                                                                                 layout=widgets.Layout(width="50%")),
         )
@@ -411,7 +426,10 @@ class CenterOfRotationAndTilt(Parent):
 
         _, width = np.shape(self.image_0_degree)
         vmax = np.max([self.image_0_degree, self.image_180_degree, self.image_360_degree])
-        vmax = 4 # debug
+        vmin = np.min([self.image_0_degree, self.image_180_degree, self.image_360_degree])
+        
+        default_vmin = float(np.percentile(self.image_0_degree, 2))
+        default_vmax = float(np.percentile(self.image_0_degree, 98))
 
         def plot_images(angles, center, v_range):
                 
@@ -466,10 +484,10 @@ class CenterOfRotationAndTilt(Parent):
                                                                       max=int(width-1), 
                                                                       layout=widgets.Layout(width="50%"),
                                                                       value=int(width/2)),
-                                    v_range = widgets.FloatRangeSlider(min=0,
+                                    v_range = widgets.FloatRangeSlider(min=vmin,
                                                                        max=vmax,
                                                                        layout=widgets.Layout(width='50%'),
-                                                                       value=[0, vmax]),
+                                                                       value=[default_vmin, default_vmax]),
 
                                     )                                                                     
         display(self.manual_center_selection)
@@ -502,7 +520,7 @@ class CenterOfRotationAndTilt(Parent):
 
         display(widgets.HTML("Select the slice to use to calculate the center of rotation"))
         # max_value = np.max([image_0_degree, image_180_degree, image_360_degree])
-        max_value = np.max([image_0_degree, image_180_degree])
+        # max_value = np.max([image_0_degree, image_180_degree])
         # max_value = 4 # DEBUG
 
         # self.fig, self.axs = plt.subplots(nrows=1, ncols=2, figsize=(10,5), 
@@ -517,6 +535,11 @@ class CenterOfRotationAndTilt(Parent):
         # self.axs[1].axhline(int(height/2), color='blue', linestyle='--')
 
         self.slice_value = int(height/2)
+        
+        default_vmin = float(np.percentile(image_0_degree, 2))
+        default_vmax = float(np.percentile(image_0_degree, 98))
+        min_value = np.min([image_0_degree, image_180_degree])
+        max_value = np.max([image_0_degree, image_180_degree])
         
         def plot_images(slice_value=int(height/2), vmin_vmax: list = None):
 
@@ -566,9 +589,9 @@ class CenterOfRotationAndTilt(Parent):
                                                                              max=height-1, 
                                                                              value=int(height/2),
                                                                              layout=widgets.Layout(width="50%")),
-                                            vmin_vmax=widgets.FloatRangeSlider(min=0, 
+                                            vmin_vmax=widgets.FloatRangeSlider(min=min_value, 
                                                                       max=max_value, 
-                                                                      value=[0, max_value],
+                                                                      value=[default_vmin, default_vmax],
                                                                       layout=widgets.Layout(width="50%")),
         )
         display(self.plot_slice_to_use)
@@ -628,7 +651,10 @@ class CenterOfRotationAndTilt(Parent):
 
         combined_images = 0.5*image_0_degree + 0.5*image_180_degree
         vmax = np.max(combined_images)
-        vmin = 0
+        vmin = np.min(combined_images)
+        
+        default_vmin = float(np.percentile(combined_images, 2))
+        default_vmax = float(np.percentile(combined_images, 98))
                  
         def plot_result(v_range):
             
@@ -660,7 +686,7 @@ class CenterOfRotationAndTilt(Parent):
                                     v_range = widgets.FloatRangeSlider(min=vmin,
                                                                        max=vmax,
                                                                        layout=widgets.Layout(width='50%'),
-                                                                       value=[0, vmax]),
+                                                                       value=[default_vmin, default_vmax]),
 
                                     )                                                                     
         display(manual_center_selection)
