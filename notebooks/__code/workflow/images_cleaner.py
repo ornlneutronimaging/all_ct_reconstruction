@@ -51,6 +51,8 @@ from ipywidgets import interactive
 from IPython.display import display
 from IPython.display import HTML
 import ipywidgets as widgets
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 from scipy.ndimage import median_filter
 from typing import Optional, List, Tuple, Union, Dict, Any
 from numpy.typing import NDArray
@@ -190,41 +192,44 @@ class ImagesCleaner(Parent):
             
             display(HTML("<h2> Histogram settings </h2>"))
             def plot_histogram(nbr_bins=100, nbr_exclude_left=1, nbr_exclude_right=1):
-            
-                fig, axs = plt.subplots(nrows=nrows, ncols=1)
-                
-                if self.ignore_ob:
-                    axs0 = axs
-                else:
-                    axs0 = axs[0]
-                    axs1 = axs[1]
-                
-                _, sample_bin_edges = np.histogram(sample_histogram.flatten(), bins=nbr_bins, density=False)
-                axs0.hist(sample_histogram.flatten(), bins=nbr_bins)
-                axs0.set_title('sample histogram')
-                axs0.set_yscale('log')
-                axs0.axvspan(sample_bin_edges[0], sample_bin_edges[nbr_exclude_left], facecolor='red', alpha=0.2)
-                axs0.axvspan(sample_bin_edges[-nbr_exclude_right-1], sample_bin_edges[-1], facecolor='red', alpha=0.2)
-                
-                if not self.ignore_ob:
-                    _, ob_bin_edges = np.histogram(ob_histogram.flatten(), bins=nbr_bins, density=False)
-                    axs1.hist(ob_histogram.flatten(), bins=nbr_bins)
-                    axs1.set_title('ob histogram')
-                    axs1.set_yscale('log')
-                    axs1.axvspan(ob_bin_edges[0], ob_bin_edges[nbr_exclude_left], facecolor='red', alpha=0.2)
-                    axs1.axvspan(ob_bin_edges[-nbr_exclude_right-1], ob_bin_edges[-1], facecolor='red', alpha=0.2)
-                    plt.tight_layout()
-                    plt.show()
 
-                # if dc_data is not None:
-                #     _, dc_bin_edges = np.histogram(dc_histogram.flatten(), bins=nbr_bins, density=False)
-                #     axs[2].hist(dc_histogram.flatten(), bins=nbr_bins)
-                #     axs[2].set_title('dc histogram')
-                #     axs[2].set_yscale('log')
-                #     axs[2].axvspan(dc_bin_edges[0], dc_bin_edges[nbr_exclude], facecolor='red', alpha=0.2)
-                #     axs[2].axvspan(dc_bin_edges[-nbr_exclude-1], dc_bin_edges[-1], facecolor='red', alpha=0.2)
-                #     plt.tight_layout()
-                #     plt.show()
+                if self.ignore_ob:
+                    nrows = 1
+                else:
+                    nrows = 2
+
+                titles = ['sample histogram']
+                if not self.ignore_ob:
+                    titles.append('ob histogram')
+
+                fig = make_subplots(rows=nrows, cols=1, subplot_titles=titles)
+
+                # Sample histogram
+                sample_counts, sample_bin_edges = np.histogram(sample_histogram.flatten(), bins=nbr_bins)
+                fig.add_trace(go.Bar(x=sample_bin_edges[:-1], y=sample_counts, name='sample',
+                                     marker_color='blue', width=(sample_bin_edges[1]-sample_bin_edges[0])),
+                              row=1, col=1)
+                # Exclusion zones (left)
+                fig.add_vrect(x0=sample_bin_edges[0], x1=sample_bin_edges[nbr_exclude_left],
+                              fillcolor='red', opacity=0.2, line_width=0, row=1, col=1)
+                # Exclusion zones (right)
+                fig.add_vrect(x0=sample_bin_edges[-nbr_exclude_right-1], x1=sample_bin_edges[-1],
+                              fillcolor='red', opacity=0.2, line_width=0, row=1, col=1)
+                fig.update_yaxes(type='log', row=1, col=1)
+
+                if not self.ignore_ob:
+                    ob_counts, ob_bin_edges = np.histogram(ob_histogram.flatten(), bins=nbr_bins)
+                    fig.add_trace(go.Bar(x=ob_bin_edges[:-1], y=ob_counts, name='ob',
+                                         marker_color='blue', width=(ob_bin_edges[1]-ob_bin_edges[0])),
+                                  row=2, col=1)
+                    fig.add_vrect(x0=ob_bin_edges[0], x1=ob_bin_edges[nbr_exclude_left],
+                                  fillcolor='red', opacity=0.2, line_width=0, row=2, col=1)
+                    fig.add_vrect(x0=ob_bin_edges[-nbr_exclude_right-1], x1=ob_bin_edges[-1],
+                                  fillcolor='red', opacity=0.2, line_width=0, row=2, col=1)
+                    fig.update_yaxes(type='log', row=2, col=1)
+
+                fig.update_layout(height=300 * nrows, width=800, showlegend=False)
+                fig.show()
 
                 return nbr_bins, nbr_exclude_left, nbr_exclude_right
 
@@ -436,36 +441,49 @@ class ImagesCleaner(Parent):
             nrows = 1
         else:
             nrows = 2
-        fig, axs_sample = plt.subplots(nrows=1, ncols=1)
 
+        titles = ['Sample: before and after cleaning']
+        if not ignore_ob:
+            titles.append('OB: before and after cleaning')
+
+        fig = make_subplots(rows=nrows, cols=1, subplot_titles=titles)
+
+        # Sample histogram
         flatten_sample_histogram = sample_histogram.flatten()
-        _, sample_bin_edges = np.histogram(flatten_sample_histogram, bins=nbr_bins, density=False)
-        axs_sample.hist(flatten_sample_histogram, bins=nbr_bins, label='after cleaning')
-        
-        flatten_sample_histogram_before = sample_histogram_before.flatten()
-        _, sample_bin_edges_before = np.histogram(flatten_sample_histogram_before, bins=nbr_bins, density=False)
-        axs_sample.hist(flatten_sample_histogram_before, bins=sample_bin_edges_before, alpha=0.5, label='before cleaning')
+        sample_counts_after, sample_bin_edges = np.histogram(flatten_sample_histogram, bins=nbr_bins)
+        bar_width = sample_bin_edges[1] - sample_bin_edges[0]
 
-        axs_sample.set_title('Sample: before and after cleaning')
-        axs_sample.set_yscale('log')
-        axs_sample.legend()
+        flatten_sample_histogram_before = sample_histogram_before.flatten()
+        sample_counts_before, sample_bin_edges_before = np.histogram(flatten_sample_histogram_before, bins=nbr_bins)
+        bar_width_before = sample_bin_edges_before[1] - sample_bin_edges_before[0]
+
+        fig.add_trace(go.Bar(x=sample_bin_edges[:-1], y=sample_counts_after,
+                             name='after cleaning', marker_color='blue',
+                             width=bar_width), row=1, col=1)
+        fig.add_trace(go.Bar(x=sample_bin_edges_before[:-1], y=sample_counts_before,
+                             name='before cleaning', marker_color='orange', opacity=0.5,
+                             width=bar_width_before), row=1, col=1)
+        fig.update_yaxes(type='log', row=1, col=1)
 
         if not ignore_ob:
-            
-            fig, axs_ob = plt.subplots(nrows=1, ncols=1)
             flatten_ob_histogram = ob_histogram.flatten()
-            _, ob_bin_edges = np.histogram(flatten_ob_histogram, bins=nbr_bins, density=False)
-            axs_ob.hist(flatten_ob_histogram, bins=nbr_bins, label='after cleaning')
-            
+            ob_counts_after, ob_bin_edges = np.histogram(flatten_ob_histogram, bins=nbr_bins)
+            ob_bar_width = ob_bin_edges[1] - ob_bin_edges[0]
+
             flatten_ob_histogram_before = ob_histogram_before.flatten()
-            _, ob_bin_edges_before = np.histogram(flatten_ob_histogram_before, bins=nbr_bins, density=False)
-            axs_ob.hist(flatten_ob_histogram_before, bins=ob_bin_edges_before, alpha=0.5, label='before cleaning')
-            
-            axs_ob.set_title('OB: before and after cleaning')
-            axs_ob.set_yscale('log')
-            axs_ob.legend()
-            plt.tight_layout()
-            plt.show()
+            ob_counts_before, ob_bin_edges_before = np.histogram(flatten_ob_histogram_before, bins=nbr_bins)
+            ob_bar_width_before = ob_bin_edges_before[1] - ob_bin_edges_before[0]
+
+            fig.add_trace(go.Bar(x=ob_bin_edges[:-1], y=ob_counts_after,
+                                 name='after cleaning', marker_color='blue',
+                                 width=ob_bar_width, showlegend=False), row=2, col=1)
+            fig.add_trace(go.Bar(x=ob_bin_edges_before[:-1], y=ob_counts_before,
+                                 name='before cleaning', marker_color='orange', opacity=0.5,
+                                 width=ob_bar_width_before, showlegend=False), row=2, col=1)
+            fig.update_yaxes(type='log', row=2, col=1)
+
+        fig.update_layout(barmode='overlay', height=350 * nrows, width=800)
+        fig.show()
 
         logging.info(f"cleaning by histogram ... done!")
 
