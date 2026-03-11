@@ -8,7 +8,7 @@ description = "Minimal environment for mbirjax with CUDA 12 support for CT recon
 
 [tasks]
 # Test tasks for deployment verification
-test-cuda = "python tests/test_mbirjax_cuda.py"
+test-cuda = "python test_mbirjax_cuda.py"
 test-notebook = "jupyter nbconvert --to notebook --execute tests/test_mbirjax.ipynb --output test_mbirjax_executed.ipynb"
 lab = "jupyter lab --notebook-dir=tests"
 
@@ -33,17 +33,25 @@ mbirjax = { version = ">=0.6.7, <0.7", extras = ["cuda12"] }
 # jax-cuda12-plugin includes: nvidia-cublas-cu12, nvidia-cuda-cupti-cu12,
 # nvidia-cuda-nvcc-cu12, nvidia-cuda-nvrtc-cu12, nvidia-cuda-runtime-cu12, nvidia-cudnn-cu12
 
+[feature.gpu.system-requirements]
+cuda = "12.0"
+
+[feature.gpu.dependencies]
+cuda-version = "12.6.*"
+jaxlib  = {version="*", build="*cuda*"}
+
+[feature.cpu.dependencies]
+jaxlib  = {version="*", build="*cpu*"}
+
 [feature.headless]
 # For headless deployment without Jupyter
 [feature.headless.dependencies]
-python = ">=3.12"
-numpy = "*"
 
 [feature.headless.pypi-dependencies]
-mbirjax = { version = ">=0.6.7, <0.7", extras = ["cuda12"] }
 
 [environments]
 # Default environment includes Jupyter for interactive testing
-default = { features = [], solve-group = "default" }
+default = { features = ["gpu"], solve-group = "default" } # default environment, gpu feature
+cpu = ["cpu"] # cpu environment, cpu feature
 # Headless environment for production deployment without Jupyter
 headless = { features = ["headless"], solve-group = "headless" }
