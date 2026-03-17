@@ -1,6 +1,6 @@
 [workspace]
 authors = ["Jean Bilheux <bilheuxjm@ornl.gov>", "Chen Zhang <zhangc@ornl.gov>"]
-channels = ["conda-forge", "neutronimaging", "astra-toolbox"]
+channels = ["conda-forge"]
 name = "all_ct_reconstruction"
 platforms = ["linux-64", "osx-arm64"]
 version = "1.0.0"

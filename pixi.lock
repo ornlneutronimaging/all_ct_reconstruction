@@ -3,8 +3,6 @@ environments:
   default:
     channels:
     - url: https://conda.anaconda.org/conda-forge/
-    - url: https://conda.anaconda.org/neutronimaging/
-    - url: https://conda.anaconda.org/astra-toolbox/
     indexes:
     - https://pypi.org/simple
     options:
