@@ -54,7 +54,6 @@ from plotly.subplots import make_subplots
 from scipy.ndimage import median_filter
 # from typing import Optional, List, Tuple, Union, Dict, Any
 # from numpy.typing import NDArray
-# from imars3d.backend.corrections.gamma_filter import gamma_filter
 from tomopy.misc.corr import remove_outlier
 from tomopy.misc.corr import remove_outlier_cuda
  

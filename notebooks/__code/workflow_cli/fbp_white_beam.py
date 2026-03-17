@@ -42,7 +42,6 @@ import tomopy
 from tomopy.prep import stripe
 from numpy.typing import NDArray
 
-# from imars3d.backend.reconstruction import recon
 from tomopy import recon as tomopy_recon
 import algotom.rec.reconstruction as rec
 

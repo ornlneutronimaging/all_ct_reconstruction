@@ -40,8 +40,6 @@ from algotom.prep.calculation import find_center_vo, find_center_360
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-# from imars3d.backend.diagnostics.rotation import find_rotation_center
-
 from __code.parent import Parent
 from __code.config import NUM_THREADS
 from __code import DataType, Run, OperatingMode

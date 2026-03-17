@@ -16,10 +16,15 @@ Dependencies:
 Author: CT Reconstruction Development Team
 """
 
+import logging
+import os
+
 import numpy as np
+import tomopy
 from scipy.ndimage import median_filter
-from typing import Union
 from numpy.typing import NDArray
+
+logger = logging.getLogger(__name__)
 
 
 def replace_pixels(im: NDArray[np.floating], 
@@ -71,3 +76,62 @@ def replace_pixels(im: NDArray[np.floating],
         im[y, x] = full_median_filter_corr_im[y, x]
 
     return im
+
+
+def gamma_filter(
+    arrays: NDArray[np.floating],
+    threshold: int = -1,
+    median_kernel: int = 5,
+    axis: int = 0,
+    max_workers: int = 0,
+    selective_median_filter: bool = True,
+    diff_tomopy: float = -1,
+) -> NDArray[np.floating]:
+    """Replace near-saturated pixels (from gamma radiation) with median values.
+
+    Ported from imars3d.backend.corrections.gamma_filter. Uses
+    tomopy.remove_outlier for the underlying median filtering.
+
+    Args:
+        arrays: 3D array of images (first dimension is rotation angle).
+        threshold: Saturation threshold. -1 uses dtype max - 5.
+        median_kernel: Size of the median filter kernel.
+        axis: Axis along which to chunk for parallel filtering.
+        max_workers: Number of cores (0 = all available minus 2).
+        selective_median_filter: If True, only replace pixels above threshold.
+        diff_tomopy: Outlier detection threshold for tomopy. Negative values
+            use 20% of saturation intensity.
+
+    Returns:
+        Corrected 3D array of images.
+    """
+    if max_workers <= 0:
+        max_workers = max(1, os.cpu_count() - 2)
+
+    try:
+        saturation_intensity = np.iinfo(arrays.dtype).max
+    except ValueError:
+        saturation_intensity = 65535
+
+    if threshold == -1:
+        threshold = saturation_intensity - 5
+
+    if diff_tomopy < 0:
+        diff_tomopy = 0.2 * saturation_intensity
+
+    arrays_filtered = tomopy.remove_outlier(
+        arrays,
+        dif=diff_tomopy,
+        size=median_kernel,
+        axis=axis,
+        ncore=max_workers,
+    )
+
+    if selective_median_filter:
+        arrays_filtered = np.where(
+            arrays > threshold,
+            arrays_filtered,
+            arrays,
+        )
+
+    return arrays_filtered
