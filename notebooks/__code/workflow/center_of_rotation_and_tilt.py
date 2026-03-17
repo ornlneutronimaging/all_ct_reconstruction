@@ -18,7 +18,7 @@ Key Features:
     - Interactive widgets for parameter fine-tuning
 
 Dependencies:
-    - neutompy: Neutron tomography preprocessing functions
+    - __code.utilities.cor: Center of rotation and tilt correction
     - algotom: Advanced tomographic algorithms
     - matplotlib: Visualization and interactive plotting
     - scikit-image: Image transformation utilities
@@ -31,7 +31,7 @@ from typing import Optional, Union, Tuple, Any, Dict, List
 import numpy as np
 from numpy.typing import NDArray
 import logging
-from neutompy.preproc.preproc import correction_COR, find_COR
+from __code.utilities.cor import correction_COR, find_COR
 from ipywidgets import interactive
 from IPython.display import display, HTML
 import ipywidgets as widgets

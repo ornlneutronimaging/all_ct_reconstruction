@@ -36,7 +36,6 @@ tomopy = ">=1.15,<2"
 
 [pypi-dependencies]
 neutronbraggedge = ">=2.0.6, <3"
-neutompy = { git = "https://github.com/ornlneutronimaging/NeuTomPy-toolbox.git", branch = "main" }
 timepix-geometry-correction = { git = "https://github.com/ornlneutronimaging/timepix_geometry_correction.git", branch = "main" }
 
 # ── Linux-only dependencies (CUDA, MKL) ──────────────────────────
