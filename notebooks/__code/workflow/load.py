@@ -39,7 +39,6 @@ from IPython.display import display, HTML
 import ipywidgets as widgets
 from PIL import Image
 import random
-import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 from ipywidgets import interactive
 
@@ -269,14 +268,27 @@ class Load(Parent):
             logging.info(f"\tSelected angles (radians): {self.parent.temp_final_list_of_angles_rad}")
             
             if preview:
-                fig, ax = plt.subplots(figsize=(5, 5), subplot_kw={'projection': 'polar'})
-                ax.plot(full_list_of_angles_rad, np.ones(len(full_list_of_angles_rad))*2, marker='o', linestyle='None', color='blue', markersize=5, label='All Angles')
-                ax.set_rmax(2)
-                ax.set_rticks([0.5, 1, 1.5])
                 selected_list_of_angles_rad = self.parent.temp_final_list_of_angles_rad
-                ax.plot(selected_list_of_angles_rad, np.ones(len(selected_list_of_angles_rad))*2, marker='o', linestyle='None', color='green', markersize=10, label='Selected Angles')
-                ax.legend()
-                plt.show()
+                fig = go.Figure()
+                fig.add_trace(go.Scatterpolar(
+                    theta=np.degrees(full_list_of_angles_rad),
+                    r=np.ones(len(full_list_of_angles_rad)) * 2,
+                    mode='markers',
+                    marker=dict(color='blue', size=5),
+                    name='All Angles',
+                ))
+                fig.add_trace(go.Scatterpolar(
+                    theta=np.degrees(selected_list_of_angles_rad),
+                    r=np.ones(len(selected_list_of_angles_rad)) * 2,
+                    mode='markers',
+                    marker=dict(color='green', size=10),
+                    name='Selected Angles',
+                ))
+                fig.update_layout(
+                    polar=dict(radialaxis=dict(range=[0, 2], tickvals=[0.5, 1, 1.5])),
+                    height=500, width=500,
+                )
+                fig.show()
             
             return slider_index
         
@@ -631,12 +643,27 @@ class Load(Parent):
         full_list_of_angles_rad = self.parent.full_list_of_angles_rad
         logging.info(f"\tFull list of angles (radians): {full_list_of_angles_rad}")
         logging.info(f"\tSelected angles (radians): {self.parent.temp_final_list_of_angles_rad}")
-        fig, ax = plt.subplots(figsize=(8, 8), subplot_kw={'projection': 'polar'})
-        ax.plot(full_list_of_angles_rad, np.ones(len(full_list_of_angles_rad))*2, marker='o', linestyle='None', color='blue', markersize=5, label='All Angles')
-        ax.set_rmax(2)
-        ax.set_rticks([0.5, 1, 1.5])
         selected_list_of_angles_rad = self.parent.temp_final_list_of_angles_rad
-        ax.plot(selected_list_of_angles_rad, np.ones(len(selected_list_of_angles_rad))*2, marker='o', linestyle='None', color='red', markersize=10, label='Selected Angles')
+        fig = go.Figure()
+        fig.add_trace(go.Scatterpolar(
+            theta=np.degrees(full_list_of_angles_rad),
+            r=np.ones(len(full_list_of_angles_rad)) * 2,
+            mode='markers',
+            marker=dict(color='blue', size=5),
+            name='All Angles',
+        ))
+        fig.add_trace(go.Scatterpolar(
+            theta=np.degrees(selected_list_of_angles_rad),
+            r=np.ones(len(selected_list_of_angles_rad)) * 2,
+            mode='markers',
+            marker=dict(color='red', size=10),
+            name='Selected Angles',
+        ))
+        fig.update_layout(
+            polar=dict(radialaxis=dict(range=[0, 2], tickvals=[0.5, 1, 1.5])),
+            height=600, width=600,
+        )
+        fig.show()
 
     def load_white_beam_data(self):
         """ from white beam notebook """

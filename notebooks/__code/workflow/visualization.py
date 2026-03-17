@@ -30,7 +30,6 @@ Created: Part of CT reconstruction development workflow
 from typing import Optional, Union, List, Dict, Any
 from IPython.display import display, HTML
 import ipywidgets as widgets
-import matplotlib.pyplot as plt
 from ipywidgets import interactive
 import numpy as np
 from numpy.typing import NDArray
@@ -177,15 +176,16 @@ class Visualization(Parent):
         sample_data = self.parent.master_3d_data_array[DataType.sample]
         integrated_intensity = sample_data.sum(axis=(1,2))
 
-        fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(7, 5))
-
-        ax.plot(integrated_intensity, marker='o')
-        ax.set_title(f"Integrated intensity vs image index ({self.mode} data)")
-        ax.set_xlabel("Angle (degrees)")
-        ax.set_ylabel("Integrated intensity (a.u.)")
-
-        plt.tight_layout()
-        plt.show()
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(y=integrated_intensity, mode='lines+markers'))
+        fig.update_layout(
+            title=f"Integrated intensity vs image index ({self.mode} data)",
+            xaxis_title="Angle (degrees)",
+            yaxis_title="Integrated intensity (a.u.)",
+            height=500,
+            width=700,
+        )
+        fig.show()
 
     def visualize_statistics(self):
 
@@ -240,51 +240,68 @@ class Visualization(Parent):
 
         # # ratio firt / last
         # ratio_last_first = sample_proj_last / sample_proj_first
-        nrows = 2
 
-        fig, axs = plt.subplots(nrows=nrows, ncols=3, figsize=(15, 15))
-
-        im0 = axs[0, 0].imshow(sample_proj_min, vmin=vmin, vmax=vmax)
-        axs[0, 0].set_title("Sample (np.min)")
-        plt.colorbar(im0, ax=axs[0, 0], shrink=0.5)
+        # Row 1: Sample min, OB min, DC max
+        row1_titles = ["Sample (np.min)"]
+        row1_data = [sample_proj_min]
+        row1_zmin = [vmin]
+        row1_zmax = [vmax]
 
         if not no_ob_data:
-            im1 = axs[0, 1].imshow(ob_proj_min, vmin=vmin, vmax=vmax)
-            axs[0, 1].set_title("OB (np.min)")
-            plt.colorbar(im1, ax=axs[0, 1], shrink=0.5)
-        else:
-            axs[0, 1].axis('off')
+            row1_titles.append("OB (np.min)")
+            row1_data.append(ob_proj_min)
+            row1_zmin.append(vmin)
+            row1_zmax.append(vmax)
 
         if not no_dc_data:
-            im2 = axs[0, 2].imshow(dc_proj_max, vmin=vmin, vmax=vmin+1000)
-            axs[0, 2].set_title("DC (np.max)")
-            plt.colorbar(im2, ax=axs[0, 2], shrink=0.5)
-        else:
-            axs[0, 2].axis('off')
+            row1_titles.append("DC (np.max)")
+            row1_data.append(dc_proj_max)
+            row1_zmin.append(vmin)
+            row1_zmax.append(vmin + 1000)
 
-        im3 = axs[1, 0].imshow(sample_proj_first, vmin=vmin, vmax=vmax)
-        axs[1, 0].set_title(f"Sample at angle {list_of_angles[0]}")
-        plt.colorbar(im3, ax=axs[1, 0], shrink=0.5)
+        if row1_data:
+            ncols_row1 = len(row1_data)
+            fig0 = make_subplots(rows=1, cols=ncols_row1,
+                                 horizontal_spacing=0.15,
+                                 subplot_titles=tuple(row1_titles))
+            for i, (data, zmin_val, zmax_val) in enumerate(zip(row1_data, row1_zmin, row1_zmax), start=1):
+                fig0.add_trace(go.Heatmap(z=data, colorscale='Viridis',
+                                          zmin=zmin_val, zmax=zmax_val,
+                                          coloraxis=f'coloraxis{i}'), row=1, col=i)
+            fig0.update_yaxes(autorange='reversed')
+            coloraxis_dict = {}
+            x_positions = np.linspace(0.3, 1.0, ncols_row1)
+            for i, (zmin_val, zmax_val) in enumerate(zip(row1_zmin, row1_zmax), start=1):
+                key = f'coloraxis{i}'
+                coloraxis_dict[key] = dict(colorscale='Viridis', cmin=zmin_val, cmax=zmax_val,
+                                           colorbar=dict(x=float(x_positions[i-1]), len=0.9, thickness=15))
+            fig0.update_layout(height=500, width=1000, **coloraxis_dict)
+            fig0.show()
 
-        im4 = axs[1, 1].imshow(sample_proj_last, vmin=vmin, vmax=vmax)
-        axs[1, 1].set_title(f"Sample at angle {list_of_angles[-1]}")
-        plt.colorbar(im4, ax=axs[1, 1], shrink=0.5)
-
-        # im5 = axs[1, 2].imshow(ratio_last_first, vmin=0.9, vmax=1.1)
-        # axs[1, 2].set_title("Ratio last/first")
-        # plt.colorbar(im5, ax=axs[1, 2], shrink=0.5)
-        axs[1, 2].axis('off')
+        # Row 2: First angle, last angle
+        fig1 = make_subplots(rows=1, cols=2,
+                             horizontal_spacing=0.15,
+                             subplot_titles=(f"Sample at angle {list_of_angles[0]}",
+                                             f"Sample at angle {list_of_angles[-1]}"))
+        fig1.add_trace(go.Heatmap(z=sample_proj_first, colorscale='Viridis',
+                                  zmin=vmin, zmax=vmax,
+                                  coloraxis='coloraxis1'), row=1, col=1)
+        fig1.add_trace(go.Heatmap(z=sample_proj_last, colorscale='Viridis',
+                                  zmin=vmin, zmax=vmax,
+                                  coloraxis='coloraxis2'), row=1, col=2)
+        fig1.update_yaxes(autorange='reversed')
+        fig1.update_layout(height=500, width=1000,
+                           coloraxis1=dict(colorscale='Viridis', cmin=vmin, cmax=vmax,
+                                           colorbar=dict(x=0.44, len=0.9, thickness=15)),
+                           coloraxis2=dict(colorscale='Viridis', cmin=vmin, cmax=vmax,
+                                           colorbar=dict(x=1.0, len=0.9, thickness=15)))
+        fig1.show()
    
         if (self.mode == 'cleaned') and (self.parent.histogram_sample_before_cleaning is not None):
 
             # display histogram of sample before and after
-            fig, axs = plt.subplots(nrows=2, ncols=1)
-            
             flatten_raw_histogram = self.parent.histogram_sample_before_cleaning.flatten()
-            # _, sample_bin_edges = np.histogram(flatten_raw_histogram, bins=100, density=False)
-            axs[0].hist(flatten_raw_histogram, bins=100)
-            axs[0].set_title('raw sample histogram')
-            axs[0].set_yscale('log')
+            raw_counts, raw_bin_edges = np.histogram(flatten_raw_histogram, bins=100)
 
             edge_nbr_pixels = clean_paras['edge_nbr_pixels']
 
@@ -292,12 +309,16 @@ class Visualization(Parent):
             histogram_corrected_data = corrected_data.sum(axis=0)[edge_nbr_pixels: -edge_nbr_pixels,
                                                         edge_nbr_pixels: -edge_nbr_pixels]
             flatten_corrected_histogram = histogram_corrected_data.flatten()
-            axs[1].hist(flatten_corrected_histogram, bins=100)
-            axs[1].set_title('cleaned sample histogram')
-            axs[1].set_yscale('log')
+            cleaned_counts, cleaned_bin_edges = np.histogram(flatten_corrected_histogram, bins=100)
 
-            plt.tight_layout()
-            plt.show()
+            fig_hist = make_subplots(rows=2, cols=1,
+                                    subplot_titles=('raw sample histogram', 'cleaned sample histogram'))
+            fig_hist.add_trace(go.Bar(x=raw_bin_edges[:-1], y=raw_counts, name='raw'), row=1, col=1)
+            fig_hist.add_trace(go.Bar(x=cleaned_bin_edges[:-1], y=cleaned_counts, name='cleaned'), row=2, col=1)
+            fig_hist.update_yaxes(type='log', row=1, col=1)
+            fig_hist.update_yaxes(type='log', row=2, col=1)
+            fig_hist.update_layout(height=600, width=800, showlegend=False)
+            fig_hist.show()
 
     def settings(self):
         self.display_ui = widgets.ToggleButtons(options=['1 image at a time',
@@ -343,21 +364,6 @@ class Visualization(Parent):
             
                 if vmax_after is None:
                     vmax_after = np.max(data_after)
-
-                # self.fig0, self.axs = plt.subplots(nrows=2, ncols=1, 
-                #                                    figsize=(5, 10),
-                #                                    num="Visualization")
-                # self.img_before = self.axs[0].imshow(data_before[0],
-                #                               vmin=vmin_before, 
-                #                               vmax=vmax_before)
-                # self.cbar_before = plt.colorbar(self.img_before, ax=self.axs[0], shrink=0.5)
-                # self.axs[0].set_title(label_before)
-                
-                # self.img_after = self.axs[1].imshow(data_after[0],
-                #                              vmin=vmin_after, 
-                #                              vmax=vmax_after)
-                # self.cbar_after = plt.colorbar(self.img_after, ax=self.axs[1], shrink=0.5)
-                # self.axs[1].set_title(label_after)
 
                 def plot_norm(image_index=0, 
                               v_before=None, 
@@ -472,30 +478,22 @@ class Visualization(Parent):
             nbr_images = len(self.parent.master_3d_data_array[_data_type])
             nbr_rows = int(np.ceil(nbr_images / nbr_cols))
 
-            fig, axs =  plt.subplots(nrows=nbr_rows, ncols=nbr_cols,
-                                    figsize=(nbr_cols*2,nbr_rows*2))
-            flat_axs = axs.flatten()
+            subplot_titles = [f"{i}" for i in range(nbr_images)] + [""] * (nbr_rows * nbr_cols - nbr_images)
+            fig = make_subplots(rows=nbr_rows, cols=nbr_cols,
+                                subplot_titles=subplot_titles,
+                                horizontal_spacing=0.02,
+                                vertical_spacing=0.05)
 
-            _index = 0
-            list_runs_with_infos = []
-            for _row in np.arange(nbr_rows):
-                for _col in np.arange(nbr_cols):
-                    _index = _col + _row * nbr_cols
-                    if _index == (nbr_images):
-                        break
-                    # title = f"{list_runs[_index]}, {list_angles[_index]}"
-                    # list_runs_with_infos.append(title)
-                    # flat_axs[_index].set_title(title)
-                    im1 = flat_axs[_index].imshow(array[_index])
-                    plt.colorbar(im1, ax=flat_axs[_index], shrink=0.5)
-            
-            for _row in np.arange(nbr_rows):
-                for _col in np.arange(nbr_cols):
-                    _index = _col + _row * nbr_cols
-                    flat_axs[_index].axis('off')
+            for _index in range(nbr_images):
+                _row = _index // nbr_cols + 1
+                _col = _index % nbr_cols + 1
+                fig.add_trace(go.Heatmap(z=array[_index], colorscale='Viridis',
+                                         showscale=False), row=_row, col=_col)
 
-            plt.tight_layout()
-            plt.show()
+            fig.update_yaxes(autorange='reversed', showticklabels=False)
+            fig.update_xaxes(showticklabels=False)
+            fig.update_layout(height=nbr_rows * 200, width=nbr_cols * 150)
+            fig.show()
 
     def visualize_normalized_images(self):
      
@@ -503,16 +501,13 @@ class Visualization(Parent):
 
         def plot_images(image_index=0):
 
-            fig, axs = plt.subplots(nrows=1, ncols=1, figsize=(7, 7))
-
             _norm_data = normalized_images[image_index]
-            
-            im = axs.imshow(_norm_data, vmin=0, vmax=1)
-            axs.set_title("Normalized data")
-            plt.colorbar(im, ax=axs, shrink=0.5)
 
-            plt.tight_layout()
-            plt.show()
+            fig = go.Figure(go.Heatmap(z=_norm_data, colorscale='Viridis',
+                                       zmin=0, zmax=1))
+            fig.update_yaxes(autorange='reversed')
+            fig.update_layout(title="Normalized data", height=500, width=500)
+            fig.show()
 
         display_plot = interactive(plot_images,
                                 image_index=widgets.IntSlider(min=0,
@@ -608,15 +603,12 @@ class Visualization(Parent):
                 self.vmin = np.min(data[index])
             if self.vmax is None:
                 self.vmax = np.max(data[index])
-                
-            fig, axs = plt.subplots(nrows=1, ncols=1, 
-                                           figsize=(7, 7),
-                                           num="Visualization")
-            
-            im = axs.imshow(data[index], vmin=self.vmin, vmax=self.vmax)
-            axs.set_title(title)
-            self.cbar = plt.colorbar(im, ax=axs, shrink=0.5)
-            plt.show()
+
+            fig = go.Figure(go.Heatmap(z=data[index], colorscale='Viridis',
+                                       zmin=self.vmin, zmax=self.vmax))
+            fig.update_yaxes(autorange='reversed')
+            fig.update_layout(title=title, height=500, width=500)
+            fig.show()
 
             
         _display_plot_images = interactive(plot_images,

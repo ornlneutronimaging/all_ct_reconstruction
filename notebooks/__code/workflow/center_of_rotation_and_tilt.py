@@ -32,7 +32,6 @@ import numpy as np
 from numpy.typing import NDArray
 import logging
 from neutompy.preproc.preproc import correction_COR, find_COR
-import matplotlib.pyplot as plt
 from ipywidgets import interactive
 from IPython.display import display, HTML
 import ipywidgets as widgets

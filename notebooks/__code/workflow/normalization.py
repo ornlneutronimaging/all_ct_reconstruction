@@ -46,13 +46,13 @@ from plotly.subplots import make_subplots
 from copy import copy
 
 from __code.parent import Parent
-from __code import Run, DataType, NormalizationSettings
-from __code.workflow.load import Load
+from __code import DataType, NormalizationSettings
+# from __code.workflow.load import Load
 from __code.workflow.export import Export
 from __code.utilities.files import make_or_reset_folder
 from __code.utilities.logging import logging_3d_array_infos
 # from __code.workflow.final_projections_review import FinalProjectionsReview
-from __code.config import NUM_THREADS, DEBUG, roi
+from __code.config import DEBUG, roi
 
 
 # class RectangleSelector:

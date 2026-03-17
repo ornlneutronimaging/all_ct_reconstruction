@@ -43,14 +43,9 @@ import ipywidgets as widgets
 from IPython.display import display
 from IPython.display import HTML
 from ipywidgets import interactive
-from tqdm import tqdm
 import numpy as np
 from skimage import transform
-import multiprocessing as mp 
 import logging
-from functools import partial
-import matplotlib.pyplot as plt
-from typing import Optional, Tuple, Union
 from numpy.typing import NDArray
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -127,11 +122,14 @@ class Rotate(Parent):
 
         def plot_images(index: int) -> None:
             """Plot individual projection with rotation axis overlay."""
-            fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(5, 5))
             image: NDArray[np.floating] = self.parent.normalized_images[index]
-            ax.imshow(image, cmap='viridis', vmin=0, vmax=1)
-            ax.axvline(x=horizontal_center, color='red', linestyle='--', label='Rotation Axis')
-            ax.set_title(f"Image {index}")
+            fig = go.Figure(go.Heatmap(z=image, colorscale='Viridis',
+                                       zmin=0, zmax=1))
+            fig.add_vline(x=horizontal_center, line_dash='dash', line_color='red',
+                          annotation_text='Rotation Axis')
+            fig.update_yaxes(autorange='reversed')
+            fig.update_layout(title=f"Image {index}", height=500, width=500)
+            fig.show()
 
         display_plot_images = interactive(plot_images, 
                                           index=widgets.IntSlider(min=0, 

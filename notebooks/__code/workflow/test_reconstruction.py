@@ -1,7 +1,3 @@
-from ast import List
-import os
-import astra
-import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import ipywidgets as widgets

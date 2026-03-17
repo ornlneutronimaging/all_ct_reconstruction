@@ -15,16 +15,13 @@ The module uses interactive widgets to allow users to visually select the
 optimal cropping region and immediately see the effects on image visualization.
 """
 
-from matplotlib.pylab import f
+# from matplotlib.pylab import f
 import numpy as np
 import logging
-from neutompy.preproc.preproc import correction_COR
-import matplotlib.pyplot as plt
 from ipywidgets import interactive
 from IPython.display import display
 import ipywidgets as widgets
-from matplotlib.patches import Rectangle
-from typing import Tuple, Optional, Dict, Any
+from typing import Tuple
 from numpy.typing import NDArray
 import plotly.graph_objects as go
 

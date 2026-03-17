@@ -41,11 +41,9 @@ Author: CT Reconstruction Pipeline Team
 Created: Part of CT reconstruction development workflow
 """
 
-from operator import not_
 import numpy as np
 from tqdm import tqdm
 import os
-import matplotlib.pyplot as plt
 import logging
 from ipywidgets import interactive
 from IPython.display import display
@@ -54,8 +52,8 @@ import ipywidgets as widgets
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from scipy.ndimage import median_filter
-from typing import Optional, List, Tuple, Union, Dict, Any
-from numpy.typing import NDArray
+# from typing import Optional, List, Tuple, Union, Dict, Any
+# from numpy.typing import NDArray
 # from imars3d.backend.corrections.gamma_filter import gamma_filter
 from tomopy.misc.corr import remove_outlier
 from tomopy.misc.corr import remove_outlier_cuda

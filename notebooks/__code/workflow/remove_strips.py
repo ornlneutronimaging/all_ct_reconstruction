@@ -45,23 +45,18 @@ Author: CT Reconstruction Pipeline Team
 Created: Part of CT reconstruction development workflow
 """
 
-import mkl_fft
 import numpy as np
 from IPython.display import display
 import ipywidgets as widgets
 from IPython.display import HTML
-from IPython.display import Javascript
-from enum import Enum
 from tomopy.prep import stripe
 import logging
 from tqdm import tqdm
-import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from ipywidgets import interactive
 import webbrowser
-from matplotlib.patches import Rectangle
-from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any
 from numpy.typing import NDArray
 
 from __code import DataType, RemoveStripeAlgo, OperatingMode, WhenToRemoveStripes
