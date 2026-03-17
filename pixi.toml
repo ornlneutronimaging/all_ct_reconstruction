@@ -31,7 +31,7 @@ pandas = ">=2.2,<3"
 tqdm = ">=4.66,<5"
 psutil = ">=6.0,<7"
 astropy = ">=6.1,<7"
-dxchange = ">=0.2,<1"
+tifffile = ">=2024.1,<2026"
 tomopy = ">=1.15,<2"
 
 [pypi-dependencies]
@@ -49,9 +49,10 @@ mkl-fft = ">=2.0.0, <3"
 mbirjax = { version = ">=0.6.7, <0.7", extras = ["cuda12"] }
 
 # ── macOS Apple Silicon ──────────────────────────────────────────
+# svmbir not available for osx-arm64 (no conda build, PyPI requires Pillow<=10.1.0)
+# users have mbirjax + algotom for reconstruction on macOS
 [target.osx-arm64.dependencies]
 astra-toolbox = ">=2.2.0,<3"
-svmbir = ">=0.4.0,<0.5"
 
 [target.osx-arm64.pypi-dependencies]
 mbirjax = ">=0.6.7, <0.7"
