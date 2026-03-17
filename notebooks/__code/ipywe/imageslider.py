@@ -1,6 +1,3 @@
-#Allows Python 3-style division in Python 2.7
-from __future__ import division
-
 import ipywidgets as ipyw
 from . import base
 from traitlets import Unicode, Integer, Float, Tuple, observe
