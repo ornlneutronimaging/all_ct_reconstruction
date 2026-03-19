@@ -5,7 +5,6 @@ Uses skimage.transform.rotate instead of SimpleITK for image rotation.
 """
 
 import logging
-from time import sleep
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -20,8 +19,6 @@ logger = logging.getLogger(__name__)
 def find_COR(
     proj_0: NDArray,
     proj_180: NDArray,
-    nroi: int = 1,
-    ref_proj: NDArray | None = None,
     ystep: int = 5,
     show_results: bool = True,
     rois: list[tuple[int, int]] | None = None,
@@ -34,17 +31,18 @@ def find_COR(
     Args:
         proj_0: Projection at 0 degrees.
         proj_180: Projection at 180 degrees.
-        nroi: Number of ROIs (only used when *rois* is None).
-        ref_proj: Reference image for ROI display (defaults to proj_0).
         ystep: Row step size inside each ROI.
         show_results: If True, display diagnostic matplotlib figures.
-        rois: List of (ymin, ymax) tuples defining row ranges.
+        rois: List of (ymin, ymax) tuples defining row ranges. Required.
 
     Returns:
         (middle_shift, theta) – horizontal pixel shift and tilt angle in degrees.
+
+    Raises:
+        ValueError: If rois is not provided.
     """
-    if ref_proj is None:
-        ref_proj = proj_0
+    if rois is None:
+        raise ValueError("rois must be provided")
 
     proj_0 = proj_0.astype(np.float32)
     proj_180 = proj_180.astype(np.float32)
@@ -56,11 +54,6 @@ def find_COR(
 
     tmin = -nd // 2
     tmax = nd - nd // 2
-
-    if rois is None:
-        raise ValueError(
-            "rois must be provided (interactive ROI selection not supported)"
-        )
 
     for ymin, ymax in rois:
         aus = np.arange(ymin, ymax + 1, ystep)
@@ -90,7 +83,7 @@ def find_COR(
     middle_shift = int(np.round(m * nz * 0.5 + q)) // 2
     offset = int(np.round(m * nz * 0.5 + q)) * 0.5
 
-    logger.info(f"COR found: offset={offset}, tilt angle={theta:.4f}°")
+    logger.info(f"COR found: offset={offset}, tilt angle={theta:.4f}")
 
     if show_results:
         _plot_cor_results(proj_0, proj_180, proj_flip, shift, slices, m, q, nd, nz, offset, theta, middle_shift)
@@ -105,13 +98,13 @@ def correction_COR(
     show_opt: str = "mean",
     shift: int | None = None,
     theta: float | None = None,
-    nroi: int | None = None,
     ystep: int = 5,
+    show_results: bool = False,
     rois: list[tuple[int, int]] | None = None,
 ) -> NDArray:
     """Correct rotation axis misalignment for a projection stack.
 
-    If *shift* and *theta* are None they are estimated from the 0/180
+    If *shift* and *theta* are both None they are estimated from the 0/180
     degree pair via :func:`find_COR`.
 
     Args:
@@ -121,13 +114,19 @@ def correction_COR(
         show_opt: Image used for ROI display ('mean', 'std', 'zero', 'pi').
         shift: Known horizontal shift (pixels). None → estimate.
         theta: Known tilt angle (degrees). None → estimate.
-        nroi: Number of ROIs for find_COR.
         ystep: Row step for find_COR.
+        show_results: If True, display diagnostic matplotlib figures.
         rois: Explicit ROI list for find_COR.
 
     Returns:
         Corrected projection stack (modified in place and returned).
+
+    Raises:
+        ValueError: If only one of shift/theta is provided.
     """
+    if (shift is None) != (theta is None):
+        raise ValueError("shift and theta must both be provided, or both be None")
+
     if shift is None and theta is None:
         if show_opt == "mean":
             proj2show = norm_proj.mean(axis=0, dtype=np.float32)
@@ -141,11 +140,10 @@ def correction_COR(
             raise ValueError("show_opt must be 'mean', 'std', 'zero', or 'pi'.")
 
         shift, theta = find_COR(
-            proj_0, proj_180, nroi=nroi or 1, ref_proj=proj2show, ystep=ystep, show_results=True, rois=rois
+            proj_0, proj_180, ystep=ystep, show_results=show_results, rois=rois
         )
-        sleep(0.5)
 
-    logger.info(f"Correcting rotation axis: shift={shift}, theta={theta:.4f}°")
+    logger.info(f"Correcting rotation axis: shift={shift}, theta={theta:.4f}")
     for s in tqdm(range(norm_proj.shape[0]), unit=" images"):
         norm_proj[s, :, :] = np.roll(
             rotate(norm_proj[s, :, :], theta, preserve_range=True, order=1, mode="edge"),
@@ -175,7 +173,7 @@ def _plot_cor_results(proj_0, proj_180, proj_flip, shift, slices, m, q, nd, nz, 
     diff = proj_0 - proj_flip
     mu, s = np.median(diff), diff.std()
     plt.imshow(diff, cmap="gray", vmin=mu - s, vmax=mu + s)
-    info_cor = f"offset = {offset:.2f}\n       θ = {theta:.3f}"
+    info_cor = f"offset = {offset:.2f}\n       \u03b8 = {theta:.3f}"
     ax1.add_artist(AnchoredText(info_cor, loc=2))
     plt.title(r"$P_0 - P^{flipped}_{\pi}$ before correction")
     plt.colorbar(fraction=0.046, pad=0.04)

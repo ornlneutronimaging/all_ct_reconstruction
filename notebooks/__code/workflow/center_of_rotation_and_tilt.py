@@ -348,17 +348,6 @@ class CenterOfRotationAndTilt(Parent):
         logging.info(f"tilt correction applied to normalized_images_log")
         display(HTML("<font color='blue'>Tilt correction applied to normalized_images_log!</font>"))
 
-    def calculate_tilt_using_neutompy(self):
-        logging.info(f"calculate tilt correction:")
-        proj_crop_min = np.min(self.parent.normalized_images_log, axis=0)
-        pixel_offset, self.tilt_angle = find_COR(self.image_0_degree, 
-                                            self.image_180_degree,
-                                            nroi=1,
-                                            ref_proj=proj_crop_min)
-
-        print(f"\t{pixel_offset = }")
-        print(f"\t{self.tilt_angle = }")
-
     def calculate_and_apply_tilt_using_neutompy(self):
         
         # retrieve index of 0 and 180degrees runs
@@ -384,8 +373,7 @@ class CenterOfRotationAndTilt(Parent):
         normalized_images = correction_COR(normalized_images,
                        np.array(self.image_0_degree),
                        np.array(self.image_180_degree),
-                       shift=None,
-                       theta=None,
+                       show_results=True,
                        rois=rois)
         logging.info(f"{np.shape(normalized_images) =}")
         # self.parent.normalized_images_log = normalized_images

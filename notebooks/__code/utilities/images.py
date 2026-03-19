@@ -16,15 +16,12 @@ Dependencies:
 Author: CT Reconstruction Development Team
 """
 
-import logging
 import os
 
 import numpy as np
 import tomopy
 from scipy.ndimage import median_filter
 from numpy.typing import NDArray
-
-logger = logging.getLogger(__name__)
 
 
 def replace_pixels(im: NDArray[np.floating], 
@@ -106,7 +103,7 @@ def gamma_filter(
         Corrected 3D array of images.
     """
     if max_workers <= 0:
-        max_workers = max(1, os.cpu_count() - 2)
+        max_workers = max(1, (os.cpu_count() or 1) - 2)
 
     try:
         saturation_intensity = np.iinfo(arrays.dtype).max

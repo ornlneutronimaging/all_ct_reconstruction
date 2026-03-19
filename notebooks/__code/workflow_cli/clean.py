@@ -24,6 +24,7 @@ Cleaning Algorithms:
 
 Dependencies:
     - numpy: Numerical computing and array operations
+    - tomopy: Outlier removal (via __code.utilities.images.gamma_filter)
 
 Author: CT Reconstruction Pipeline Team
 Created: Part of CLI-based CT reconstruction workflow
