@@ -125,8 +125,9 @@ class RecapData(Parent):
         logging.info(f"\t{pc_ob_requested = }")
         logging.info(f"\t{pc_threshold = }")
 
-        list_of_runs: Dict[DataType, Dict[str, Dict[Run, Any]]] = self.parent.list_of_runs
-        
+        # list_of_runs: Dict[DataType, Dict[str, Dict[Run, Any]]] = self.parent.list_of_runs
+        list_of_runs: Dict[DataType, Dict[str, Dict[Run, Any]]] = self.parent.list_of_runs_after_recap_data
+
         final_list_of_sample_runs: List[str] = []
         for _run in list_of_runs[DataType.sample].keys():
             logging.info(f"Working with {DataType.sample}")

@@ -423,6 +423,7 @@ class Step1PrepareTimePixImages:
         # except ValueError:
         #     display(HTML("<span style='color:red; font-size:16px'>Something went wrong during data checking. Please report issue to j35@ornl.gov!</span>") )
         #     logging.info("Check the input folders provided !")
+   
     def recap_data(self) -> None:
         """
         Generate and display comprehensive TimePix data summary.
@@ -439,7 +440,7 @@ class Step1PrepareTimePixImages:
         """
         o_recap = RecapData(parent=self)
         o_recap.run()
-
+        
     def how_to_integrate(self) -> None:
         """
         Configure TimePix data integration parameters.

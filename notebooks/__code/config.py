@@ -18,7 +18,7 @@ from __code import DetectorType, OperatingMode, DataType
 from __code.utilities.system import get_user_name
 
 # Debug and development settings
-debugging: bool = False
+debugging: bool = True
 verbose: bool = True
 debugger_username: str = 'j35'
 imaging_team: List[str] = ["j35", "gxt"]

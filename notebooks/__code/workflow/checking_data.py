@@ -147,6 +147,10 @@ class CheckingData(Parent):
 
         # # # display graph
         self.display_graph()
+        
+        # use to update the list of runs after the recap data (if the user decided to come back to the recap data)
+        self.parent.list_of_runs_after_recap_data = self.parent.list_of_runs
+
 
     def retrieve_frame_number(self) -> None:
         """
