@@ -23,8 +23,8 @@ Cleaning Algorithms:
     2. Threshold cleaning: Applies gamma filtering for outlier removal
 
 Dependencies:
-    - imars3d: Gamma filter implementation for threshold cleaning
     - numpy: Numerical computing and array operations
+    - tomopy: Outlier removal (via __code.utilities.images.gamma_filter)
 
 Author: CT Reconstruction Pipeline Team
 Created: Part of CLI-based CT reconstruction workflow
@@ -35,7 +35,7 @@ from typing import Dict, List, Any
 import numpy as np
 from numpy.typing import NDArray
 
-from imars3d.backend.corrections.gamma_filter import gamma_filter
+from __code.utilities.images import gamma_filter
 
 from __code import OperatingMode
 from __code import CleaningAlgorithm

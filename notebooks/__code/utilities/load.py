@@ -9,8 +9,9 @@ used in neutron imaging and CT reconstruction workflows.
 from skimage.io import imread
 import numpy as np
 import os
-import multiprocessing as mp 
-import dxchange
+import multiprocessing as mp
+import tifffile
+from astropy.io import fits
 import logging
 from typing import List, Optional, Union
 from numpy.typing import NDArray
@@ -117,14 +118,14 @@ def load_list_of_tif(list_of_tiff: List[str], dtype: Optional[np.dtype] = None) 
 
     # init array
     logging.info(f"loading first image to determine size of 3D array")
-    first_image: NDArray[np.generic] = dxchange.read_tiff(list_of_tiff[0])
+    first_image: NDArray[np.generic] = tifffile.imread(list_of_tiff[0])
     size_3d: List[int] = [len(list_of_tiff), np.shape(first_image)[0], np.shape(first_image)[1]]
     data_3d_array: NDArray[np.generic] = np.empty(size_3d, dtype=dtype)
 
     # load stack of tiff
     logging.info(f"loading {len(list_of_tiff)} images into 3D array of shape {size_3d}")
     for _index, _file in enumerate(list_of_tiff):
-        _array: NDArray[np.generic] = dxchange.read_tiff(_file)
+        _array: NDArray[np.generic] = tifffile.imread(_file)
         data_3d_array[_index] = _array
     return data_3d_array
 
@@ -149,14 +150,14 @@ def load_list_of_fits(list_of_fits: List[str], dtype: Optional[np.dtype] = None)
 
     # init array
     logging.info(f"loading first image to determine size of 3D array")
-    first_image: NDArray[np.generic] = dxchange.read_fits(list_of_fits[0])
+    first_image: NDArray[np.generic] = fits.getdata(list_of_fits[0])
     size_3d: List[int] = [len(list_of_fits), np.shape(first_image)[0], np.shape(first_image)[1]]
     data_3d_array: NDArray[np.generic] = np.empty(size_3d, dtype=dtype)
 
     # load stack of fits
     logging.info(f"loading {len(list_of_fits)} images into 3D array of shape {size_3d}")
     for _index, _file in enumerate(list_of_fits):
-        _array: NDArray[np.generic] = dxchange.read_fits(_file)
+        _array: NDArray[np.generic] = fits.getdata(_file)
         # flip upside down
         _array = np.flipud(_array)
         data_3d_array[_index] = _array

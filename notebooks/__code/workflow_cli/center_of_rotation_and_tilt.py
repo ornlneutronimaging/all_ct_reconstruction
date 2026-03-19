@@ -11,7 +11,7 @@ Key Functions:
     - get_0_and_180_degrees_images: Extract 0° and 180° projection pairs
 
 Key Features:
-    - Automatic COR and tilt correction using neutompy library
+    - Automatic COR and tilt correction
     - 0° and 180° projection pair identification and extraction
     - ROI-based correction for improved accuracy
     - Integration with CLI configuration management
@@ -24,7 +24,7 @@ Mathematical Background:
     improve reconstruction quality.
 
 Dependencies:
-    - neutompy: Neutron tomography preprocessing functions
+    - __code.utilities.cor: Center of rotation and tilt correction
     - numpy: Numerical computing and array operations
 
 Author: CT Reconstruction Pipeline Team
@@ -34,7 +34,7 @@ Created: Part of CLI-based CT reconstruction workflow
 import numpy as np
 from typing import Tuple, List, Any, Union
 from numpy.typing import NDArray
-from neutompy.preproc.preproc import correction_COR
+from __code.utilities.cor import correction_COR
 
 
 def center_of_rotation_and_tilt(config_model: Any, data_array: NDArray[np.floating]) -> NDArray[np.floating]:

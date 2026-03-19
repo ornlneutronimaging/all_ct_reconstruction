@@ -17,7 +17,6 @@ Dependencies:
 Author: CT Reconstruction Development Team
 """
 
-from charset_normalizer import detect
 import h5py
 import os
 import logging

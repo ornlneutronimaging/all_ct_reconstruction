@@ -29,7 +29,7 @@ import logging
 import os
 from typing import Dict, List, Any, Optional, Tuple
 import numpy as np
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 from ipywidgets import interactive
 from IPython.display import display
 import ipywidgets as widgets

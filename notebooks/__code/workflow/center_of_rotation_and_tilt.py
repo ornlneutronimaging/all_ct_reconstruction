@@ -18,7 +18,7 @@ Key Features:
     - Interactive widgets for parameter fine-tuning
 
 Dependencies:
-    - neutompy: Neutron tomography preprocessing functions
+    - __code.utilities.cor: Center of rotation and tilt correction
     - algotom: Advanced tomographic algorithms
     - matplotlib: Visualization and interactive plotting
     - scikit-image: Image transformation utilities
@@ -31,7 +31,7 @@ from typing import Optional, Union, Tuple, Any, Dict, List
 import numpy as np
 from numpy.typing import NDArray
 import logging
-from neutompy.preproc.preproc import correction_COR, find_COR
+from __code.utilities.cor import correction_COR, find_COR
 from ipywidgets import interactive
 from IPython.display import display, HTML
 import ipywidgets as widgets
@@ -39,8 +39,6 @@ from skimage.transform import rotate
 from algotom.prep.calculation import find_center_vo, find_center_360
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-
-# from imars3d.backend.diagnostics.rotation import find_rotation_center
 
 from __code.parent import Parent
 from __code.config import NUM_THREADS
@@ -350,17 +348,6 @@ class CenterOfRotationAndTilt(Parent):
         logging.info(f"tilt correction applied to normalized_images_log")
         display(HTML("<font color='blue'>Tilt correction applied to normalized_images_log!</font>"))
 
-    def calculate_tilt_using_neutompy(self):
-        logging.info(f"calculate tilt correction:")
-        proj_crop_min = np.min(self.parent.normalized_images_log, axis=0)
-        pixel_offset, self.tilt_angle = find_COR(self.image_0_degree, 
-                                            self.image_180_degree,
-                                            nroi=1,
-                                            ref_proj=proj_crop_min)
-
-        print(f"\t{pixel_offset = }")
-        print(f"\t{self.tilt_angle = }")
-
     def calculate_and_apply_tilt_using_neutompy(self):
         
         # retrieve index of 0 and 180degrees runs
@@ -386,8 +373,7 @@ class CenterOfRotationAndTilt(Parent):
         normalized_images = correction_COR(normalized_images,
                        np.array(self.image_0_degree),
                        np.array(self.image_180_degree),
-                       shift=None,
-                       theta=None,
+                       show_results=True,
                        rois=rois)
         logging.info(f"{np.shape(normalized_images) =}")
         # self.parent.normalized_images_log = normalized_images
