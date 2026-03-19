@@ -1204,7 +1204,7 @@ class Step1PrepareTimePixImages:
     def validate_tilt_correction(self) -> None:
         self.o_tilt.validate_tilt_correction()
         
-    # calcualte center of rotation
+    # calculate center of rotation
     def center_of_rotation_settings(self) -> None:
         """
         Configure center of rotation calculation for TimePix reconstruction.
