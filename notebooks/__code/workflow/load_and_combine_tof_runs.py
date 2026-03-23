@@ -43,6 +43,7 @@ Created: Part of neutron CT reconstruction development workflow
 """
 
 import logging
+from matplotlib.pylab import f
 import numpy as np
 from tqdm import tqdm
 from typing import Dict, List, Optional, Tuple, Union, Any
@@ -146,7 +147,7 @@ class LoadAndCombineTofRuns(Parent):
         for _run in list_sample_to_reject:
             logging.info(f"rejecting run {_run}")
             list_of_runs[DataType.sample][_run][Run.use_it] = False
-
+            
         self.parent.list_of_runs = list_of_runs
 
     def load_data(self, detector_type=DetectorType.tpx1_legacy, combine_runs_with_same_angle=False) -> None:
@@ -265,8 +266,12 @@ class LoadAndCombineTofRuns(Parent):
         logging.info(f"{master_3d_data_array[DataType.sample].shape = }")
         logging.info(f"{master_3d_data_array[DataType.ob].shape = }")
         logging.info(f"{list_of_angles_of_runs_to_keep = }")
+        logging.info(f"{len(list_of_angles_of_runs_to_keep) = }")
         logging.info(f"{self.parent.final_list_of_angles_rad = }")
+        logging.info(f"{len(self.parent.final_list_of_angles_rad) = }")
         logging.info(f"{self.parent.list_of_images = }")
+        logging.info(f"{len(self.parent.list_of_images) = }")
+        logging.info(f"--------------------------------")
 
     def load_data_for_a_run(self, run: Optional[str] = None, 
                             detector_type: DetectorType = DetectorType.tpx1_legacy,

@@ -287,6 +287,7 @@ class TestReconstruction(Parent):
                                             #    roi_radius=1000,
                                             svmbir_lib_path = svmbir_lib_path,
                                             )
+                _rec_img_svmbir = _rec_img_svmbir[0].T
                 time_end_svmbir: float = time.time()
                 logging.info(f"\tslice: {_slice}")
                 logging.info(f"\tusing rec.svmbir_reconstruction ... done in {time_end_svmbir - time_start_svmbir:.2f} seconds!")
@@ -315,10 +316,12 @@ class TestReconstruction(Parent):
                 logging.info(f"\t{recon_dict = }")
                 logging.info(f"\tusing mbirjax ... done in {time_end_mbirjax - time_start_mbirjax:.2f} seconds!")
                 _rec_img_mbirjax = _rec_img_mbirjax.squeeze()
+                
+                
 
             self.display_reconstructed_slice(gridrec=_rec_img_gridrec, 
                                              astra=_rec_img_astra, 
-                                             svmbir=_rec_img_svmbir[0].T, 
+                                             svmbir=_rec_img_svmbir, 
                                              mbirjax=_rec_img_mbirjax,
                                              slice=_slice)
             

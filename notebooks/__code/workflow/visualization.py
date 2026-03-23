@@ -382,12 +382,28 @@ class Visualization(Parent):
                                         vertical_spacing=0.08)
                     fig.add_trace(go.Heatmap(z=_raw_data, colorscale='Viridis',
                                             zmin=vmin_before, zmax=vmax_before,
-                                            showscale=True), row=1, col=1)
+                                            coloraxis='coloraxis1'), row=1, col=1)
                     fig.add_trace(go.Heatmap(z=_norm_data, colorscale='Viridis',
                                             zmin=vmin_after, zmax=vmax_after,
-                                            showscale=True), row=2, col=1)
+                                            coloraxis='coloraxis2'), row=2, col=1)
                     fig.update_yaxes(autorange='reversed')
-                    fig.update_layout(height=800, width=500)
+                    fig.update_layout(
+                        height=800,
+                        width=560,
+                        margin=dict(r=95),
+                        coloraxis1=dict(
+                            colorscale='Viridis',
+                            cmin=vmin_before,
+                            cmax=vmax_before,
+                            colorbar=dict(x=1.02, y=0.78, len=0.4, thickness=15)
+                        ),
+                        coloraxis2=dict(
+                            colorscale='Viridis',
+                            cmin=vmin_after,
+                            cmax=vmax_after,
+                            colorbar=dict(x=1.02, y=0.22, len=0.4, thickness=15)
+                        ),
+                    )
                     fig.show()
 
                 display_plot = interactive(plot_norm,
@@ -439,11 +455,27 @@ class Visualization(Parent):
                     fig = make_subplots(rows=1, cols=2,
                                         subplot_titles=(label_before, label_after))
                     fig.add_trace(go.Heatmap(z=_raw_data, colorscale='Viridis',
-                                            showscale=True), row=1, col=1)
+                                            coloraxis='coloraxis1'), row=1, col=1)
                     fig.add_trace(go.Heatmap(z=_norm_data, colorscale='Viridis',
-                                            showscale=True), row=1, col=2)
+                                            coloraxis='coloraxis2'), row=1, col=2)
                     fig.update_yaxes(autorange='reversed')
-                    fig.update_layout(height=500, width=1000)
+                    fig.update_layout(
+                        height=500,
+                        width=1060,
+                        margin=dict(r=95),
+                        coloraxis1=dict(
+                            colorscale='Viridis',
+                            cmin=float(np.min(_raw_data)),
+                            cmax=float(np.max(_raw_data)),
+                            colorbar=dict(x=0.47, len=0.9, thickness=15)
+                        ),
+                        coloraxis2=dict(
+                            colorscale='Viridis',
+                            cmin=float(np.min(_norm_data)),
+                            cmax=float(np.max(_norm_data)),
+                            colorbar=dict(x=1.02, len=0.9, thickness=15)
+                        ),
+                    )
                     fig.show()
 
                 display_plot = interactive(plot_norm,

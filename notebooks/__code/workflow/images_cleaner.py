@@ -499,7 +499,6 @@ class ImagesCleaner(Parent):
                                           master_base_folder_name)
 
         # sample
-        logging.info(f"working with sample:")
         sample_full_output_folder = os.path.join(full_output_folder, "sample")
         logging.info(f"\t {sample_full_output_folder =}")
         make_or_reset_folder(sample_full_output_folder)
