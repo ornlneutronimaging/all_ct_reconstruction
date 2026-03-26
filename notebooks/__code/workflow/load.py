@@ -173,11 +173,11 @@ class Load(Parent):
                 self.o_file_browser = FileFolderBrowser(working_dir=working_dir,
                                                 ipts_folder=self.parent.working_dir[DataType.ipts],
                                                 next_function=self.data_selected)
-                self.o_file_browser.select_output_folder_with_new(instruction=f"Select Top Folder of {data_type}")
+                self.o_file_browser.select_output_folder_with_new(instruction=f"Select Top Folder of {data_type}",)
             else:
                 self.o_file_browser = FileFolderBrowser(working_dir=working_dir,
                                                 next_function=self.data_selected)
-                self.o_file_browser.select_input_folder(instruction=f"Select Top Folder of {data_type}",
+                self.o_file_browser.select_input_folder(instruction=f"Select Top Folder of {data_type} (you should see the RUN NUMBER folders listed)",
                                                 multiple_flag=multiple_flag)
                 
             self.out = widgets.Output()
@@ -475,7 +475,7 @@ class Load(Parent):
         logging.info(f"{self.parent.current_data_type} top folder selected: {top_folder}")
         self.parent.working_dir[self.data_type] = top_folder
         # print(f"{self.data_type} top folder is: {top_folder}")
-        display(HTML(f"<font color='green'><b>{self.data_type} folder selected</b>: {top_folder}</font>"))
+        display(HTML(f"<b>{self.data_type} folder selected</b>: {top_folder}"))
         # loguru_logging.info(f"{self.data_type} folder selected: {top_folder} via LOGURU"  )
         logging.info(f"{self.data_type} folder selected: {top_folder}")
 

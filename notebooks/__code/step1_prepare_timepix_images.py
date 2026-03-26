@@ -373,6 +373,22 @@ class Step1PrepareTimePixImages:
         nexus_folder = self.working_dir[DataType.nexus]
         detector_type = self.detector_type
 
+        # check that ob selection is correct
+        ob_error = False
+        ob_message = "N/A"
+        if not os.path.exists(open_beam_folder):
+            ob_error = True
+            ob_message = "Open beam folder not found! Please select the correct folder."
+        else:
+            # each folder within that selection should have tiff images
+            list_folders_within_selection = [d for d in os.listdir(open_beam_folder) if os.path.isdir(os.path.join(open_beam_folder, d))]
+            for _folder in list_folders_within_selection:
+                list_tiff = glob.glob(os.path.join(open_beam_folder, _folder, "*.tif*"))
+                if len(list_tiff) == 0:
+                    ob_error = True
+                    ob_message = f"You probably need to go one level deeper in the folder selection for the open beam data!"
+                    break
+                
         list_sample_projections = glob.glob(os.path.join(sample_folder, "*"))
 
         logging.info(f"Infos on selected folders:")
@@ -383,13 +399,31 @@ class Step1PrepareTimePixImages:
         logging.info(f"  - detector: {detector_type}")
 
         display(HTML("<span style='color:blue; font-size:16px'>Selected folders:</span>"))
-        display(HTML(f"<ul>"
-                      f"<li><b>Sample folder:</b> {sample_folder}</li>"
-                      f"<li><b>Open beam folder:</b> {open_beam_folder}</li>"
-                      f"<li><b>Number of projections:</b> {len(list_sample_projections)}</li>"
-                      f"<li><b>Nexus folder:</b> {nexus_folder}</li>"
-                      f"<li><b>Detector type:</b> {detector_type}</li>"
-                      f"</ul>"))
+
+        if ob_error:
+            display(HTML(f"<ul>"
+                        f"<li><span style='font-weight:bold'>Sample folder:</span><span style='color:green'> {sample_folder} - OK</span></li>"
+                        f"<li><span style='color:red; font-weight:bold'>Open beam folder:</span><span style='color:red'> {open_beam_folder} - ERROR</span></li>"
+                        f"<li><span style='color:red; font-weight:bold'>Open beam message:</span><span style='color:red'> {ob_message} - ERROR</span></li>"
+                        f"<li><span style='font-weight:bold'>Number of projections:</span><span style='color:green'> {len(list_sample_projections)} - OK</span></li>"
+                        f"<li><span style='font-weight:bold'>Nexus folder:</span><span style='color:green'> {nexus_folder} - OK</span></li>"
+                        f"<li><span style='font-weight:bold'>Detector type:</span><span style='color:green'> {detector_type} - OK</span></li>"
+                        f"</ul>"))
+            
+            display(HTML(f"<span style='color:red; font-size:20px'>Please fix the open beam folder selection before proceeding! </span>"))
+            
+            
+        else:
+            display(HTML(f"<ul>"
+                        f"<li><span style='font-weight:bold'>Sample folder:</span><span style='color:green'> {sample_folder} - OK</span></li>"
+                        f"<li><span style='font-weight:bold'>Open beam folder:</span><span style='color:green'> {open_beam_folder} - OK</span></li>"
+                        f"<li><span style='font-weight:bold'>Number of projections:</span><span style='color:green'> {len(list_sample_projections)} - OK</span></li>"
+                        f"<li><span style='font-weight:bold'>Nexus folder:</span><span style='color:green'> {nexus_folder} - OK</span></li>"
+                        f"<li><span style='font-weight:bold'>Detector type:</span><span style='color:green'> {detector_type} - OK</span></li>"
+                        f"</ul>"))
+            
+        
+        
 
     # Checking data (proton charge, empty runs ...)
     def preload_and_check_data(self) -> None:
