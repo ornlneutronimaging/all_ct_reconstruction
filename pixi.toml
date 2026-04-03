@@ -1,8 +1,8 @@
 [workspace]
 authors = ["Jean Bilheux <bilheuxjm@ornl.gov>", "Chen Zhang <zhangc@ornl.gov>"]
-channels = ["conda-forge"]
+channels = ["conda-forge", "pypi"]
 name = "all_ct_reconstruction"
-platforms = ["linux-64", "osx-arm64"]
+platforms = ["linux-64"]
 version = "1.0.0"
 
 [tasks]
@@ -20,10 +20,9 @@ ipywidgets = ">=8.1.8,<9"
 ipython = ">=9.9.0,<10"
 ipympl = ">=0.9.7,<0.10"
 loguru = ">=0.7.3,<0.8"
-jax = ">=0.7.0,<0.8"
+# jax = ">=0.7.0,<0.8"
 plotly = ">=6.5.2,<7"
 numpy = ">=2.0,<3"
-matplotlib = ">=3.9,<4"
 scipy = ">=1.14,<2"
 scikit-image = ">=0.24,<1"
 h5py = ">=3.12,<4"
@@ -33,10 +32,13 @@ psutil = ">=6.0,<7"
 astropy = ">=6.1,<7"
 tifffile = ">=2024.1,<2026"
 tomopy = ">=1.15,<2"
+xarray = ">=2026.2.0,<2027"
 
 [pypi-dependencies]
 neutronbraggedge = ">=2.0.6, <3"
 timepix-geometry-correction = { git = "https://github.com/ornlneutronimaging/timepix_geometry_correction.git", branch = "main" }
+jax = { version = ">=0.9", extras = ["cuda13"] }
+mbirjax = "*"
 
 # ── Linux-only dependencies (CUDA, MKL) ──────────────────────────
 [target.linux-64.dependencies]
@@ -45,13 +47,6 @@ svmbir = ">=0.4.0,<0.5"
 
 [target.linux-64.pypi-dependencies]
 mkl-fft = ">=2.0.0, <3"
-mbirjax = { version = ">=0.6.7, <0.7", extras = ["cuda12"] }
 
-# ── macOS Apple Silicon ──────────────────────────────────────────
-# svmbir not available for osx-arm64 (no conda build, PyPI requires Pillow<=10.1.0)
-# users have mbirjax + algotom for reconstruction on macOS
-[target.osx-arm64.dependencies]
-astra-toolbox = ">=2.2.0,<3"
-
-[target.osx-arm64.pypi-dependencies]
-mbirjax = ">=0.6.7, <0.7"
+[system-requirements]
+cuda = "13.0"

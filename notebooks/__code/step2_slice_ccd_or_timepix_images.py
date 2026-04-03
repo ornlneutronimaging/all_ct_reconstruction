@@ -175,6 +175,8 @@ class Step2SliceCcdOrTimePixImages:
         width: int
         nbr_images, height, width = data.shape
 
+        max_slices = int(height/10)
+
         def plot_images(image_index: int, top_bottom: Tuple[int, int], nbr: int, vrange: Tuple[float, float]) -> Tuple[Tuple[int, int], int]:
             """
             Inner function to plot slice ranges on the selected image.
@@ -216,6 +218,8 @@ class Step2SliceCcdOrTimePixImages:
             ax.axhline(top_slice, color='red')
             ax.axhline(bottom_slice, color='red')
                   
+            display(HTML(f"Each green range of slices contains {range_size} slices (with 2 slices of overlap between ranges)"))
+                  
             plt.show()
 
             return top_slice, bottom_slice, nbr
@@ -225,7 +229,7 @@ class Step2SliceCcdOrTimePixImages:
                                                                         layout=widgets.Layout(width='50%')),
                                           top_bottom=widgets.IntRangeSlider(min=0, max=height-1, step=1, value=[0, height-1],
                                                                                  layout=widgets.Layout(width='50%')),
-                                          nbr=widgets.IntSlider(min=1, max=30, step=1, value=1,
+                                          nbr=widgets.IntSlider(min=1, max=max_slices, step=1, value=1,
                                                                           layout=widgets.Layout(width='50%')),
                                             vrange = widgets.FloatRangeSlider(min=master_vmin,
                                                                         layout=widgets.Layout(width="50%"),

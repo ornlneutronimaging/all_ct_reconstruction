@@ -160,6 +160,7 @@ class Crop(Parent):
             else:
                 integrated: NDArray[np.generic] = integrated_mean
 
+
             crop_width: int = right - left + 1
             crop_height: int = bottom - top + 1
 
@@ -203,7 +204,7 @@ class Crop(Parent):
                                         data_type=widgets.RadioButtons(options=["Min", "Mean"],
                                                                        description='Data type:',
                                                                        disabled=False,
-                                                                       value="Min",
+                                                                       value="Mean",
                                                                        layout=widgets.Layout(width="50%"))
         )
         display(self.display_roi)
