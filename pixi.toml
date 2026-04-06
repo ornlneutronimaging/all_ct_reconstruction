@@ -33,6 +33,7 @@ astropy = ">=6.1,<7"
 tifffile = ">=2024.1,<2026"
 tomopy = ">=1.15,<2"
 xarray = ">=2026.2.0,<2027"
+pytest = ">=9.0.2,<10"
 
 [pypi-dependencies]
 neutronbraggedge = ">=2.0.6, <3"

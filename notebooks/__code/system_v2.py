@@ -58,6 +58,7 @@ class System:
 
     @classmethod
     def select_working_dir(cls, 
+                           debug: bool = False,
                           debugger_folder: str = '', 
                           system_folder: str = '',
                           ipts: Optional[str] = None,
@@ -85,15 +86,19 @@ class System:
 
         facility = 'SNS'
         instrument = 'VENUS'
-
+        cls.instrument = instrument
+        
         setup_logging(basename_of_log_file="system")
         logging.info(f"*** Starting system ***")
 
-        debugging = config.debugging
+        # debugging = config.debugging
+        debugging = debug
+        cls.debugging = debugging
         logging.info(f"debugging: {debugging}")
         
         if debugging:
             print("** Using Debugging Mode! **")
+            return
 
         display(HTML("""
                     <style>
@@ -237,7 +242,8 @@ class System:
         debugging: bool = config.debugging
 
         if debugging:
-            instrument: str = cls.get_instrument_selected()
+            # instrument: str = cls.get_instrument_selected()
+            instrument: str = cls.instrument
             computer_name: str = cls.get_computer_name()
             start_path = config.debugger_instrument_folder[computer_name][instrument]
             cls.start_path = start_path
@@ -533,9 +539,13 @@ class System:
             Otherwise, constructs path from start_path and UI selection.
         """
         logging.info(f"Getting working directory. Current working_dir: {cls.working_dir}")
-        if cls.working_dir:
-            logging.info(f"\tabout to return {cls.working_dir = }")
-            return cls.working_dir
+        if cls.debugging:
+            logging.info(f"\tIn debugging mode, returning working_dir: {cls.working_dir}")
+            return os.path.join(cls.start_path, cls.working_dir)
         else:
-            logging.info(f"\tabout to start_path: {os.path.join(cls.start_path, cls.working_dir_ui.value) = }")
-            return os.path.join(cls.start_path, cls.working_dir_ui.value)
+            if cls.working_dir:
+                logging.info(f"\tabout to return {cls.working_dir = }")
+                return cls.working_dir
+            else:
+                logging.info(f"\tabout to start_path: {os.path.join(cls.start_path, cls.working_dir_ui.value) = }")
+                return os.path.join(cls.start_path, cls.working_dir_ui.value)

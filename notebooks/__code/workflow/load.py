@@ -30,6 +30,7 @@ Created: Part of CT reconstruction development workflow
 from typing import Optional, List, Dict, Any, Union, Tuple
 import glob
 import os
+from matplotlib.pylab import f
 import numpy as np
 from numpy.typing import NDArray
 import logging
@@ -471,6 +472,47 @@ class Load(Parent):
             file_name_split = current_file_name.split("_")
             self.widget_angle.value = f"{file_name_split[first_index]}.{file_name_split[second_index]}"
 
+    def _keep_only_highest_R_value(self, list_images):
+        """
+        If there are multiple files with the same angle value (same naming convention but different _R#.tiff values), keep only the file with the highest R value for each angle value (degree.minute value).
+        For example, if there are files named sample_045_030.tiff, sample_045_030_R001.tiff, sample_045_030_R002.tiff, etc. we want to keep only the file sample_045_030_R002.tiff for the angle value 45.030 degrees.
+        """
+        logging.info("When a revision number is present, keeping only the files with the highest _R#.tiff value for each angle value ...")
+        logging.info(f"\tNumber of images before keeping only the highest R value when a revision number is present: {len(list_images)}")
+        
+        dict_angle_value_to_file = {}
+        for _file in list_images:
+            print(f"_file: {_file}")
+            base_name = os.path.basename(_file)
+            path = os.path.dirname(_file)
+            name_without_extension, ext = os.path.splitext(base_name)
+            print(f"name_without_extension: {name_without_extension} and extension: {ext}")
+            
+            # isolate last part "_" and check if it contains "_R" followed by a number, if yes, we keep only the file with the highest number after _R for each angle value (degree.minute value)
+            splitted_name = name_without_extension.split("_")
+            print(f"splitted_name: {splitted_name}")
+            last_part = splitted_name[-1]
+            print(f"last_part: {last_part}")
+            if not ("R" in last_part):
+                print(f"\t No revision number found in file name, keeping the file: {_file}")
+                # key = "_".join(splitted_name)
+                # print(f"\t key: {key}")
+                dict_angle_value_to_file[_file] = [_file]
+                print(f"\t dict_angle_value_to_file: {dict_angle_value_to_file}")
+            else:
+                # if there is a revision number, we already have by design a key with the same base file name
+                print(f"\t Revision number found in file name, checking if we already have a file with the same angle value ...")
+                key = os.path.join(path, "_".join(splitted_name[:-1]) + ext)
+                dict_angle_value_to_file[key].append(_file)
+                print(f"\t dict_angle_value_to_file: {dict_angle_value_to_file}")
+   
+        # keep only the last file for each key in the dictionary
+        list_images_to_keep = [] 
+        for key in dict_angle_value_to_file.keys():
+            list_images_to_keep.append(dict_angle_value_to_file[key][-1])
+            
+        return list_images_to_keep
+        
     def data_selected(self, top_folder):
         logging.info(f"{self.parent.current_data_type} top folder selected: {top_folder}")
         self.parent.working_dir[self.data_type] = top_folder
@@ -486,6 +528,18 @@ class Load(Parent):
 
         if self.parent.MODE == OperatingMode.white_beam:
             list_images = glob.glob(os.path.join(top_folder, "*.tif*"))
+            
+            # this is where we need to keep only the files with the highest _R#.tiff value, in case there are multiple files with the same angle value (same naming convention but different _R#.tiff values)
+            list_images = self._keep_only_highest_R_value(list_images)
+            logging.info(f"{list_images = }")
+            
+            # this is where we need to format the angle value (3 digits for degree and 3 digits for minute) in case the naming convention is like this: sample_045_030_R001.tiff, sample_045_030_R002.tiff, etc. We want to keep only the file with the highest R value for each angle value (degree.minute value). So in this case, we want to keep only the file sample_045_030_R002.tiff for the angle value 45.030 degrees.
+            
+            
+            ## FIXME
+            
+            
+            
             list_images.sort()
             logging.info(f"\t {len(list_images)} {self.data_type} files found as TIFF!")
 

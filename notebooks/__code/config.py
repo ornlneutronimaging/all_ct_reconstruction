@@ -18,7 +18,7 @@ from __code import DetectorType, OperatingMode, DataType
 from __code.utilities.system import get_user_name
 
 # Debug and development settings
-debugging: bool = False
+debugging: bool = True
 verbose: bool = True
 debugger_username: str = 'j35'
 imaging_team: List[str] = ["j35", "gxt"]
@@ -105,7 +105,7 @@ svmbir_parameters: Dict[str, Union[int, float, bool]] = {
     'verbose': True,
 }
 
-default_detector_type = DetectorType.tpx1_legacy
+default_detector_type = DetectorType.ccd
 
 # Debug data folder configuration organized by operating mode and data type
 debug_folder: Dict[DetectorType, Dict[OperatingMode, Dict[DataType, str]]] = {   
@@ -173,16 +173,28 @@ debug_folder: Dict[DetectorType, Dict[OperatingMode, Dict[DataType, str]]] = {
         OperatingMode.white_beam: None
     },
 
-    DetectorType.ccd: {
+    # DetectorType.ccd: {
+    #    OperatingMode.white_beam: {
+    #         DataType.sample: "/HFIR/CG1D/IPTS-34899/shared/CT_by_jean/UTK_ORNL_VENUS_collaboration/UHP_CT_TIF",
+    #         DataType.ob: "/HFIR/CG1D/IPTS-34899/shared/CT_by_jean/UTK_ORNL_VENUS_collaboration//brights_for_CT/LiFZnS_OB_1p8A_256x256_best.tif",
+    #         DataType.dc: "",
+    #         DataType.cleaned_images: '/HFIR/CG1D/IPTS-34899/shared/jean_test',
+    #         DataType.normalized: '/HFIR/CG1D/IPTS-34899/shared/processed_data/jean_test',
+    #         DataType.reconstructed: '/HFIR/CG1D/IPTS-34899/shared/processed_data/jean_test',
+    #         DataType.extra: '/HFIR/CG1D/IPTS-34899/shared/processed_data/jean_test',
+    #         # DataType.nexus: '/HFIR/CG1D/IPTS-34899/nexus',
+    #     },
+       
+       DetectorType.ccd: {
        OperatingMode.white_beam: {
-            DataType.sample: "/HFIR/CG1D/IPTS-34899/shared/CT_by_jean/UTK_ORNL_VENUS_collaboration/UHP_CT_TIF",
-            DataType.ob: "/HFIR/CG1D/IPTS-34899/shared/CT_by_jean/UTK_ORNL_VENUS_collaboration//brights_for_CT/LiFZnS_OB_1p8A_256x256_best.tif",
+            DataType.sample: "/SNS/VENUS/IPTS-37493/images/ikonxl/raw/ct/20260322_Nautical_Compass_60_000s_2_500AngsMin/",
+            DataType.ob: "/SNS/VENUS/IPTS-37493/images/ikonxl/raw/ct/20260322_Nautical_Compass_60_000s_2_500AngsMin/20260320_Run_15803_OB_Compass_60_000s_2_500AngsMin_ob_0.tiff",
             DataType.dc: "",
-            DataType.cleaned_images: '/HFIR/CG1D/IPTS-34899/shared/jean_test',
-            DataType.normalized: '/HFIR/CG1D/IPTS-34899/shared/processed_data/jean_test',
-            DataType.reconstructed: '/HFIR/CG1D/IPTS-34899/shared/processed_data/jean_test',
-            DataType.extra: '/HFIR/CG1D/IPTS-34899/shared/processed_data/jean_test',
-            # DataType.nexus: '/HFIR/CG1D/IPTS-34899/nexus',
+            DataType.cleaned_images: '/SNS/VENUS/IPTS-37493/shared/processed_data/ct_reconstructed/compass_2_5_test',
+            DataType.normalized: '/SNS/VENUS/IPTS-37493/shared/processed_data/ct_reconstructed/compass_2_5_test',
+            DataType.reconstructed: '/SNS/VENUS/IPTS-37493/shared/processed_data/ct_reconstructed/compass_2_5_test',
+            DataType.extra: '/SNS/VENUS/IPTS-37493/shared/processed_data/ct_reconstructed/compass_2_5_test',
+            # DataType.nexus: '/SNS/VENUS/IPTS-37493/nexus',
         },
 
     #  DetectorType.ccd: {
