@@ -481,35 +481,27 @@ class Load(Parent):
         logging.info(f"\tNumber of images before keeping only the highest R value when a revision number is present: {len(list_images)}")
         
         dict_angle_value_to_file = {}
+        list_images.sort()
         for _file in list_images:
-            print(f"_file: {_file}")
             base_name = os.path.basename(_file)
             path = os.path.dirname(_file)
             name_without_extension, ext = os.path.splitext(base_name)
-            print(f"name_without_extension: {name_without_extension} and extension: {ext}")
             
             # isolate last part "_" and check if it contains "_R" followed by a number, if yes, we keep only the file with the highest number after _R for each angle value (degree.minute value)
             splitted_name = name_without_extension.split("_")
-            print(f"splitted_name: {splitted_name}")
             last_part = splitted_name[-1]
-            print(f"last_part: {last_part}")
             if not ("R" in last_part):
-                print(f"\t No revision number found in file name, keeping the file: {_file}")
-                # key = "_".join(splitted_name)
-                # print(f"\t key: {key}")
                 dict_angle_value_to_file[_file] = [_file]
-                print(f"\t dict_angle_value_to_file: {dict_angle_value_to_file}")
             else:
-                # if there is a revision number, we already have by design a key with the same base file name
-                print(f"\t Revision number found in file name, checking if we already have a file with the same angle value ...")
                 key = os.path.join(path, "_".join(splitted_name[:-1]) + ext)
                 dict_angle_value_to_file[key].append(_file)
-                print(f"\t dict_angle_value_to_file: {dict_angle_value_to_file}")
-   
+            
         # keep only the last file for each key in the dictionary
         list_images_to_keep = [] 
         for key in dict_angle_value_to_file.keys():
             list_images_to_keep.append(dict_angle_value_to_file[key][-1])
+            
+        logging.info(f"\tNumber of images after keeping only the highest R value when a revision number is present: {len(list_images_to_keep)}")
             
         return list_images_to_keep
         
