@@ -1,4 +1,5 @@
 import logging
+from cv2 import log
 import numpy as np
 from IPython.display import display, HTML
 import ipywidgets as widgets
@@ -32,7 +33,7 @@ class Exclusion(Parent):
 
     def list_of_images_to_exclude(self):
         """List of images to exclude from the reconstruction."""
-        label = widgets.HTML("<b>Define the index of the images you want to exclude from the reconstruction:</b>")
+        label = widgets.HTML("<b>Define the index of the images you want to exclude from the reconstruction (check logbook for available images in correct order!):</b>")
         display(label)
         self.list_index_widget = widgets.Text(
             value='',
@@ -42,6 +43,9 @@ class Exclusion(Parent):
 
         example = widgets.HTML("<font color='gray' size='2'><i>Example: 0, 1, 2, 10-20 (to exclude images with index 0, 1, 2 and from 10 to 20)</i></font>")
         display(example)
+        
+        # display the list of images in the logbook
+        logging.info(f"List of images available for reconstruction: {list(range(len(self.parent.list_of_images[DataType.sample])))}")
 
     def exclude_images_below_threshold(self):
     

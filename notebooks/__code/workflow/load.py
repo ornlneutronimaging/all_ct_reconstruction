@@ -411,6 +411,9 @@ class Load(Parent):
         display(first_hori_box)
 
         list_splits = os.path.basename(first_file).split("_")
+        if "R" in list_splits[-1]:
+            list_splits = list_splits[:-1]
+            
         self.list_checkboxes = []
         global_list_verti_box = []
 
@@ -522,22 +525,15 @@ class Load(Parent):
             list_images = glob.glob(os.path.join(top_folder, "*.tif*"))
             
             # this is where we need to keep only the files with the highest _R#.tiff value, in case there are multiple files with the same angle value (same naming convention but different _R#.tiff values)
-            list_images = self._keep_only_highest_R_value(list_images)
-            logging.info(f"{list_images = }")
-            
-            # this is where we need to format the angle value (3 digits for degree and 3 digits for minute) in case the naming convention is like this: sample_045_030_R001.tiff, sample_045_030_R002.tiff, etc. We want to keep only the file with the highest R value for each angle value (degree.minute value). So in this case, we want to keep only the file sample_045_030_R002.tiff for the angle value 45.030 degrees.
-            
-            
-            ## FIXME
-            
-            
-            
             list_images.sort()
+            list_images = self._keep_only_highest_R_value(list_images)
+                        
             logging.info(f"\t {len(list_images)} {self.data_type} files found as TIFF!")
 
             if len(list_images) == 0:
                 list_images = glob.glob(os.path.join(top_folder, "*.fits"))
                 list_images.sort()
+                list_images = self._keep_only_highest_R_value(list_images)
                 logging.info(f"\t {len(list_images)} {self.data_type} files found as FITS!")
 
             self.parent.list_of_images[self.data_type] = list_images
@@ -551,7 +547,9 @@ class Load(Parent):
             self.parent.configuration.top_folder.ob = top_folder
 
     def save_list_of_angles(self, list_of_images):
+        
         if self.how_to_retrieve_angle_value_widget.value == HowToRetrieveAngleValue.use_angle_value_from_metadata_file:
+            
             self.retrieve_angle_value_from_metadata_file(list_of_images)
             
             self.parent.final_list_of_angles = [float(angle) for angle in self.parent.final_list_of_angles]
@@ -621,14 +619,25 @@ class Load(Parent):
         for _file in base_list_of_images:
             _file = os.path.splitext(_file)[0]  # remove extension
             _splitted_named = _file.split("_")
+            if "R" in _splitted_named[-1]:  # if the last part contains revision number, we remove it
+                _splitted_named = _splitted_named[:-1]
+                
             angle_degree = _splitted_named[list_indices[0]]
             angle_minute = _splitted_named[list_indices[1]]
             angle_value = float(f"{angle_degree}.{angle_minute}")
             list_of_angles.append(angle_value)
 
+        # we need to sort the angles and then sort the list of images the same way
+        sorted_indices = np.argsort(list_of_angles)
+        list_of_angles = [list_of_angles[i] for i in sorted_indices]
+        base_list_of_images = [base_list_of_images[i] for i in sorted_indices]
+        list_of_images = [list_of_images[i] for i in sorted_indices]
+        self.parent.list_of_images[DataType.sample] = list_of_images
+
         self.parent.final_list_of_angles = np.array(list_of_angles)
         list_of_angles_rad = np.array([np.deg2rad(float(_angle)) for _angle in list_of_angles])
         self.parent.final_list_of_angles_rad = list_of_angles_rad
+        
         for _file_name, _angle, _angle_rad in zip(base_list_of_images, list_of_angles, list_of_angles_rad):
             logging.info(f"\t{_file_name} : {_angle} degrees, {_angle_rad} radians")
 

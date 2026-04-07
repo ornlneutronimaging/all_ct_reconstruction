@@ -36,6 +36,8 @@ from numpy.typing import NDArray
 from tomopy.misc.corr import remove_outlier
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+import copy
+import random
 
 from __code.parent import Parent
 from __code import DataType
@@ -275,7 +277,8 @@ class Visualization(Parent):
                 key = f'coloraxis{i}'
                 coloraxis_dict[key] = dict(colorscale='Viridis', cmin=zmin_val, cmax=zmax_val,
                                            colorbar=dict(x=float(x_positions[i-1]), len=0.9, thickness=15))
-            fig0.update_layout(height=500, width=1000, **coloraxis_dict)
+            
+            fig0.update_layout(height=500, width=500*ncols_row1, **coloraxis_dict)
             fig0.show()
 
         # Row 2: First angle, last angle
@@ -494,9 +497,14 @@ class Visualization(Parent):
 
     def visualize_all_images_at_once(self):
         
-        master_3d_data_array = self.parent.master_3d_data_array
+        master_3d_data_array = copy.deepcopy(self.parent.master_3d_data_array)
 
         nbr_cols = 8
+
+        # lower resolution to be able to visualize all images at once
+        for _data_type in master_3d_data_array.keys():
+            if master_3d_data_array[_data_type] is not None:
+                master_3d_data_array[_data_type] = master_3d_data_array[_data_type][:, ::20, ::20]
 
         for _data_type in master_3d_data_array.keys():
 
@@ -504,22 +512,35 @@ class Visualization(Parent):
             # if not self.parent.list_of_images[_data_type]:
                 continue
             
-            display(HTML(f"<b>{_data_type}</b>"))
             array = master_3d_data_array[_data_type]
+            
+            display(HTML(f"<b>{_data_type}</b>"))
+            # array = master_3d_data_array[_data_type]
             # nbr_images = len(self.parent.list_of_images[_data_type])
-            nbr_images = len(self.parent.master_3d_data_array[_data_type])
+            nbr_images = len(array)
             nbr_rows = int(np.ceil(nbr_images / nbr_cols))
+            
+            if nbr_rows > 10:
+                # use a substet of images to avoid crashing the notebook
+                nbr_rows = 10
+                # random number of index to plot
+                index_to_plot = np.random.choice(nbr_images, size=10* nbr_cols, replace=False)
+                index_to_plot.sort()
+            else:
+                index_to_plot = np.arange(nbr_images)
 
-            subplot_titles = [f"{i}" for i in range(nbr_images)] + [""] * (nbr_rows * nbr_cols - nbr_images)
+            data_to_used = array[index_to_plot]
+
+            subplot_titles = [f"{i}" for i in index_to_plot] + [""] * (nbr_rows * nbr_cols - nbr_images)
             fig = make_subplots(rows=nbr_rows, cols=nbr_cols,
                                 subplot_titles=subplot_titles,
                                 horizontal_spacing=0.02,
                                 vertical_spacing=0.05)
 
-            for _index in range(nbr_images):
+            for _index in np.arange(len(data_to_used)):
                 _row = _index // nbr_cols + 1
                 _col = _index % nbr_cols + 1
-                fig.add_trace(go.Heatmap(z=array[_index], colorscale='Viridis',
+                fig.add_trace(go.Heatmap(z=data_to_used[_index], colorscale='Viridis',
                                          showscale=False), row=_row, col=_col)
 
             fig.update_yaxes(autorange='reversed', showticklabels=False)
@@ -623,30 +644,38 @@ class Visualization(Parent):
                           data=None, 
                           vmin=None, 
                           vmax=None,
-                          title="normalized"):
+                          title="normalized",
+                          low_res=False):
         
         self.vmin = vmin
         self.vmax = vmax
+        
+        low_res_data = copy.deepcopy(data)
 
+        # convert data into low resolution for faster visualization
+        if low_res: #consider low res only if really needed to avoid losing details
+            if low_res_data.shape[1] > 500 or low_res_data.shape[2] > 500:
+                coeff = 20
+                low_res_data = low_res_data[:, ::coeff, ::coeff]
 
         def plot_images(index=0):
             
             if self.vmin is None:
-                self.vmin = np.min(data[index])
+                self.vmin = np.min(low_res_data[index])
             if self.vmax is None:
-                self.vmax = np.max(data[index])
+                self.vmax = np.max(low_res_data[index])
 
-            fig = go.Figure(go.Heatmap(z=data[index], colorscale='Viridis',
+            fig = go.Figure(go.Heatmap(z=low_res_data[index], colorscale='Viridis',
                                        zmin=self.vmin, zmax=self.vmax))
+            # add a title
             fig.update_yaxes(autorange='reversed')
-            fig.update_layout(title=title, height=500, width=500)
+            fig.update_layout(title=f"{title} - image index: {index} (low resolution!)", height=500, width=500)
             fig.show()
 
-            
         _display_plot_images = interactive(plot_images,
                                 index=widgets.IntSlider(min=0,
                                                         layout=widgets.Layout(width='80%'),
-                                                        max=len(data)-1,
+                                                        max=len(low_res_data)-1,
                                                         continuous_update=False,
                                                         value=0),
         )

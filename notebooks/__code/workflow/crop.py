@@ -82,8 +82,22 @@ class Crop(Parent):
             _data = self.parent.master_3d_data_array[DataType.sample]
         else:
            _data = self.parent.normalized_images
-        integrated_min: NDArray[np.generic] = np.min(_data, axis=0)
-        integrated_mean: NDArray[np.generic] = np.mean(_data, axis=0)
+           
+        # Downsample for visualization if size of image is large
+        if _data.shape[1] > 1000 or _data.shape[2] > 1000:
+            low_res_flag = True
+        else:
+            low_res_flag = False
+           
+        if low_res_flag:
+            low_res_coeff = 20
+            low_res_data: NDArray[np.generic] = _data[:, ::low_res_coeff, ::low_res_coeff]  # downsample for visualization
+            integrated_min: NDArray[np.generic] = np.min(low_res_data, axis=0)
+            integrated_mean: NDArray[np.generic] = np.mean(low_res_data, axis=0)
+        else:
+            low_res_data = _data
+            integrated_min: NDArray[np.generic] = np.min(_data, axis=0)
+            integrated_mean: NDArray[np.generic] = np.mean(_data, axis=0)
 
         height: int
         width: int
@@ -105,6 +119,12 @@ class Crop(Parent):
             default_top = 0
             default_right = width - 1
             default_bottom = height - 1
+            
+        if low_res_flag:
+            default_left = default_left // low_res_coeff
+            default_right = default_right // low_res_coeff
+            default_top = default_top // low_res_coeff
+            default_bottom = default_bottom // low_res_coeff
 
         # Handle negative values (offset from edges)
         if default_right < 0:
@@ -167,6 +187,9 @@ class Crop(Parent):
             fig = go.Figure()
             fig.add_trace(go.Heatmap(z=integrated, colorscale='Viridis',
                                      zmin=vmin, zmax=vmax, showscale=True))
+            # hide the axis ticks and labels
+            fig.update_xaxes(showticklabels=False)
+            fig.update_yaxes(showticklabels=False)
             fig.add_shape(type='rect',
                           x0=left, x1=left + crop_width,
                           y0=top, y1=top + crop_height,
@@ -177,8 +200,8 @@ class Crop(Parent):
             fig.update_layout(height=600, width=600, title='Select Crop Region')
             fig.show()
 
-            return left, right, top, bottom            
-        
+            return left*low_res_coeff, right*low_res_coeff, top*low_res_coeff, bottom*low_res_coeff
+
         self.display_roi = interactive(plot_crop,
                                        left_right=widgets.SelectionRangeSlider(options=list(range(width)),
                                                                                 index=(default_left, default_right),

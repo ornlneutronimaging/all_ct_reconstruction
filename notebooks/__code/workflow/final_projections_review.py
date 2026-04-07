@@ -41,6 +41,9 @@ Author: CT Reconstruction Pipeline Team
 Created: Part of CT reconstruction development workflow
 """
 
+from random import random
+from re import sub
+
 import numpy as np
 import matplotlib.pyplot as plt
 from IPython.display import display
@@ -54,6 +57,7 @@ from plotly.subplots import make_subplots
 
 from __code.parent import Parent
 from __code import DataType
+from __code.utilities import logging
 
 
 class FinalProjectionsReview(Parent):
@@ -121,7 +125,13 @@ class FinalProjectionsReview(Parent):
         if not list(array):
             return
 
-        nbr_images: int = len(array)
+        if len(array) > 100:
+            logging.info(f"Too many images to display ({len(array)}). Displaying a random subset of 100 images for review.")
+            subset_array = random.sample(array.tolist(), 100)
+        else:
+            subset_array = array
+            
+        nbr_images: int = len(subset_array)
 
         # list_angles = self.parent.final_list_of_angles
         # list_runs = self.parent.list_of_runs_to_use[DataType.sample]
@@ -130,8 +140,8 @@ class FinalProjectionsReview(Parent):
         nbr_rows: int = int(np.ceil(nbr_images / nbr_cols))
 
         if auto_vrange:
-            vmin: float = float(np.min(array))
-            vmax: float = float(np.max(array))
+            vmin: float = float(np.min(subset_array))
+            vmax: float = float(np.max(subset_array))
         else:
             vmin = 0.0
             vmax = 1.0
@@ -149,7 +159,7 @@ class FinalProjectionsReview(Parent):
                     break
                 # title = f"{list_runs[_index]}, {list_angles[_index]}"
                 # list_runs_with_infos.append(title)
-                fig.add_trace(go.Heatmap(z=array[_index],
+                fig.add_trace(go.Heatmap(z=subset_array[_index],
                                          colorscale='Viridis',
                                          zmin=vmin, zmax=vmax,
                                          showscale=(int(_index) == 0)),

@@ -645,7 +645,8 @@ class Step1PrepareCcdImages:
 
         o_vizu = Visualization(parent=self)
         o_vizu.visualize_1_stack(data=self.sinogram_normalized_images_log,
-                                 title="Sinograms")
+                                 title="Sinograms",
+                                 low_res=False)
     # test reconstruction using gridrec (fast algorithm)
     def select_slices_to_use_to_test_reconstruction(self):
         """uses: normalized_images_log"""

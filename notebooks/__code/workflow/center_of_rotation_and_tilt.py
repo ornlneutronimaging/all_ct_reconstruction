@@ -225,6 +225,16 @@ class CenterOfRotationAndTilt(Parent):
         default_zmin = float(np.percentile(self.image_0_degree, 2))
         default_zmax = float(np.percentile(self.image_0_degree, 98))
 
+        height, width = np.shape(self.image_0_degree)
+        if height > 1000:
+            logging.warning(f"height of the image is {height}, which is quite large. working with low resolution images for the selection of the range of slices to use to calculate the center of rotation might be better for performance.")
+            local_image_0_degree = self.image_0_degree[::10, ::10]
+            local_image_180_degree = self.image_180_degree[::10, ::10]
+        else:
+            local_image_0_degree = self.image_0_degree
+            local_image_180_degree = self.image_180_degree
+        height, width = np.shape(local_image_0_degree)
+
         def plot_range(y_range, vrange):
 
             y_top, y_bottom = y_range
@@ -232,15 +242,15 @@ class CenterOfRotationAndTilt(Parent):
             fig = make_subplots(rows=1, cols=2,
                                 subplot_titles=(f"theory: 0 degree - measured: {self.real_0_degree_angle} degree",
                                                 f"theory: 180 degree - measured: {self.real_180_degree_angle} degree"))
-            fig.add_trace(go.Heatmap(z=self.image_0_degree, colorscale='Viridis',
+            fig.add_trace(go.Heatmap(z=local_image_0_degree, colorscale='Viridis',
                                      zmin=vrange[0], zmax=vrange[1], showscale=True), row=1, col=1)
-            fig.add_trace(go.Heatmap(z=self.image_180_degree, colorscale='Viridis',
+            fig.add_trace(go.Heatmap(z=local_image_180_degree, colorscale='Viridis',
                                      zmin=vrange[0], zmax=vrange[1], showscale=True), row=1, col=2)
 
             # Add horizontal band (y_range selection) on both subplots
             for xref, yref in [("x", "y"), ("x2", "y2")]:
                 fig.add_shape(type="rect",
-                              x0=0, x1=np.shape(self.image_0_degree)[1],
+                              x0=0, x1=np.shape(local_image_0_degree)[1],
                               y0=y_top, y1=y_bottom,
                               fillcolor='blue', opacity=0.2,
                               line=dict(width=0),
