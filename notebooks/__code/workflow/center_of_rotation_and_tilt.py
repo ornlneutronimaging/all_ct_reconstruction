@@ -31,6 +31,7 @@ from typing import Optional, Union, Tuple, Any, Dict, List
 import numpy as np
 from numpy.typing import NDArray
 import logging
+import copy
 from __code.utilities.cor import correction_COR, find_COR
 from ipywidgets import interactive
 from IPython.display import display, HTML
@@ -227,10 +228,12 @@ class CenterOfRotationAndTilt(Parent):
 
         height, width = np.shape(self.image_0_degree)
         if height > 1000:
+            coefficient = 10
             logging.warning(f"height of the image is {height}, which is quite large. working with low resolution images for the selection of the range of slices to use to calculate the center of rotation might be better for performance.")
-            local_image_0_degree = self.image_0_degree[::10, ::10]
-            local_image_180_degree = self.image_180_degree[::10, ::10]
+            local_image_0_degree = self.image_0_degree[::coefficient, ::coefficient]
+            local_image_180_degree = self.image_180_degree[::coefficient, ::coefficient]
         else:
+            coefficient = 1
             local_image_0_degree = self.image_0_degree
             local_image_180_degree = self.image_180_degree
         height, width = np.shape(local_image_0_degree)
@@ -242,6 +245,9 @@ class CenterOfRotationAndTilt(Parent):
             fig = make_subplots(rows=1, cols=2,
                                 subplot_titles=(f"theory: 0 degree - measured: {self.real_0_degree_angle} degree",
                                                 f"theory: 180 degree - measured: {self.real_180_degree_angle} degree"))
+            # keep x and y axis the same size for both subplots
+            fig.update_xaxes(scaleanchor="y", scaleratio=1, row=1, col=1)
+            fig.update_xaxes(scaleanchor="y", scaleratio=1, row=1, col=2)
             fig.add_trace(go.Heatmap(z=local_image_0_degree, colorscale='Viridis',
                                      zmin=vrange[0], zmax=vrange[1], showscale=True), row=1, col=1)
             fig.add_trace(go.Heatmap(z=local_image_180_degree, colorscale='Viridis',
@@ -260,7 +266,7 @@ class CenterOfRotationAndTilt(Parent):
             fig.update_layout(height=500, width=1000)
             fig.show()
 
-            return y_top, y_bottom
+            return y_top*coefficient, y_bottom*coefficient
 
         self.display_plot = interactive(plot_range,
                                         y_range = widgets.IntRangeSlider(min=0, 
@@ -277,9 +283,8 @@ class CenterOfRotationAndTilt(Parent):
 
     # ---- tilt correction ----
     def test_tilt_correction(self):
-       # self.calculate_tilt_using_neutompy()
-        self.calculate_and_apply_tilt_using_neutompy()
-
+        self.calculate_tilt_using_neutompy()
+        
     def display_before_after_tilt_correction(self):
                 
         height, width = np.shape(self.parent.normalized_images_log[0])
@@ -358,7 +363,7 @@ class CenterOfRotationAndTilt(Parent):
         logging.info(f"tilt correction applied to normalized_images_log")
         display(HTML("<font color='blue'>Tilt correction applied to normalized_images_log!</font>"))
 
-    def calculate_and_apply_tilt_using_neutompy(self):
+    def calculate_tilt_using_neutompy(self):
         
         # retrieve index of 0 and 180degrees runs
         logging.info(f"calculate and apply tilt correction:")
@@ -366,6 +371,7 @@ class CenterOfRotationAndTilt(Parent):
         logging_3d_array_infos(message="before tilt correction", array=self.parent.normalized_images_log)
 
         normalized_images = np.array(self.parent.normalized_images_log) if type(self.parent.normalized_images_log) == list else self.parent.normalized_images_log
+        stagging_normalized_images = copy.deepcopy(normalized_images)
 
         y_top, y_bottom = self.display_plot.result
 
@@ -380,14 +386,17 @@ class CenterOfRotationAndTilt(Parent):
         logging.info(f"\t{np.shape(self.image_180_degree) =}")
         logging.info(f"\t{rois =}")
 
-        normalized_images = correction_COR(normalized_images,
+        temp_normalized_images = correction_COR(stagging_normalized_images,
                        np.array(self.image_0_degree),
                        np.array(self.image_180_degree),
                        show_results=True,
                        rois=rois)
-        logging.info(f"{np.shape(normalized_images) =}")
+        
+        del stagging_normalized_images
+        
+        logging.info(f"{np.shape(temp_normalized_images) =}")
         # self.parent.normalized_images_log = normalized_images
-        self.parent.temporary_normalized_images_log = normalized_images
+        self.parent.temporary_normalized_images_log = temp_normalized_images
 
         logging_3d_array_infos(message="after tilt correction", array=self.parent.temporary_normalized_images_log)
 
@@ -572,7 +581,10 @@ class CenterOfRotationAndTilt(Parent):
             
             fig.update_yaxes(autorange='reversed', row=1, col=1)
             fig.update_yaxes(autorange='reversed', row=1, col=2)
-            fig.update_layout(width=1000, height=500)
+            fig.update_layout(yaxis=dict(scaleanchor="x", scaleratio=1, constrain='domain'), 
+                              yaxis2=dict(scaleanchor="x2", scaleratio=1, constrain='domain'), 
+                              width=1000, height=500)
+
             fig.show()
 
             return slice_value

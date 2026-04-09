@@ -54,10 +54,11 @@ from typing import Optional, List, Tuple
 from numpy.typing import NDArray
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+import logging
 
 from __code.parent import Parent
 from __code import DataType
-from __code.utilities import logging
+
 
 
 class FinalProjectionsReview(Parent):
@@ -133,6 +134,12 @@ class FinalProjectionsReview(Parent):
             
         nbr_images: int = len(subset_array)
 
+        # check if we need lower the resolution of the images to be able to display them all at once, if the images are too big, it can be very slow to display them
+        height, width = subset_array[0].shape
+        if height > 1000 or width > 1000:
+            logging.info(f"Images are too big to display them all at once. Lowering the resolution for the display.")
+            subset_array = [image[::20, ::20] for image in subset_array]
+
         # list_angles = self.parent.final_list_of_angles
         # list_runs = self.parent.list_of_runs_to_use[DataType.sample]
 
@@ -169,7 +176,7 @@ class FinalProjectionsReview(Parent):
 
         fig.update_yaxes(autorange='reversed', showticklabels=False)
         fig.update_xaxes(showticklabels=False)
-        # fig.update_layout(height=nbr_rows * 200, width=nbr_cols * 200)
+        fig.update_layout(height=nbr_rows * 200, width=nbr_cols * 200)
         fig.show()
 
     def single_image(self, image: Optional[NDArray[np.floating]] = None) -> None:

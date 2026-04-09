@@ -327,7 +327,8 @@ class ExportExtra(Parent):
         )
         display(choices)
 
-        self.instructions = widgets.Textarea(value=f"Reload the configuration file {os.path.basename(self.config_file_name)} found in {os.path.dirname(self.config_file_name)} in the notebook {STEP2_NOTEBOOK}",
+        basename_config_file_name = os.path.basename(self.config_file_name)
+        self.instructions = widgets.Textarea(value=f"Reload the configuration file {basename_config_file_name} found in {os.path.dirname(self.config_file_name)} in the notebook {STEP2_NOTEBOOK}",
                                              layout=widgets.Layout(width='100%', height='160px'),
                                              disabled=True)
         display(self.instructions) 
@@ -370,8 +371,9 @@ class ExportExtra(Parent):
         else:
             self.run_script.disabled = True
 
+        cleaned_config_file_name = os.path.abspath(self.config_file_name)
         if change['new'] == RunningModeOptions.go_to_step2:
-            self.instructions.value = f"Reload the configuration file ({self.config_file_name}) in the notebook {STEP2_NOTEBOOK}"
+            self.instructions.value = f"Reload the configuration file ({cleaned_config_file_name}) in the notebook {STEP2_NOTEBOOK}"
         elif change['new'] == RunningModeOptions.manual_launch:
             self.instructions.value = f"Launch the following script from the command line: {self.sh_file_name}"
         elif change['new'] == RunningModeOptions.run_on_hsnt:

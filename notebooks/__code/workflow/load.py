@@ -433,10 +433,15 @@ class Load(Parent):
                                       description=f"{_split}")
             self.list_checkboxes.append(_check)
             global_list_verti_box.append(_check)
-            _check.observe(self.on_check_change, names='value')
+            # _check.observe(self.on_check_change, names='value')
 
         verti_box = widgets.VBox(global_list_verti_box)
         display(verti_box)
+
+        # turn the next to last 2 checkboxes to true by default, since most of the time the angle value is at the end of the file name, just before the extension, and is usually composed of 2 fields separated by an underscore (for example: sample_045_030.tiff, where 045 is the degree value and 030 is the minute value, which together give an angle value of 45.030 degrees)
+        if len(self.list_checkboxes) >= 2:
+            self.list_checkboxes[-2].value = True
+            self.list_checkboxes[-3].value = True
 
         if self._are_2_checkboxes_selected():
             self.error_label = widgets.HTML("")
@@ -447,6 +452,11 @@ class Load(Parent):
         display(widgets.HTML("<hr>"))
         self.widget_angle = widgets.Label("")
         display(widgets.HBox([widgets.Label("Angle value:"), self.widget_angle]))
+
+        for _widget in self.list_checkboxes:
+            _widget.observe(self.on_check_change, names='value')
+            
+        self.on_check_change(None)  # to initialize the angle value based on the default checkboxes state
 
     def get_list_index_of_checkboxes(self):
         self.parent.list_states_checkbox = [x.value for x in self.list_checkboxes]

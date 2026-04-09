@@ -154,6 +154,14 @@ class Normalization(Parent):
         integrated_images = np.mean(sample_images, axis=0)
         height, width = np.shape(integrated_images)
 
+        if height > 1000 or width > 1000:
+            coeff = 10
+            logging.warning(f"Integrated image is large (height: {height}, width: {width}), working with low resolution version for ROI selection.")
+            integrated_images = integrated_images[::coeff, ::coeff]  # Downsample by a factor of 10
+            height, width = np.shape(integrated_images)
+        else:
+            coeff = 1
+
         # self.fig, self.axs = plt.subplots(nrows=1, ncols=1, figsize=(7,7), 
         #                                   num="Normalization ROI Selection")
         # self.img = self.axs.imshow(integrated_images)
@@ -176,10 +184,13 @@ class Normalization(Parent):
                           fillcolor='green',
                           opacity=0.3)
             fig.update_yaxes(autorange='reversed')
+            # xaxis and yaxis range to match the image dimensions
+            fig.update_xaxes(range=[0, coeff*width])
+            fig.update_yaxes(range=[0, coeff*height])
             fig.update_layout(height=600, width=600, title='Normalization ROI Selection')
             fig.show()
 
-            return left, right, top, bottom                       
+            return coeff*left, coeff*right, coeff*top, coeff*bottom                       
     
         if DEBUG:
             default_left = roi[self.MODE]['left']

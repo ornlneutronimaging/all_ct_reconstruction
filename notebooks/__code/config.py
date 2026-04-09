@@ -187,14 +187,14 @@ debug_folder: Dict[DetectorType, Dict[OperatingMode, Dict[DataType, str]]] = {
        
        DetectorType.ccd: {
        OperatingMode.white_beam: {
-            DataType.sample: "/SNS/VENUS/IPTS-37493/images/ikonxl/raw/ct/20260322_Nautical_Compass_60_000s_2_500AngsMin/",
-            DataType.ob: "/SNS/VENUS/IPTS-37493/images/ikonxl/raw/ct/20260322_Nautical_Compass_60_000s_2_500AngsMin/20260320_Run_15803_OB_Compass_60_000s_2_500AngsMin_ob_0.tiff",
+            DataType.sample: "/SNS/VENUS/IPTS-37035/images/ikonxl/raw/ct/20260330_SAPO_CT_180_000s_3_000AngsMin/",
+            DataType.ob: "/SNS/VENUS/IPTS-37035/images/ikonxl/raw/ct/20260322_Nautical_Compass_60_000s_2_500AngsMin/20260320_Run_15803_OB_Compass_60_000s_2_500AngsMin_ob_0.tiff",
             DataType.dc: "",
-            DataType.cleaned_images: '/SNS/VENUS/IPTS-37493/shared/processed_data/ct_reconstructed/compass_2_5_test',
-            DataType.normalized: '/SNS/VENUS/IPTS-37493/shared/processed_data/ct_reconstructed/compass_2_5_test',
-            DataType.reconstructed: '/SNS/VENUS/IPTS-37493/shared/processed_data/ct_reconstructed/compass_2_5_test',
-            DataType.extra: '/SNS/VENUS/IPTS-37493/shared/processed_data/ct_reconstructed/compass_2_5_test',
-            # DataType.nexus: '/SNS/VENUS/IPTS-37493/nexus',
+            DataType.cleaned_images: '/SNS/VENUS/IPTS-37035/shared/processed_data/ct_reconstructed/compass_2_5_test',
+            DataType.normalized: '/SNS/VENUS/IPTS-37035/shared/processed_data/ct_reconstructed/compass_2_5_test',
+            DataType.reconstructed: '/SNS/VENUS/IPTS-37035/shared/processed_data/ct_reconstructed/compass_2_5_test',
+            DataType.extra: '/SNS/VENUS/IPTS-37035/shared/processed_data/ct_reconstructed/compass_2_5_test',
+            # DataType.nexus: '/SNS/VENUS/IPTS-37035/nexus',
         },
 
     #  DetectorType.ccd: {

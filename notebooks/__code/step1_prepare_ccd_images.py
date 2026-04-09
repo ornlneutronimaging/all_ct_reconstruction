@@ -35,6 +35,7 @@ from __code.utilities.configuration_file import ReconstructionAlgorithm
 from __code.utilities.logging import logging_3d_array_infos
 from __code.utilities.exceptions import MetadataError
 from __code.workflow.exclusion import Exclusion
+from __code.workflow.export_hdf5 import ExportHdf5
 
 LOG_BASENAME_FILENAME, _ = os.path.splitext(os.path.basename(__file__))
 
@@ -467,60 +468,6 @@ class Step1PrepareCcdImages:
     def display_removed_strips(self):
         self.o_remove.display_cleaning()
 
-
-    # # calcualte center of rotation
-    # def center_of_rotation_settings(self) -> None:
-    #     """
-    #     Configure center of rotation calculation for TimePix reconstruction.
-        
-    #     Sets up the interface for center of rotation determination using
-    #     0°, 180°, and 360° TimePix projection images. Isolates specific
-    #     angular positions and configures calculation parameters.
-        
-    #     Side Effects:
-    #         - Creates CenterOfRotationAndTilt object if not already initialized
-    #         - Isolates 0°, 180°, and 360° degree images for calculation
-    #         - Launches center of rotation parameter configuration interface
-    #     """
-    #     if self.o_tilt is None:
-    #         self.o_tilt = CenterOfRotationAndTilt(parent=self)
-    #     self.o_tilt.isolate_0_180_360_degrees_images()
-    #     self.o_tilt.center_of_rotation_settings()
-
-    # def run_center_of_rotation(self) -> None:
-    #     """
-    #     Execute center of rotation calculation using TimePix log data.
-        
-    #     Runs the center of rotation calculation algorithms using the
-    #     log-converted TimePix data and isolated angular positions.
-    #     Essential for accurate CT reconstruction geometry.
-        
-    #     Side Effects:
-    #         - Executes center of rotation calculation using self.o_tilt
-    #         - Uses normalized_images_log for calculation
-    #         - Determines optimal center of rotation value
-    #     """
-    #     self.o_tilt.run_center_of_rotation()
-
-    # def run_center_of_rotation_or_skip_it(self) -> None:
-    #     """
-    #     Calculate center of rotation or provide skip option.
-        
-    #     Provides interface for either calculating the center of rotation
-    #     automatically or allowing the user to skip this step if the
-    #     center is already known or will be determined manually.
-        
-    #     Side Effects:
-    #         - Launches center of rotation calculation interface
-    #         - Allows user choice between calculation and manual specification
-    #     """
-    #     continue_flag = self.o_tilt.calculate_center_of_rotation()
-    #     if continue_flag:
-    #         self.display_center_of_rotation()
-            
-            
-            
-
     # calculate and apply tilt
     def select_sample_roi(self):
         self.o_tilt = CenterOfRotationAndTilt(parent=self)
@@ -539,6 +486,7 @@ class Step1PrepareCcdImages:
             - Updates normalized_images_log with tilt-corrected data
             - Logs tilt correction parameters and results
         """
+        
         self.o_tilt.test_tilt_correction()
         display(HTML("<hr>"))
         self.o_tilt.display_before_after_tilt_correction()
@@ -725,6 +673,10 @@ class Step1PrepareCcdImages:
         o_export.update_configuration()
         o_export.run(base_log_file_name=LOG_BASENAME_FILENAME,
                      prefix=prefix)
+
+    def export_hdf5(self):
+        o_export = ExportHdf5(parent=self)
+        o_export.export()
         
     @classmethod
     def legend(cls) -> None:

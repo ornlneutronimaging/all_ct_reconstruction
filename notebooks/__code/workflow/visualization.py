@@ -337,6 +337,12 @@ class Visualization(Parent):
                   vmin_after=None,
                   vmax_after=None):
 
+        # should we use low resolution for the display to speed up the visualization? if the images are too big, it can be very slow to display them
+        use_low_resolution = False
+        height, width = data_before.shape[1], data_before.shape[2]
+        if height > 1000 or width > 1000:
+            use_low_resolution = True
+
         if self.display_ui.value == '1 image at a time':
 
             # if we combine the images, the index of the image before will match the index of the image after after correction
@@ -380,6 +386,10 @@ class Visualization(Parent):
                     # _run_number = list_of_images[image_index]
                     _raw_data = data_before[image_index * coeff]
                     
+                    if use_low_resolution:
+                        _raw_data = _raw_data[::20, ::20]
+                        _norm_data = _norm_data[::20, ::20]
+                    
                     fig = make_subplots(rows=2, cols=1,
                                         subplot_titles=(label_before, label_after),
                                         vertical_spacing=0.08)
@@ -391,6 +401,7 @@ class Visualization(Parent):
                                             coloraxis='coloraxis2'), row=2, col=1)
                     fig.update_yaxes(autorange='reversed')
                     fig.update_layout(
+                        yaxis=dict(scaleanchor="x", scaleratio=1),
                         height=800,
                         width=560,
                         margin=dict(r=95),
@@ -455,6 +466,10 @@ class Visualization(Parent):
                     # _run_number = list_of_images[image_index]
                     _raw_data = data_before[image_index * coeff]
 
+                    if use_low_resolution:
+                        _raw_data = _raw_data[::20, ::20]
+                        _norm_data = _norm_data[::20, ::20]
+
                     fig = make_subplots(rows=1, cols=2,
                                         subplot_titles=(label_before, label_after))
                     fig.add_trace(go.Heatmap(z=_raw_data, colorscale='Viridis',
@@ -499,7 +514,7 @@ class Visualization(Parent):
         
         master_3d_data_array = copy.deepcopy(self.parent.master_3d_data_array)
 
-        nbr_cols = 8
+        nbr_cols = 6
 
         # lower resolution to be able to visualize all images at once
         for _data_type in master_3d_data_array.keys():
@@ -545,7 +560,11 @@ class Visualization(Parent):
 
             fig.update_yaxes(autorange='reversed', showticklabels=False)
             fig.update_xaxes(showticklabels=False)
-            fig.update_layout(height=nbr_rows * 200, width=nbr_cols * 150)
+            if _data_type == DataType.sample:
+                fig.update_layout(height=nbr_rows * 200, width=nbr_cols * 150)
+            else:
+                fig.update_layout(width=nbr_cols * 150)
+
             fig.show()
 
     def visualize_normalized_images(self):

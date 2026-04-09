@@ -1,12 +1,11 @@
 import os
 import logging
 import glob
-import matplotlib.pyplot as plt
+import plotly.graph_objects as go
 from ipywidgets import interactive
 from IPython.display import display
 import ipywidgets as widgets
 import numpy as np
-from matplotlib.patches import Rectangle
 from IPython.display import HTML
 from typing import Optional, Tuple, List, Any
 from numpy.typing import NDArray
@@ -193,34 +192,41 @@ class Step2SliceCcdOrTimePixImages:
             
             vmin: float = vrange[0]
             vmax: float = vrange[1]
-            
-            fig, ax = plt.subplots(figsize=(7,7))
-            im = ax.imshow(data[image_index], cmap='jet', vmin=vmin, vmax=vmax)
-            plt.colorbar(im, ax=ax, shrink=0.5)
-            
+
             top_slice: int = top_bottom[0]
             bottom_slice: int = top_bottom[1]
-            
+
             range_size: int = int((np.abs(top_slice - bottom_slice)) / nbr)
+
+            fig = go.Figure(data=go.Heatmap(
+                z=data[image_index],
+                colorscale='Jet',
+                zmin=vmin,
+                zmax=vmax,
+            ))
 
             for _range_index in np.arange(nbr):
                 _top_slice: int = top_slice + _range_index * range_size
 
-                ax.add_patch(Rectangle((0, _top_slice), width, range_size,
-                                    edgecolor='yellow',
-                                    facecolor='green',
-                                    fill=True,
-                                    lw=2,
-                                    alpha=0.3,
-                                    ),
-                )     
+                fig.add_shape(
+                    type="rect",
+                    x0=0, y0=_top_slice,
+                    x1=width - 1, y1=_top_slice + range_size,
+                    line=dict(color="yellow", width=2),
+                    fillcolor="green",
+                    opacity=0.3,
+                )
 
-            ax.axhline(top_slice, color='red')
-            ax.axhline(bottom_slice, color='red')
-                  
+            fig.add_hline(y=top_slice, line_color="red")
+            fig.add_hline(y=bottom_slice, line_color="red")
+
+            fig.update_layout(
+                width=700, height=700,
+                yaxis=dict(autorange='reversed', scaleanchor='x'),
+            )
+            fig.show()
+
             display(HTML(f"Each green range of slices contains {range_size} slices (with 2 slices of overlap between ranges)"))
-                  
-            plt.show()
 
             return top_slice, bottom_slice, nbr
 
@@ -281,34 +287,38 @@ class Step2SliceCcdOrTimePixImages:
             Returns:
                 Tuple of (left, right, top, bottom) ROI boundaries
             """
-            fig0, axs = plt.subplots(figsize=(7,7))
-
             vmin: float = vrange[0]
             vmax: float = vrange[1]
 
             if use_local:
-                vmin=np.min(self.data[image_index])
+                vmin = np.min(self.data[image_index])
                 vmax = np.max(self.data[image_index])
-
-            img = axs.imshow(self.data[image_index], vmin=vmin, vmax=vmax)
-            plt.colorbar(img, ax=axs, shrink=0.5)
 
             left: int = left_right[0]
             right: int = left_right[1]
             top: int = top_bottom[0]
             bottom: int = top_bottom[1]
 
-            width = right - left + 1
-            height = bottom - top + 1
+            fig = go.Figure(data=go.Heatmap(
+                z=self.data[image_index],
+                zmin=vmin,
+                zmax=vmax,
+            ))
 
-            axs.add_patch(Rectangle((left, top), width, height,
-                                            edgecolor='yellow',
-                                            facecolor='green',
-                                            fill=True,
-                                            lw=2,
-                                            alpha=0.3,
-                                            ),
-                )     
+            fig.add_shape(
+                type="rect",
+                x0=left, y0=top,
+                x1=right, y1=bottom,
+                line=dict(color="yellow", width=2),
+                fillcolor="green",
+                opacity=0.3,
+            )
+
+            fig.update_layout(
+                width=700, height=700,
+                yaxis=dict(autorange='reversed', scaleanchor='x'),
+            )
+            fig.show()
 
             return left, right, top, bottom
                 
