@@ -20,7 +20,9 @@ ipywidgets = ">=8.1.8,<9"
 ipython = ">=9.9.0,<10"
 ipympl = ">=0.9.7,<0.10"
 loguru = ">=0.7.3,<0.8"
-# jax = ">=0.7.0,<0.8"
+cuda-version = "12.*"
+jaxlib  = {version="*", build="*cuda*"}
+jax = { version = ">=0.9" }
 plotly = ">=6.5.2,<7"
 numpy = ">=2.0,<3"
 scipy = ">=1.14,<2"
@@ -35,10 +37,10 @@ tomopy = ">=1.15,<2"
 xarray = ">=2026.2.0,<2027"
 pytest = ">=9.0.2,<10"
 
+
 [pypi-dependencies]
 neutronbraggedge = ">=2.0.6, <3"
 timepix-geometry-correction = { git = "https://github.com/ornlneutronimaging/timepix_geometry_correction.git", branch = "main" }
-jax = { version = ">=0.9", extras = ["cuda13"] }
 mbirjax = "*"
 
 # ── Linux-only dependencies (CUDA, MKL) ──────────────────────────
@@ -50,4 +52,4 @@ svmbir = ">=0.4.0,<0.5"
 mkl-fft = ">=2.0.0, <3"
 
 [system-requirements]
-cuda = "13.0"
+cuda = "12.0"
