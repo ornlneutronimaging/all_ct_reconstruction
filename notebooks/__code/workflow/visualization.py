@@ -389,19 +389,25 @@ class Visualization(Parent):
                     if use_low_resolution:
                         _raw_data = _raw_data[::20, ::20]
                         _norm_data = _norm_data[::20, ::20]
+
+                    raw_x = np.linspace(0, data_before.shape[2] - 1, _raw_data.shape[1])
+                    raw_y = np.linspace(0, data_before.shape[1] - 1, _raw_data.shape[0])
+                    norm_x = np.linspace(0, data_after.shape[2] - 1, _norm_data.shape[1])
+                    norm_y = np.linspace(0, data_after.shape[1] - 1, _norm_data.shape[0])
                     
                     fig = make_subplots(rows=2, cols=1,
                                         subplot_titles=(label_before, label_after),
                                         vertical_spacing=0.08)
-                    fig.add_trace(go.Heatmap(z=_raw_data, colorscale='Viridis',
+                    fig.add_trace(go.Heatmap(z=_raw_data, x=raw_x, y=raw_y, colorscale='Viridis',
                                             zmin=vmin_before, zmax=vmax_before,
                                             coloraxis='coloraxis1'), row=1, col=1)
-                    fig.add_trace(go.Heatmap(z=_norm_data, colorscale='Viridis',
+                    fig.add_trace(go.Heatmap(z=_norm_data, x=norm_x, y=norm_y, colorscale='Viridis',
                                             zmin=vmin_after, zmax=vmax_after,
                                             coloraxis='coloraxis2'), row=2, col=1)
                     fig.update_yaxes(autorange='reversed')
+                    fig.update_yaxes(scaleanchor='x', scaleratio=1, row=1, col=1)
+                    fig.update_yaxes(scaleanchor='x2', scaleratio=1, row=2, col=1)
                     fig.update_layout(
-                        yaxis=dict(scaleanchor="x", scaleratio=1),
                         height=800,
                         width=560,
                         margin=dict(r=95),
@@ -436,26 +442,6 @@ class Visualization(Parent):
                                                                             value=[vmin_after, vmax_after],
                                                                             continuous_update=False,
                                                                             layout=widgets.Layout(width='80%')),
-                                        # vmin_before=widgets.IntSlider(min=vmin_before, 
-                                        #                               max=vmax_before, 
-                                        #                               value=vmin_before,
-                                        #                               continuous_update=False,
-                                        #                               layout=widgets.Layout(width='50%')),
-                                        # vmax_before=widgets.IntSlider(min=vmin_before, 
-                                        #                               max=vmax_before, 
-                                        #                               value=vmax_before,
-                                        #                               continuous_update=False,
-                                        #                               layout=widgets.Layout(width='50%')),
-                                        # vmin_after=widgets.FloatSlider(min=vmin_after, 
-                                        #                                max=vmax_after,
-                                        #                                value=vmin_after,
-                                        #                                continuous_update=False,
-                                        #                                layout=widgets.Layout(width='50%')),
-                                        # vmax_after=widgets.FloatSlider(min=vmin_after, 
-                                        #                                max=vmax_after, 
-                                        #                                value=vmax_after,
-                                        #                                continuous_update=False,
-                                        #                                layout=widgets.Layout(width='50%')),
                                                                        )
 
             else:
@@ -470,13 +456,20 @@ class Visualization(Parent):
                         _raw_data = _raw_data[::20, ::20]
                         _norm_data = _norm_data[::20, ::20]
 
+                    raw_x = np.linspace(0, data_before.shape[2] - 1, _raw_data.shape[1])
+                    raw_y = np.linspace(0, data_before.shape[1] - 1, _raw_data.shape[0])
+                    norm_x = np.linspace(0, data_after.shape[2] - 1, _norm_data.shape[1])
+                    norm_y = np.linspace(0, data_after.shape[1] - 1, _norm_data.shape[0])
+
                     fig = make_subplots(rows=1, cols=2,
                                         subplot_titles=(label_before, label_after))
-                    fig.add_trace(go.Heatmap(z=_raw_data, colorscale='Viridis',
+                    fig.add_trace(go.Heatmap(z=_raw_data, x=raw_x, y=raw_y, colorscale='Viridis',
                                             coloraxis='coloraxis1'), row=1, col=1)
-                    fig.add_trace(go.Heatmap(z=_norm_data, colorscale='Viridis',
+                    fig.add_trace(go.Heatmap(z=_norm_data, x=norm_x, y=norm_y, colorscale='Viridis',
                                             coloraxis='coloraxis2'), row=1, col=2)
                     fig.update_yaxes(autorange='reversed')
+                    fig.update_yaxes(scaleanchor='x', scaleratio=1, row=1, col=1)
+                    fig.update_yaxes(scaleanchor='x2', scaleratio=1, row=1, col=2)
                     fig.update_layout(
                         height=500,
                         width=1060,
@@ -633,6 +626,8 @@ class Visualization(Parent):
                                      zmin=vmin_right, zmax=vmax_right,
                                      coloraxis='coloraxis2'), row=2, col=1)
             fig.update_yaxes(autorange='reversed')
+            fig.update_yaxes(scaleanchor='x', scaleratio=1, row=1, col=1)
+            fig.update_yaxes(scaleanchor='x2', scaleratio=1, row=2, col=1)
             fig.update_layout(height=700, width=500,
                               coloraxis1=dict(colorscale='Viridis', cmin=vmin_left, cmax=vmax_left,
                                               colorbar=dict(y=0.77, len=0.4)),

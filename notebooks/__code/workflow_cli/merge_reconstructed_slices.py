@@ -56,8 +56,8 @@ def merge_reconstructed_slices(output_data_folder: Optional[str] = None,
         
     Output Structure:
         output_data_folder/
-        ├── image_000.tiff
-        ├── image_001.tiff
+        ├── image_0000.tiff
+        ├── image_0001.tiff
         └── ...
         
     Process:
@@ -105,8 +105,8 @@ def merge_reconstructed_slices(output_data_folder: Optional[str] = None,
 
             else:
                 list_slices_already_processed.append(_slice_index)
-                logging.info(f"moving slice #{_slice_index} ({os.path.basename(list_folder_tiff[_index][_tiff_index])}) -> #image_{_slice_index + top_slice:03d}.tiff ... ")
-                _new_tiff_file: str = os.path.join(final_output_folder, f"image_{_slice_index + top_slice:03d}.tiff")
+                logging.info(f"moving slice #{_slice_index} ({os.path.basename(list_folder_tiff[_index][_tiff_index])}) -> #image_{_slice_index + top_slice:04d}.tiff ... ")
+                _new_tiff_file: str = os.path.join(final_output_folder, f"image_{_slice_index + top_slice:04d}.tiff")
                 os.rename(list_folder_tiff[_index][_tiff_index], _new_tiff_file)
                 
         # remove the input folder
