@@ -198,7 +198,9 @@ class Step1PrepareCcdImages:
         self.working_dir[DataType.dc] = os.path.join(top_sample_dir, "raw", "dc")
         self.working_dir[DataType.nexus] = os.path.join(top_sample_dir, "nexus")
         self.working_dir[DataType.processed] = os.path.join(top_sample_dir, "shared", "processed_data")
-        logging.info(f"working_dir: {self.working_dir}")
+        logging.info(f"working_dir:")
+        for _key, _value in self.working_dir.items():
+            logging.info(f"\t{_key}: {_value}")
         logging.info(f"instrument: {self.instrument}")
         logging.info(f"ipts_number: {self.ipts_number}")
         if DEBUG:
@@ -338,7 +340,7 @@ class Step1PrepareCcdImages:
     
     def select_export_normalized_folder(self):
         o_select = Load(parent=self)
-        o_select.select_folder(data_type=DataType.normalized)
+        o_select.select_folder(data_type=DataType.normalized, output_flag=True)
 
     def export_normalized_images(self):
         self.o_norm.export_images()

@@ -96,6 +96,7 @@ class Crop(Parent):
             integrated_mean: NDArray[np.generic] = np.mean(low_res_data, axis=0)
         else:
             low_res_data = _data
+            low_res_coeff = 1
             integrated_min: NDArray[np.generic] = np.min(_data, axis=0)
             integrated_mean: NDArray[np.generic] = np.mean(_data, axis=0)
 
@@ -179,7 +180,6 @@ class Crop(Parent):
                 integrated: NDArray[np.generic] = integrated_min
             else:
                 integrated: NDArray[np.generic] = integrated_mean
-
 
             crop_width: int = right - left + 1
             crop_height: int = bottom - top + 1

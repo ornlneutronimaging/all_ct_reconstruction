@@ -154,6 +154,7 @@ class Load(Parent):
 
         logging.info(f"\t{working_dir = }")
         if not os.path.exists(working_dir):
+            working_dir = self.parent.working_dir[DataType.ipts]
             logging.warning(f"Working directory {working_dir} does not exist!")
             while (not os.path.exists(working_dir)):
                 print(f"Working directory {working_dir} does not exist, trying to go up one level ...")

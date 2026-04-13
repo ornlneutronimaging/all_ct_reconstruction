@@ -52,6 +52,7 @@ class Exclusion(Parent):
         sample_data = self.parent.master_3d_data_array[DataType.sample]
         integrated_intensity = sample_data.sum(axis=(1,2))
 
+        logging.info(f"Integrated intensity (full image) for each image: {integrated_intensity}")
         display(HTML("<b>Use the slider to define the threshold below which images will be excluded from the reconstruction:</b>"))
 
         def on_threshold_change(threshold_value):
@@ -137,6 +138,8 @@ class Exclusion(Parent):
             logging.info(f"\t{len(self.parent.final_list_of_angles_rad)} angles (rad) remain for reconstruction.")
 
             logging.info(f"Excluding images with index: {list_of_images_to_exclude} from the reconstruction.")
+            logging.info(f"\t angles corresponding to the images to exclude: {[self.parent.final_list_of_angles[idx] for idx in list_of_images_to_exclude]}")
+            logging.info(f"\t images to exclude: {[self.parent.list_of_images[DataType.sample][idx] for idx in list_of_images_to_exclude]}")
             mask = np.ones(len(self.parent.list_of_images[DataType.sample]), dtype=bool)
             mask[list_of_images_to_exclude] = False
 

@@ -226,7 +226,9 @@ class SvmbirCliHandler:
                                                   delta_det_channel=center_offset,
                                                   snr_db=snr_db,
                     )
-                    reconstruction_array, recond_dict = ct_model_for_recon.recon(_sino,
+                    # go from [angle, y, x] to [y, x, angle]
+                    _sino_swapped = np.swapaxes(_sino, 0, 2)
+                    reconstruction_array, recond_dict = ct_model_for_recon.recon(_sino_swapped,
                                                                     print_logs=False,
                                                                     weights=None,
                                                                     )
@@ -287,7 +289,9 @@ class SvmbirCliHandler:
                                                 det_channel_offset=center_offset,
                                                 snr_db=snr_db,
                 )
-                reconstruction_array, recond_dict = ct_model_for_recon.recon(corrected_array_log,
+                # go from [angle, y, x] to [y, x, angle]
+                _sino_swapped = np.swapaxes(corrected_array_log, 0, 2)
+                reconstruction_array, recond_dict = ct_model_for_recon.recon(_sino_swapped,
                                                                 print_logs=False,
                                                                 weights=None,
                                                                 )
