@@ -200,6 +200,7 @@ class Step1PrepareCcdImages:
         self.working_dir[DataType.processed] = os.path.join(top_sample_dir, "shared", "processed_data")
         logging.info(f"working_dir: {self.working_dir}")
         logging.info(f"instrument: {self.instrument}")
+        logging.info(f"ipts_number: {self.ipts_number}")
         if DEBUG:
             logging.info(f"WARNING!!!! we are running using DEBUG mode!")
 
