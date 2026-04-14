@@ -158,7 +158,7 @@ class Normalization(Parent):
             coeff = 10
             logging.warning(f"Integrated image is large (height: {height}, width: {width}), working with low resolution version for ROI selection.")
             integrated_images = integrated_images[::coeff, ::coeff]  # Downsample by a factor of 10
-            height, width = np.shape(integrated_images)
+            # height, width = np.shape(integrated_images)
         else:
             coeff = 1
 
@@ -175,6 +175,10 @@ class Normalization(Parent):
             roi_height = np.abs(bottom - top) + 1
             roi_width = np.abs(right - left) + 1
 
+            title = "Integrated Projections with ROI"
+            if coeff > 1:
+                title += f" (downsampled by {coeff}x)"
+
             fig = make_subplots(rows=1, cols=1, subplot_titles=["Integrated Projections with ROI"])
             fig.add_trace(go.Heatmap(z=integrated_images, colorscale='Viridis', showscale=True))
             fig.add_shape(type='rect',
@@ -184,10 +188,7 @@ class Normalization(Parent):
                           fillcolor='green',
                           opacity=0.3)
             fig.update_yaxes(autorange='reversed')
-            # xaxis and yaxis range to match the image dimensions
-            fig.update_xaxes(range=[0, coeff*width])
-            fig.update_yaxes(range=[0, coeff*height])
-            fig.update_layout(height=600, width=600, title='Normalization ROI Selection')
+            fig.update_layout(height=600, width=600, title=title)
             fig.show()
 
             return coeff*left, coeff*right, coeff*top, coeff*bottom                       
