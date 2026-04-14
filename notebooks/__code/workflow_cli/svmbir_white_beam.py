@@ -32,7 +32,10 @@ Created: Part of CLI-based CT reconstruction workflow
 """
 
 import numpy as np
+
 import os
+# os.environ["JAX_PLATFORMS"] = "cpu" 
+
 import glob
 import logging
 from typing import List, Dict, Any, Tuple, Optional, Union
@@ -226,16 +229,19 @@ class SvmbirCliHandler:
                                                   delta_det_channel=center_offset,
                                                   snr_db=snr_db,
                     )
-                    # go from [angle, y, x] to [y, x, angle]
-                    _sino_swapped = np.swapaxes(_sino, 0, 2)
-                    reconstruction_array, recond_dict = ct_model_for_recon.recon(_sino_swapped,
+                    # # go from [angle, y, x] to [y, x, angle]
+                    # _sino_swapped = np.swapaxes(_sino, 0, 2)
+                    reconstruction_array, recond_dict = ct_model_for_recon.recon(corrected_array_log,
                                                                     print_logs=False,
                                                                     weights=None,
                                                                     )
-                    logging.info(f"\t{recond_dict = }")
-                    logging.info(f"\treconstruction_array shape: {np.shape(reconstruction_array)} ")
+                    logging.info(f"Report of reconstruction:")
+                    for _key, _value in recond_dict.items():
+                        logging.info(f"\t{_key}: {_value}")
+                    logging.info(f"reconstruction_array shape before swapping: {np.shape(reconstruction_array)} ")
                     reconstruction_array = np.swapaxes(reconstruction_array, 0, 2)  # swap axes to match SVMBIR output
-                    del recond_dict  
+                    logging.info(f"reconstruction_array shape after swapping: {np.shape(reconstruction_array)}")
+                    del recond_dict
 
                 else:
 
@@ -281,23 +287,33 @@ class SvmbirCliHandler:
 
             if mbirjax:
                 sinogram_shape = corrected_array_log.shape
-
+                logging.info(f"sinogram_shape for mbirjax input: {sinogram_shape}")
+                logging.info(f"{list_of_angles_rad = }")
+                logging.info(f"{sinogram_shape = }")
                 ct_model_for_recon = mj.ParallelBeamModel(sinogram_shape,
-                                                            list_of_angles_rad)
+                                                          list_of_angles_rad)
+
+                logging.info(f"{sharpness = }")
+                logging.info(f"{verbose = }")
+                logging.info(f"{center_offset = }")
+                logging.info(f"{snr_db = }")
                 ct_model_for_recon.set_params(sharpness=sharpness,
                                                 verbose=verbose,
                                                 det_channel_offset=center_offset,
                                                 snr_db=snr_db,
                 )
                 # go from [angle, y, x] to [y, x, angle]
-                _sino_swapped = np.swapaxes(corrected_array_log, 0, 2)
-                reconstruction_array, recond_dict = ct_model_for_recon.recon(_sino_swapped,
+                reconstruction_array, recond_dict = ct_model_for_recon.recon(corrected_array_log,
                                                                 print_logs=False,
-                                                                weights=None,
+                                                                # weights=None,
                                                                 )
                
-                logging.info(f"{recond_dict = }")
-                logging.info(f"reconstruction_array shape: {np.shape(reconstruction_array)} ")
+                logging.info(f"Report of reconstruction:")
+                for _key, _value in recond_dict.items():
+                    logging.info(f"\t{_key}: {_value}")
+                logging.info(f"reconstruction_array shape before swapping: {np.shape(reconstruction_array)} ")
+                reconstruction_array = np.swapaxes(reconstruction_array, 0, 2)  # swap axes to match SVMBIR output
+                logging.info(f"reconstruction_array shape after swapping: {np.shape(reconstruction_array)}")
                 del recond_dict
 
             else:
@@ -307,7 +323,7 @@ class SvmbirCliHandler:
 
                 logging.info(f"{corrected_array_log.shape = }")
                 logging.info(f"{list_of_angles_rad.shape = }")
-                
+                logging.info(f"{sinogram_shape = }")
                 reconstruction_array = svmbir.recon(sino=corrected_array_log,
                                                     angles=list_of_angles_rad,
                                                     num_rows = corrected_array_log.shape[2],  # height,
