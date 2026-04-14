@@ -1,4 +1,5 @@
 import logging
+import os
 from cv2 import log
 import numpy as np
 from IPython.display import display, HTML
@@ -51,6 +52,7 @@ class Exclusion(Parent):
     
         sample_data = self.parent.master_3d_data_array[DataType.sample]
         integrated_intensity = sample_data.sum(axis=(1,2))
+        file_basenames = [os.path.basename(f) for f in self.parent.list_of_images[DataType.sample]]
 
         logging.info(f"Integrated intensity (full image) for each image: {integrated_intensity}")
         display(HTML("<b>Use the slider to define the threshold below which images will be excluded from the reconstruction:</b>"))
@@ -70,10 +72,20 @@ class Exclusion(Parent):
                 mode='markers',
                 marker=dict(color='green', symbol='star', size=8),
                 name='All images',
+                customdata=file_basenames,
                 hovertemplate='Index: %{x}<br>Intensity: %{y:.2f}<extra></extra>'
             ))
 
             # Add points below threshold (red circles)
+            
+            _custome_data_below_threshold = [file_basenames[i] for i in list_index_below_threshold]
+            # keep run number and last part of the filename for hover info
+            # isolate run number for file looking like 20260322_Run_1234_....
+            _run_numbers_below_threshold = [f.split('_')[2] for f in _custome_data_below_threshold]
+            # isolate last part of the filename for file looking like 20260322_Run_123 from the last 3 "_"
+            _last_part_below_threshold = ["..."+"_".join(f.split('_')[-3:]) for f in _custome_data_below_threshold]
+            _custome_data_below_threshold = [f"Run: {run}<br>Last part: {last_part}" for run, last_part in zip(_run_numbers_below_threshold, _last_part_below_threshold)]
+                       
             if list_index_below_threshold:
                 fig.add_trace(go.Scatter(
                     x=list_index_below_threshold,
@@ -81,7 +93,8 @@ class Exclusion(Parent):
                     mode='markers',
                     marker=dict(color='red', symbol='circle', size=8),
                     name='Below threshold',
-                    hovertemplate='Index: %{x}<br>Intensity: %{y:.2f}<extra></extra>'
+                    customdata=_custome_data_below_threshold,
+                    hovertemplate='Index: %{x}<br>Intensity: %{y:.2f}<br>File: %{customdata}<extra></extra>'
                 ))
 
             # Add threshold line
