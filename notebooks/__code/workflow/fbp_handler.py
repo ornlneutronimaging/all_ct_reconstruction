@@ -148,7 +148,7 @@ class FbpHandler(Parent):
         if type(self.parent.working_dir[DataType.sample]) == str:
             base_sample_folder: str = os.path.basename(self.parent.working_dir[DataType.sample])
         else:
-            base_sample_folder: str = self.parent.working_dir[DataType.sample][0]
+            base_sample_folder: str = os.path.basename(self.parent.working_dir[DataType.sample][0])
 
         pre_projections_export_folder: str = os.path.join(output_folder, f"{base_sample_folder}_projections_pre_data_{_time_ext}")
         os.makedirs(pre_projections_export_folder)

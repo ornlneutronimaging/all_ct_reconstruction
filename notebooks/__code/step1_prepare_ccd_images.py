@@ -462,6 +462,8 @@ class Step1PrepareCcdImages:
         self.normalized_images[:] += 1e-6
         # remove negative values if there are any after adding the offset
         self.normalized_images[:] = remove_negative_values(self.normalized_images[:])
+        # we should not have values above 1 after normalization, but just in case, we can also set them to 1 to avoid issues with log conversion
+        # self.normalized_images[:] = np.clip(self.normalized_images[:], a_min=0, a_max=1)
         
         normalized_images_log = log_conversion(self.normalized_images[:])
         o_cleaner = ImagesCleaner(parent=self)

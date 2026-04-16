@@ -232,6 +232,38 @@ class SvmbirCliHandler:
                     )
                     # # go from [angle, y, x] to [y, x, angle]
                     # _sino_swapped = np.swapaxes(_sino, 0, 2)
+                    
+                    # get statistics of the sino for mbirjax input
+                    logging.info(f"Statistics of the sino for mbirjax input:")
+                    logging.info(f"\tmin: {np.min(_sino)}")
+                    logging.info(f"\tmax: {np.max(_sino)}")
+                    logging.info(f"\tmean: {np.mean(_sino)}")
+                    logging.info(f"\tstd: {np.std(_sino)}")
+                    # counts how many pixels are zero, and how many are non-zero
+                    logging.info(f"\tnumber of zero pixels: {( _sino == 0).sum()}")
+                    logging.info(f"\tnumber of non-zero pixels: {( _sino != 0).sum()}")
+                    # check for NaN or inf values
+                    logging.info(f"\tnumber of NaN pixels: {np.isnan(_sino).sum()}")
+                    logging.info(f"\tnumber of inf pixels: {np.isinf(_sino).sum()}")
+                    # making sure there is no values below 0
+                    if np.any(_sino < 0):
+                        logging.warning(f"There are {_sino[_sino < 0].size} pixels with negative values in the sino for mbirjax input. Setting them to small positive value to avoid issues with the reconstruction.")
+                        _sino[_sino < 0] = 1e-6
+                    logging.info(f"\tmin: {np.min(_sino)}")
+                    logging.info(f"\tmax: {np.max(_sino)}")
+
+                    # convert back to transmission to remove the values above 1 that can cause issues with mbirjax reconstruction
+                    _sino = np.exp(-_sino)
+                    logging.info(f"After converting back to transmission:")
+                    logging.info(f"\tmin: {np.min(_sino)}")
+                    logging.info(f"\tmax: {np.max(_sino)}")
+                    _sino = np.clip(_sino, a_min=0, a_max=1)
+                    logging.info(f"\tmin: {np.min(_sino)}")
+                    logging.info(f"\tmax: {np.max(_sino)}")
+                    
+                    # converting back to attenuation for mbirjax input
+                    _sino = -np.log(_sino)
+
                     reconstruction_array, recond_dict = ct_model_for_recon.recon(_sino,
                                                                     print_logs=True,
                                                                     # weights=None,

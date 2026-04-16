@@ -280,6 +280,7 @@ class ImagesCleaner(Parent):
     def cleaning_with_scipy(self, ignore_dc=False, ignore_ob=False):
         """scipy"""
 
+        display(HTML("Cleaning with Scipy median filter: this method will replace the outlier pixel values by the median value of the neighbor pixels ..."))
         if not self.scipy_ui.value:
             logging.info(f"cleaning using median filter: OFF")
             return  
@@ -310,9 +311,11 @@ class ImagesCleaner(Parent):
                 logging.info(f"ignoring dc cleaning, no dc data available")
         
         logging.info(f"cleaning using median filter ... done!")
+        display(HTML("Cleaning with Scipy median filter ... done!"))
 
     def cleaning_with_tomopy(self, ignore_dc=False, ignore_ob=False):
         
+        display(HTML("Cleaning with Tomopy: this method will replace the outlier pixel values by the median value of the neighbor pixels ..."))
         if not self.tomopy_ui.value:
             logging.info(f"cleaning using tomopy: OFF")
             return
@@ -356,9 +359,11 @@ class ImagesCleaner(Parent):
                 logging.info(f"ignoring dc cleaning with tomopy, no dc data available")
 
         logging.info(f"cleaning using tomopy ... done!")
+        display(HTML("Cleaning with Tomopy ... done!"))
             
     def cleaning_by_histogram(self, ignore_dc=False, ignore_ob=False):
 
+        display(HTML("Cleaning by histogram: this method will replace the pixel values in the selected bins by the median value of the neighbor pixels ..."))
         if not self.in_house_ui.value:
             logging.info(f"cleaning by histogram: OFF")
             return
@@ -483,6 +488,7 @@ class ImagesCleaner(Parent):
         fig.show()
 
         logging.info(f"cleaning by histogram ... done!")
+        display(HTML("Cleaning by histogram ... done!"))
 
     def select_export_folder(self):
         o_load = Load(parent=self.parent)

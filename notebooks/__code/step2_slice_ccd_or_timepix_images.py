@@ -243,7 +243,7 @@ class Step2SliceCcdOrTimePixImages:
             )
             fig.show()
 
-            display(HTML(f"Each green range of slices contains {range_size} slices (with 2 slices of overlap between ranges)"))
+            display(HTML(f"Each green range of slices contains {range_size*coeff} slices (with 2 slices of overlap between ranges)"))
 
             return top_slice, bottom_slice, nbr
 

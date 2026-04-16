@@ -304,7 +304,7 @@ class TopFolder(BaseModel):
         sample: Path to sample data folder (default: empty string)
         ob: Path to open beam data folder (default: empty string)
     """
-    sample: str = ""
+    sample: list = []
     ob: str = ""
 
 
