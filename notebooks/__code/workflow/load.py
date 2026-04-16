@@ -132,6 +132,11 @@ class Load(Parent):
 
         logging.info(f"Selecting folder for {data_type} ...")
 
+        if type(self.parent.working_dir[DataType.sample]) == str:
+            sample_folder = self.parent.working_dir[DataType.sample]
+        else:
+            sample_folder = self.parent.working_dir[DataType.sample][0]
+
         if DEBUG:
             
             logging.info(f"DEBUG MODE: Selecting folder for {data_type} ...")
@@ -143,7 +148,12 @@ class Load(Parent):
             logging.info(f"{default_detector_type = }")
             self.parent.working_dir[DataType.nexus] = debug_folder[default_detector_type][self.parent.MODE].get(DataType.nexus, None)
             logging.info(f"DEBUG MODE: {data_type} folder selected: {debug_folder[default_detector_type][self.parent.MODE][data_type]}")
-            _list_sep = self.parent.working_dir[DataType.sample].split(os.sep)
+            
+            if type(self.parent.working_dir[DataType.sample]) == str:
+                _list_sep = self.parent.working_dir[DataType.sample].split(os.sep)
+            else:
+                _list_sep = self.parent.working_dir[DataType.sample][0].split(os.sep)
+                
             # facility = _list_sep[0]
             instrument = _list_sep[2]
             ipts_number = _list_sep[3]
@@ -167,7 +177,7 @@ class Load(Parent):
         logging.info(f"ipts_folder: {self.parent.working_dir[DataType.ipts]}")
 
         display(HTML(f"<u>REMINDER:</u>"))
-        display(HTML(f"- Sample folder: <b>{os.path.basename(self.parent.working_dir[DataType.sample])}</b>"))
+        display(HTML(f"- Sample folder: <b>{os.path.basename(sample_folder)}</b>"))
 
         try:
 
@@ -533,8 +543,11 @@ class Load(Parent):
             pass
 
         if self.parent.MODE == OperatingMode.white_beam:
-            list_images = glob.glob(os.path.join(top_folder, "*.tif*"))
-            
+            list_images = []
+            for _folder in top_folder:
+                _list_images = glob.glob(os.path.join(_folder, "*.tif*"))
+                list_images.extend(_list_images)
+
             # this is where we need to keep only the files with the highest _R#.tiff value, in case there are multiple files with the same angle value (same naming convention but different _R#.tiff values)
             list_images.sort()
             list_images = self._keep_only_highest_R_value(list_images)

@@ -205,19 +205,19 @@ class Normalization(Parent):
         if default_left >= width:
             default_left = 0
         if default_right >= width:
-            default_right = width // 10
+            default_right = width // coeff
         if default_top >= height:
             default_top = 0
         if default_bottom >= height:
-            default_bottom = height // 10
+            default_bottom = height // coeff
 
         self.display_roi = interactive(plot_roi,
-                                       left_right=widgets.SelectionRangeSlider(options=list(range(width)),
+                                       left_right=widgets.SelectionRangeSlider(options=list(range(width//coeff)),
                                                                                 index=(default_left, default_right),
                                                                                 description='Left-Right:',
                                                                                 orientation='horizontal',
                                                                                 layout=widgets.Layout(width='80%')),
-                                        top_bottom=widgets.SelectionRangeSlider(options=list(range(height)),
+                                        top_bottom=widgets.SelectionRangeSlider(options=list(range(height//coeff)),
                                                                                 index=(default_top, default_bottom),
                                                                                 description='Top-Bottom:',
                                                                                 orientation='horizontal',

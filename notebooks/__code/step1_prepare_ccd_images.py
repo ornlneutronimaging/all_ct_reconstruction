@@ -1,11 +1,13 @@
+from operator import mul
 import os
 import logging
 from loguru import logger as loguru_logging
 from collections import OrderedDict
 import numpy as np
 from IPython.display import display, HTML
+import ipywidgets as widgets
 
-from __code import DataType, OperatingMode, DEFAULT_OPERATING_MODE
+from __code import DataType, DetectorType, OperatingMode, DEFAULT_OPERATING_MODE
 from __code.utilities.logging import setup_logging
 from __code.utilities.configuration_file import Configuration
 from __code.config import debugging as DEBUG
@@ -186,16 +188,30 @@ class Step1PrepareCcdImages:
         # o_init = Initialization(parent=self)
         # o_init.configuration()
 
-        top_sample_dir = system.System.get_working_dir()
+        self.top_sample_dir = system.System.get_working_dir()
         self.instrument = system.System.get_instrument_selected()
         self.ipts_number = system.System.get_ipts_number()
 
+        display(HTML("<span style='color:blue; font-size:16px'>Select detector type</span>"))
+        self.detector_type_widget = widgets.Dropdown(
+            options=[DetectorType.ikonxl, DetectorType.ccd],
+            value=DetectorType.ikonxl,
+            layout=widgets.Layout(width="400px"),
+            disabled=False,
+        )
+        display(self.detector_type_widget)
+        self.detector_type = self.detector_type_widget.value
+
         setup_logging(basename_of_log_file=LOG_BASENAME_FILENAME)        
+
+    def update_all_paths(self):
+        top_sample_dir = self.top_sample_dir
+        detector_type = self.detector_type.lower()
         self.working_dir[DataType.ipts] = top_sample_dir
         self.working_dir[DataType.top] = os.path.join(top_sample_dir)
-        self.working_dir[DataType.sample] = os.path.join(top_sample_dir, "raw", "ct_scans")
-        self.working_dir[DataType.ob] = os.path.join(top_sample_dir, "raw", "ob")
-        self.working_dir[DataType.dc] = os.path.join(top_sample_dir, "raw", "dc")
+        self.working_dir[DataType.sample] = os.path.join(top_sample_dir, "images", detector_type, "raw", "ct")
+        self.working_dir[DataType.ob] = os.path.join(top_sample_dir, "images",  detector_type, "ob")
+        self.working_dir[DataType.dc] = os.path.join(top_sample_dir, "images",  detector_type, "raw", "dc")
         self.working_dir[DataType.nexus] = os.path.join(top_sample_dir, "nexus")
         self.working_dir[DataType.processed] = os.path.join(top_sample_dir, "shared", "processed_data")
         logging.info(f"working_dir:")
@@ -205,10 +221,23 @@ class Step1PrepareCcdImages:
         logging.info(f"ipts_number: {self.ipts_number}")
         if DEBUG:
             logging.info(f"WARNING!!!! we are running using DEBUG mode!")
+        
 
     # Selection of data
+    def select_top_sample_folders(self):
+        """updates: list_of_images[DataType.sample]"""
+        self.detector_type = self.detector_type_widget.value
+        self.update_all_paths()
+
+        o_load = Load(parent=self)
+        o_load.select_folder(data_type=DataType.sample, 
+                             multiple_flag=True)
+
     def select_top_sample_folder(self):
         """updates: list_of_images[DataType.sample]"""
+        self.detector_type = self.detector_type_widget.value
+        self.update_all_paths()
+
         o_load = Load(parent=self)
         o_load.select_folder(data_type=DataType.sample)
 
@@ -268,20 +297,27 @@ class Step1PrepareCcdImages:
         self.o_vizu.visualize_according_to_selection(mode='raw')
 
     # exclude images
-    def selection_mode(self):
+    def visualize_integrated_images_together(self):
         self.o_exclude = Exclusion(parent=self)
-        self.o_exclude.selection_mode()
-
-    def process_exclusion_mode(self):
         self.o_exclude.process_exclusion_mode()
+              
+    def process_exclusion(self):
+        self.o_exclude.exclude_this_list_of_images()
+                       
+    # def selection_mode(self):
+    #     self.o_exclude = Exclusion(parent=self)
+    #     self.o_exclude.selection_mode()
+
+    # def process_exclusion_mode(self):
+    #     self.o_exclude.process_exclusion_mode()
 
     # def list_of_images_to_exclude(self):
     #     """updates: master_3d_data_array"""
     #     self.o_exclude.list_of_images_to_exclude()
 
-    def exclude_this_list_of_images(self):
-        """updates: master_3d_data_array"""
-        self.o_exclude.exclude_this_list_of_images()
+    # def exclude_this_list_of_images(self):
+    #     """updates: master_3d_data_array"""
+    #     self.o_exclude.exclude_this_list_of_images()
 
     # pre processing crop
     def pre_processing_crop_settings(self):
@@ -424,11 +460,13 @@ class Step1PrepareCcdImages:
         """
         # apply a tiny offset to avoid log(0)
         self.normalized_images[:] += 1e-6
+        # remove negative values if there are any after adding the offset
+        self.normalized_images[:] = remove_negative_values(self.normalized_images[:])
         
         normalized_images_log = log_conversion(self.normalized_images[:])
         o_cleaner = ImagesCleaner(parent=self)
         normalized_images_log = o_cleaner.remove_outliers(normalized_images_log[:])
-        normalized_images_log = remove_negative_values(normalized_images_log[:])
+        # normalized_images_log = remove_negative_values(normalized_images_log[:])
 
         # self.corrected_images_log = normalized_images_log[:]
         self.normalized_images_log = normalized_images_log[:]

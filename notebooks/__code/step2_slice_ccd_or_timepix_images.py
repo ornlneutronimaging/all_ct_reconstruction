@@ -1,3 +1,4 @@
+from email.mime import image
 import os
 import logging
 import glob
@@ -174,6 +175,11 @@ class Step2SliceCcdOrTimePixImages:
         width: int
         nbr_images, height, width = data.shape
 
+        if height > 1000 or width > 1000:
+            coeff = 20
+        else:
+            coeff = 1
+
         max_slices = int(height/10)
 
         def plot_images(image_index: int, top_bottom: Tuple[int, int], nbr: int, vrange: Tuple[float, float]) -> Tuple[Tuple[int, int], int]:
@@ -196,33 +202,44 @@ class Step2SliceCcdOrTimePixImages:
             top_slice: int = top_bottom[0]
             bottom_slice: int = top_bottom[1]
 
-            range_size: int = int((np.abs(top_slice - bottom_slice)) / nbr)
+            local_top_slice = int(top_slice/coeff)
+            local_bottom_slice = int(bottom_slice/coeff)
+
+            range_size: int = int((np.abs(local_top_slice - local_bottom_slice)) / nbr)
+
+            _data = data[image_index]
+            _data = _data[::coeff, ::coeff]
+            y_coords = np.arange(_data.shape[0]) * coeff
+            x_coords = np.arange(_data.shape[1]) * coeff
 
             fig = go.Figure(data=go.Heatmap(
-                z=data[image_index],
+                z=_data,
+                x=x_coords,
+                y=y_coords,
                 colorscale='Jet',
                 zmin=vmin,
                 zmax=vmax,
             ))
 
             for _range_index in np.arange(nbr):
-                _top_slice: int = top_slice + _range_index * range_size
+                _top_slice: int = local_top_slice + _range_index * range_size
 
                 fig.add_shape(
                     type="rect",
-                    x0=0, y0=_top_slice,
-                    x1=width - 1, y1=_top_slice + range_size,
+                    x0=0, y0=coeff * _top_slice,
+                    x1=width - 1, y1=coeff * (_top_slice + range_size),
                     line=dict(color="yellow", width=2),
                     fillcolor="green",
                     opacity=0.3,
                 )
 
-            fig.add_hline(y=top_slice, line_color="red")
-            fig.add_hline(y=bottom_slice, line_color="red")
+            fig.add_hline(y=coeff * top_slice, line_color="red")
+            fig.add_hline(y=coeff * bottom_slice, line_color="red")
 
             fig.update_layout(
                 width=700, height=700,
-                yaxis=dict(autorange='reversed', scaleanchor='x'),
+                xaxis=dict(range=[0, width - 1]),
+                yaxis=dict(range=[height - 1, 0], scaleanchor='x'),
             )
             fig.show()
 
@@ -266,6 +283,11 @@ class Step2SliceCcdOrTimePixImages:
         width: int
         nbr_images, height, width = self.data.shape
 
+        if height > 1000 or width > 1000:
+            coeff = 20
+        else:
+            coeff = 1
+
         master_vmin: float = np.min(self.data)
         master_vmax: float = np.max(self.data)
 
@@ -299,16 +321,32 @@ class Step2SliceCcdOrTimePixImages:
             top: int = top_bottom[0]
             bottom: int = top_bottom[1]
 
+            local_left = int(left/coeff)
+            local_right = int(right/coeff)
+            local_top = int(top/coeff)
+            local_bottom = int(bottom/coeff)
+
+            if coeff > 1:
+                _data = self.data[image_index]
+                _data = _data[::coeff, ::coeff]
+            else:
+                _data = self.data[image_index]
+
+            y_coords = np.arange(_data.shape[0]) * coeff
+            x_coords = np.arange(_data.shape[1]) * coeff
+
             fig = go.Figure(data=go.Heatmap(
-                z=self.data[image_index],
+                z=_data,
+                x=x_coords,
+                y=y_coords,
                 zmin=vmin,
                 zmax=vmax,
             ))
 
             fig.add_shape(
                 type="rect",
-                x0=left, y0=top,
-                x1=right, y1=bottom,
+                x0=coeff * local_left, y0=coeff * local_top,
+                x1=coeff * local_right, y1=coeff * local_bottom,
                 line=dict(color="yellow", width=2),
                 fillcolor="green",
                 opacity=0.3,
@@ -316,7 +354,8 @@ class Step2SliceCcdOrTimePixImages:
 
             fig.update_layout(
                 width=700, height=700,
-                yaxis=dict(autorange='reversed', scaleanchor='x'),
+                xaxis=dict(range=[0, width - 1]),
+                yaxis=dict(range=[height - 1, 0], scaleanchor='x'),
             )
             fig.show()
 

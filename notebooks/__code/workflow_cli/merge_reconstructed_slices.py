@@ -35,6 +35,19 @@ import logging
 import glob
 from typing import List, Optional, Dict, Tuple
 
+from __code.utilities.save import make_tiff
+
+
+def live_merge_reconstructed_slices(output_data_folder="",
+                                    first_slice_index=-1,
+                                    image_3d=np.array([])):
+    file_name_template = "image_reconstructed"
+    for _index, _data in enumerate(image_3d):
+        short_file_name: str = f"{file_name_template}_{_index + first_slice_index:04d}.tiff"
+        full_file_name: str = os.path.join(output_data_folder, short_file_name)
+        make_tiff(data=_data, 
+                  filename=full_file_name)    
+
 
 def merge_reconstructed_slices(output_data_folder: Optional[str] = None, 
                               top_slice: int = 0, 

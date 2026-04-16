@@ -28,6 +28,7 @@ class DetectorType:
     tpx1 = "tpx1 - new naming convention (from August 2025)"
     tpx3 = "tpx3"
     ccd = "CCD"
+    ikonxl = "IkonXL"
 
 
 class DataType:

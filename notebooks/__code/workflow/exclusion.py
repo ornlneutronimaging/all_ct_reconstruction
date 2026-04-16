@@ -25,12 +25,12 @@ class Exclusion(Parent):
 
     def process_exclusion_mode(self):
         """Process the exclusion mode selected by the user."""
-        if self.exclusion_mode_widget.value == "Manual input image index to exclude":
-            self.list_of_images_to_exclude()
-        elif self.exclusion_mode_widget.value == "All integrated images counts below a given threshold":
-            self.exclude_images_below_threshold()
-        else:
-            logging.error("Unknown exclusion mode selected.")
+        # if self.exclusion_mode_widget.value == "Manual input image index to exclude":
+        self.list_of_images_to_exclude()
+        # elif self.exclusion_mode_widget.value == "All integrated images counts below a given threshold":
+        self.exclude_images_below_threshold()
+        # else:
+        #     logging.error("Unknown exclusion mode selected.")
 
     def list_of_images_to_exclude(self):
         """List of images to exclude from the reconstruction."""
@@ -66,26 +66,31 @@ class Exclusion(Parent):
             fig = go.Figure()
 
             # Add all data points (green stars)
+            _custom_data_below_threshold = [file_basenames[i] for i in list_index_below_threshold]
+            # keep run number and last part of the filename for hover info
+            # isolate run number for file looking like 20260322_Run_1234_....
+            _run_numbers_below_threshold = [f.split('_')[2] for f in _custom_data_below_threshold]
+            # isolate last part of the filename for file looking like 20260322_Run_123 from the last 3 "_"
+            _last_part_below_threshold = ["..."+"_".join(f.split('_')[-3:]) for f in _custom_data_below_threshold]
+            _custom_data_threshold = [f"Run: {run}<br>Last part: {last_part}" for run, last_part in zip(_run_numbers_below_threshold, _last_part_below_threshold)]                       
+
+            _custom_data_without_threshold = file_basenames
+            _run_numbers_without_threshold = [f.split('_')[2] for f in _custom_data_without_threshold]
+            _last_part_without_threshold = ["..."+"_".join(f.split('_')[-3:]) for f in _custom_data_without_threshold]
+            _custom_data_without_threshold = [f"Run: {run}<br>Last part: {last_part}" for run, last_part in zip(_run_numbers_without_threshold, _last_part_without_threshold)]                       
+
             fig.add_trace(go.Scatter(
                 x=list(range(len(integrated_intensity))),
                 y=integrated_intensity,
                 mode='markers',
                 marker=dict(color='green', symbol='star', size=8),
                 name='All images',
-                customdata=file_basenames,
-                hovertemplate='Index: %{x}<br>Intensity: %{y:.2f}<extra></extra>'
+                customdata=_custom_data_without_threshold,
+                hovertemplate='Index: %{x}<br>Intensity: %{y:.2f}<br>File: %{customdata}<extra></extra>'
             ))
 
             # Add points below threshold (red circles)
             
-            _custome_data_below_threshold = [file_basenames[i] for i in list_index_below_threshold]
-            # keep run number and last part of the filename for hover info
-            # isolate run number for file looking like 20260322_Run_1234_....
-            _run_numbers_below_threshold = [f.split('_')[2] for f in _custome_data_below_threshold]
-            # isolate last part of the filename for file looking like 20260322_Run_123 from the last 3 "_"
-            _last_part_below_threshold = ["..."+"_".join(f.split('_')[-3:]) for f in _custome_data_below_threshold]
-            _custome_data_below_threshold = [f"Run: {run}<br>Last part: {last_part}" for run, last_part in zip(_run_numbers_below_threshold, _last_part_below_threshold)]
-                       
             if list_index_below_threshold:
                 fig.add_trace(go.Scatter(
                     x=list_index_below_threshold,
@@ -93,7 +98,7 @@ class Exclusion(Parent):
                     mode='markers',
                     marker=dict(color='red', symbol='circle', size=8),
                     name='Below threshold',
-                    customdata=_custome_data_below_threshold,
+                    customdata=_custom_data_threshold,
                     hovertemplate='Index: %{x}<br>Intensity: %{y:.2f}<br>File: %{customdata}<extra></extra>'
                 ))
 
@@ -137,10 +142,11 @@ class Exclusion(Parent):
 
     def exclude_this_list_of_images(self):
 
-        if self.exclusion_mode_widget.value == "All integrated images counts below a given threshold":
-            list_of_images_to_exclude = self.display_threshold.result
-        else:
-            list_of_images_to_exclude = self.get_list_of_images_to_exclude()
+        list_of_images_to_exclude_form_threshold = self.display_threshold.result
+        list_of_images_to_exclude_from_list = self.get_list_of_images_to_exclude()
+        
+        # concatenate the two lists and remove duplicates
+        list_of_images_to_exclude = list(set(list_of_images_to_exclude_form_threshold + list_of_images_to_exclude_from_list))
 
         # update master_3d_data_array to exclude the images, list_of_images, final_list_of_angles, final_list_of_angles_rad
         if list_of_images_to_exclude:
@@ -165,6 +171,43 @@ class Exclusion(Parent):
             logging.info(f"\t{len(self.parent.list_of_images[DataType.sample])} images remain for reconstruction.")
             logging.info(f"\t{len(self.parent.final_list_of_angles)} angles remain for reconstruction.")
             logging.info(f"\t{len(self.parent.final_list_of_angles_rad)} angles (rad) remain for reconstruction.")
+
+        # Display a static summary plot (no interaction, no threshold line).
+        self.display_integrated_intensity_plot()
+
+    def display_integrated_intensity_plot(self):
+        """Display integrated intensity vs image index without threshold controls."""
+        sample_data = self.parent.master_3d_data_array[DataType.sample]
+        integrated_intensity = sample_data.sum(axis=(1, 2))
+        file_basenames = [os.path.basename(f) for f in self.parent.list_of_images[DataType.sample]]
+
+        custom_data = file_basenames
+        run_numbers = [f.split('_')[2] for f in custom_data]
+        last_part = ["..." + "_".join(f.split('_')[-3:]) for f in custom_data]
+        custom_data = [f"Run: {run}<br>Last part: {part}" for run, part in zip(run_numbers, last_part)]
+
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(
+            x=list(range(len(integrated_intensity))),
+            y=integrated_intensity,
+            mode='markers',
+            marker=dict(color='green', symbol='star', size=8),
+            name='All images',
+            customdata=custom_data,
+            hovertemplate='Index: %{x}<br>Intensity: %{y:.2f}<br>File: %{customdata}<extra></extra>'
+        ))
+
+        fig.update_layout(
+            title='Integrated intensity (full image) vs image index',
+            xaxis_title='Image index',
+            yaxis_title='Integrated intensity (a.u.)',
+            width=700,
+            height=500,
+            showlegend=True
+        )
+
+        fig.show()
+        
 
     def get_list_of_images_to_exclude(self):
         """Get the list of images to exclude from the reconstruction."""

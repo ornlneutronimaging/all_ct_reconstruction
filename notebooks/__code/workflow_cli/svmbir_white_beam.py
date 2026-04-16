@@ -54,7 +54,7 @@ from __code.config import NUM_THREADS, SVMBIR_LIB_PATH, SVMBIR_LIB_PATH_BACKUP, 
 from __code.utilities.json import load_json_string
 from __code.utilities.load import load_data_using_multithreading, load_list_of_tif
 from __code.utilities.time import get_current_time_in_special_file_name_format
-from __code.workflow_cli.merge_reconstructed_slices import merge_reconstructed_slices
+from __code.workflow_cli.merge_reconstructed_slices import merge_reconstructed_slices, live_merge_reconstructed_slices
 from __code.workflow_cli.stripes_removal import StripesRemovalHandler
 
 
@@ -201,6 +201,7 @@ class SvmbirCliHandler:
 
         list_of_output_folders = []
         start_time = time.time()
+                
         if list_of_slices_to_reconstruct:
 
             for [index, [top_slice_index, bottom_slice_index]] in enumerate(list_of_slices_to_reconstruct):
@@ -231,10 +232,14 @@ class SvmbirCliHandler:
                     )
                     # # go from [angle, y, x] to [y, x, angle]
                     # _sino_swapped = np.swapaxes(_sino, 0, 2)
-                    reconstruction_array, recond_dict = ct_model_for_recon.recon(corrected_array_log,
-                                                                    print_logs=False,
-                                                                    weights=None,
+                    reconstruction_array, recond_dict = ct_model_for_recon.recon(_sino,
+                                                                    print_logs=True,
+                                                                    # weights=None,
                                                                     )
+                    # reconstruction_array, recond_dict = ct_model_for_recon.recon(corrected_array_log,
+                    #                                                 print_logs=False,
+                    #                                                 # weights=None,
+                    #                                                 )
                     logging.info(f"Report of reconstruction:")
                     for _key, _value in recond_dict.items():
                         logging.info(f"\t{_key}: {_value}")
@@ -277,7 +282,12 @@ class SvmbirCliHandler:
                                   output_folder=_output_data_folder)
                 o_export.run()
                 print(f"done!")
-
+                
+                # let's merge the reconstructed slices in the output folder with the previous ones, to have a single folder with all the reconstructed slices so we can visualize the stack as it is being reconstructed
+                live_merge_reconstructed_slices(output_data_folder=output_data_folder,
+                                                first_slice_index=top_slice_index,
+                                                image_3d=reconstruction_array)
+                                                
             merge_reconstructed_slices(output_data_folder=output_data_folder, 
                                        top_slice=top_slice,
                                        list_of_output_folders=list_of_output_folders,
