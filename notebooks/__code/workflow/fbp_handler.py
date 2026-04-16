@@ -144,7 +144,12 @@ class FbpHandler(Parent):
             raise RuntimeError("No output folder selected in the previous cell, please select one!")           
         
         _time_ext: str = get_current_time_in_special_file_name_format()
-        base_sample_folder: str = os.path.basename(self.parent.working_dir[DataType.sample])
+        
+        if type(self.parent.working_dir[DataType.sample]) == str:
+            base_sample_folder: str = os.path.basename(self.parent.working_dir[DataType.sample])
+        else:
+            base_sample_folder: str = self.parent.working_dir[DataType.sample][0]
+
         pre_projections_export_folder: str = os.path.join(output_folder, f"{base_sample_folder}_projections_pre_data_{_time_ext}")
         os.makedirs(pre_projections_export_folder)
         logging.info(f"\tprojections pre data will be exported to {pre_projections_export_folder}!")
@@ -211,7 +216,12 @@ class FbpHandler(Parent):
 
         reconstructed_array: NDArray[np.floating] = self.parent.reconstruction_array
 
-        master_base_folder_name: str = f"{os.path.basename(self.parent.working_dir[DataType.sample])}_reconstructed"
+        if type(self.parent.working_dir[DataType.sample]) == str:
+            base_sample_folder: str = os.path.basename(self.parent.working_dir[DataType.sample])
+        else:
+            base_sample_folder: str = os.path.basename(self.parent.working_dir[DataType.sample][0])
+
+        master_base_folder_name: str = f"{base_sample_folder}_reconstructed"
         full_output_folder: str = os.path.join(self.parent.working_dir[DataType.reconstructed],
                                                master_base_folder_name)
 

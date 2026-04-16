@@ -14,7 +14,11 @@ class ExportHdf5(Parent):
         
         logging.info("Exporting pre-reconstruction data to HDF5 format...")
         
-        top_folder = os.path.abspath(self.parent.working_dir[DataType.sample])
+        if type(self.parent.working_dir[DataType.sample]) == str:
+            top_folder: str = os.path.abspath(self.parent.working_dir[DataType.sample])
+        else:
+            top_folder: str = os.path.abspath(self.parent.working_dir[DataType.sample][0])
+        
         logging.info(f"\tinput folder: {top_folder}")
         
         output_folder = os.path.abspath(self.parent.working_dir[DataType.extra])

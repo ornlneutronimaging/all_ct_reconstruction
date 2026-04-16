@@ -270,16 +270,19 @@ class ExportExtra(Parent):
 
         configuration: Any = self.parent.configuration
 
+        if type(self.parent.working_dir[DataType.sample]) == str:
+            base_sample_folder: str = os.path.basename(os.path.abspath(self.parent.working_dir[DataType.sample]))
+        else:
+            base_sample_folder: str = os.path.basename(os.path.abspath(self.parent.working_dir[DataType.sample][0]))
+
         # update configuration
         configuration.output_folder = output_folder
-        configuration.raw_data_base_folder = os.path.basename(os.path.abspath(self.parent.working_dir[DataType.sample]))
+        configuration.raw_data_base_folder = base_sample_folder
 
         # center of rotation if manual mode used
         if self.parent.o_center_and_tilt is not None:
             if self.parent.o_center_and_tilt.is_manual_mode():
                 configuration.center_of_rotation = self.parent.o_center_and_tilt.get_center_of_rotation()
-
-        base_sample_folder: str = os.path.basename(os.path.abspath(self.parent.working_dir[DataType.sample]))
 
         _time_ext: str = get_current_time_in_special_file_name_format()
         # config_file_name = f"/SNS/VENUS/shared/log/{base_sample_folder}_{_time_ext}.json"
