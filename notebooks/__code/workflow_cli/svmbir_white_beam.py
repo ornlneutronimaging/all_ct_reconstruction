@@ -370,7 +370,6 @@ class SvmbirCliHandler:
 
                 logging.info(f"{corrected_array_log.shape = }")
                 logging.info(f"{list_of_angles_rad.shape = }")
-                logging.info(f"{sinogram_shape = }")
                 reconstruction_array = svmbir.recon(sino=corrected_array_log,
                                                     angles=list_of_angles_rad,
                                                     num_rows = corrected_array_log.shape[2],  # height,
