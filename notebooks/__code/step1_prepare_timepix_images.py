@@ -369,7 +369,13 @@ class Step1PrepareTimePixImages:
     def infos(self) -> None:
        
         sample_folder = self.working_dir[DataType.sample]
+        if type(sample_folder) == list:
+            sample_folder = sample_folder[0]
+            
         open_beam_folder = self.working_dir[DataType.ob]
+        if type(open_beam_folder) == list:
+            open_beam_folder = open_beam_folder[0]
+        
         nexus_folder = self.working_dir[DataType.nexus]
         detector_type = self.detector_type
 

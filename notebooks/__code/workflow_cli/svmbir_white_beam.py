@@ -109,6 +109,10 @@ class SvmbirCliHandler:
         output_folder = os.path.abspath(config['output_folder'])
         raw_data_base_folder = os.path.basename(os.path.abspath(config['raw_data_base_folder']))
 
+        logging.info(f"input_data_folder = {input_data_folder}")
+        logging.info(f"output_folder = {output_folder}")
+        logging.info(f"raw_data_base_folder = {raw_data_base_folder}")
+
         list_tiff = glob.glob(os.path.join(input_data_folder, '*.tiff'))
         list_tiff.sort()
         print(f"loading {len(list_tiff)} images ... ", end="")
