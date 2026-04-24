@@ -305,8 +305,8 @@ class TopFolder(BaseModel):
         ob: Path to open beam data folder (default: empty string)
     """
     sample: list = []
-    ob: str = ""
-
+    # ob: str = ""
+    ob: list = []
 
 class NormalizationRoi(BaseModel):
     """
