@@ -245,13 +245,16 @@ class CenterOfRotationAndTilt(Parent):
             fig = make_subplots(rows=1, cols=2,
                                 subplot_titles=(f"theory: 0 degree - measured: {self.real_0_degree_angle} degree",
                                                 f"theory: 180 degree - measured: {self.real_180_degree_angle} degree"))
-            # keep x and y axis the same size for both subplots
-            fig.update_xaxes(scaleanchor="y", scaleratio=1, row=1, col=1)
-            fig.update_xaxes(scaleanchor="y", scaleratio=1, row=1, col=2)
             fig.add_trace(go.Heatmap(z=local_image_0_degree, colorscale='Viridis',
                                      zmin=vrange[0], zmax=vrange[1], showscale=True), row=1, col=1)
             fig.add_trace(go.Heatmap(z=local_image_180_degree, colorscale='Viridis',
                                      zmin=vrange[0], zmax=vrange[1], showscale=True), row=1, col=2)
+
+            # Keep both subplots at identical pixel scale and matched ranges.
+            fig.update_xaxes(scaleanchor="y", scaleratio=1, constrain='domain', row=1, col=1)
+            fig.update_xaxes(scaleanchor="y2", scaleratio=1, constrain='domain', row=1, col=2)
+            fig.update_xaxes(matches='x', row=1, col=2)
+            fig.update_yaxes(matches='y', row=1, col=2)
 
             # Add horizontal band (y_range selection) on both subplots
             for xref, yref in [("x", "y"), ("x2", "y2")]:
@@ -262,7 +265,7 @@ class CenterOfRotationAndTilt(Parent):
                               line=dict(width=0),
                               xref=xref, yref=yref)
 
-            fig.update_yaxes(autorange='reversed')
+            fig.update_yaxes(autorange='reversed', constrain='domain')
             fig.update_layout(height=500, width=1000)
             fig.show()
 

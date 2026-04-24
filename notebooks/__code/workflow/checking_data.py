@@ -261,10 +261,10 @@ class CheckingData(Parent):
         logging.info(f"Retrieving runs:")
         for _data_type in self.list_of_runs.keys():
             logging.info(f"\t{_data_type}:")
-            list_of_runs: List[str] = retrieve_list_of_runs(top_folder=self.parent.working_dir[_data_type],
+            list_of_runs: List[str] = retrieve_list_of_runs(top_folder=self.parent.working_dir[_data_type][0],
                                                             detector_type=self.parent.detector_type)
             if len(list_of_runs) == 0:
-                display(HTML(f"<font color=red>Found 0 {_data_type} runs in {self.parent.working_dir[_data_type]}</font>"))
+                display(HTML(f"<font color=red>Found 0 {_data_type} runs in {self.parent.working_dir[_data_type][0]}</font>"))
                 raise ValueError("Missing files !")
             
             logging.info(f"\tfound {len(list_of_runs)} {_data_type} runs")

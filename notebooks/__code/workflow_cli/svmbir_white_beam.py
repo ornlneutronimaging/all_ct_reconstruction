@@ -106,8 +106,12 @@ class SvmbirCliHandler:
         logging.info(f"config = {config}")
 
         input_data_folder = os.path.abspath(config["projections_pre_processing_folder"])
-        base_output_folder = os.path.abspath(config['output_folder'])
-        raw_data_base_folder = os.path.abspath(config['raw_data_base_folder'])
+        output_folder = os.path.abspath(config['output_folder'])
+        raw_data_base_folder = os.path.basename(os.path.abspath(config['raw_data_base_folder']))
+
+        logging.info(f"input_data_folder = {input_data_folder}")
+        logging.info(f"output_folder = {output_folder}")
+        logging.info(f"raw_data_base_folder = {raw_data_base_folder}")
 
         list_tiff = glob.glob(os.path.join(input_data_folder, '*.tiff'))
         list_tiff.sort()
@@ -150,6 +154,11 @@ class SvmbirCliHandler:
         sharpness = config['svmbir_config']['sharpness']
         snr_db = config['svmbir_config']['snr_db']
         positivity = config['svmbir_config']['positivity']
+        
+        positivity = False   # DEBUG: we set positivity to False for now as it can cause issues with mbirjax reconstruction, we will investigate this later
+        
+        
+        
         max_iterations = config['svmbir_config']['max_iterations']
         verbose = config['svmbir_config']['verbose']
         
@@ -185,7 +194,7 @@ class SvmbirCliHandler:
         logging.info(f"{verbose = }")
         logging.info(f"{svmbir_lib_path = }")
         logging.info(f"{input_data_folder = }")
-        logging.info(f"{base_output_folder = }")
+        logging.info(f"{output_folder = }")
         logging.info(f"{raw_data_base_folder = }")
         logging.info(f"{list_of_slices_to_reconstruct = }")
         
@@ -193,7 +202,7 @@ class SvmbirCliHandler:
             _prefix = "mbirjax"
         else:
             _prefix = "svmbir"
-        output_data_folder = os.path.join(base_output_folder, f"{raw_data_base_folder}_{_prefix}_reconstructed_data_{get_current_time_in_special_file_name_format()}")
+        output_data_folder = os.path.join(output_folder, f"{raw_data_base_folder}_{_prefix}_reconstructed_data_{get_current_time_in_special_file_name_format()}")
         logging.info(f"{output_data_folder = }")
 
         # make_or_reset_folder(output_data_folder)
@@ -233,39 +242,39 @@ class SvmbirCliHandler:
                     # # go from [angle, y, x] to [y, x, angle]
                     # _sino_swapped = np.swapaxes(_sino, 0, 2)
                     
-                    # get statistics of the sino for mbirjax input
-                    logging.info(f"Statistics of the sino for mbirjax input:")
-                    logging.info(f"\tmin: {np.min(_sino)}")
-                    logging.info(f"\tmax: {np.max(_sino)}")
-                    logging.info(f"\tmean: {np.mean(_sino)}")
-                    logging.info(f"\tstd: {np.std(_sino)}")
-                    # counts how many pixels are zero, and how many are non-zero
-                    logging.info(f"\tnumber of zero pixels: {( _sino == 0).sum()}")
-                    logging.info(f"\tnumber of non-zero pixels: {( _sino != 0).sum()}")
-                    # check for NaN or inf values
-                    logging.info(f"\tnumber of NaN pixels: {np.isnan(_sino).sum()}")
-                    logging.info(f"\tnumber of inf pixels: {np.isinf(_sino).sum()}")
-                    # making sure there is no values below 0
-                    if np.any(_sino < 0):
-                        logging.warning(f"There are {_sino[_sino < 0].size} pixels with negative values in the sino for mbirjax input. Setting them to small positive value to avoid issues with the reconstruction.")
-                        _sino[_sino < 0] = 1e-6
-                    logging.info(f"\tmin: {np.min(_sino)}")
-                    logging.info(f"\tmax: {np.max(_sino)}")
+                    # # get statistics of the sino for mbirjax input
+                    # logging.info(f"Statistics of the sino for mbirjax input:")
+                    # logging.info(f"\tmin: {np.min(_sino)}")
+                    # logging.info(f"\tmax: {np.max(_sino)}")
+                    # logging.info(f"\tmean: {np.mean(_sino)}")
+                    # logging.info(f"\tstd: {np.std(_sino)}")
+                    # # counts how many pixels are zero, and how many are non-zero
+                    # logging.info(f"\tnumber of zero pixels: {( _sino == 0).sum()}")
+                    # logging.info(f"\tnumber of non-zero pixels: {( _sino != 0).sum()}")
+                    # # check for NaN or inf values
+                    # logging.info(f"\tnumber of NaN pixels: {np.isnan(_sino).sum()}")
+                    # logging.info(f"\tnumber of inf pixels: {np.isinf(_sino).sum()}")
+                    # # making sure there is no values below 0
+                    # if np.any(_sino < 0):
+                    #     logging.warning(f"There are {_sino[_sino < 0].size} pixels with negative values in the sino for mbirjax input. Setting them to small positive value to avoid issues with the reconstruction.")
+                    #     _sino[_sino < 0] = 1e-6
+                    # logging.info(f"\tmin: {np.min(_sino)}")
+                    # logging.info(f"\tmax: {np.max(_sino)}")
 
-                    # convert back to transmission to remove the values above 1 that can cause issues with mbirjax reconstruction
-                    _sino = np.exp(-_sino)
-                    logging.info(f"After converting back to transmission:")
-                    logging.info(f"\tmin: {np.min(_sino)}")
-                    logging.info(f"\tmax: {np.max(_sino)}")
-                    _sino = np.clip(_sino, a_min=0, a_max=1)
-                    logging.info(f"\tmin: {np.min(_sino)}")
-                    logging.info(f"\tmax: {np.max(_sino)}")
+                    # # convert back to transmission to remove the values above 1 that can cause issues with mbirjax reconstruction
+                    # _sino = np.exp(-_sino)
+                    # logging.info(f"After converting back to transmission:")
+                    # logging.info(f"\tmin: {np.min(_sino)}")
+                    # logging.info(f"\tmax: {np.max(_sino)}")
+                    # _sino = np.clip(_sino, a_min=0, a_max=1)
+                    # logging.info(f"\tmin: {np.min(_sino)}")
+                    # logging.info(f"\tmax: {np.max(_sino)}")
                     
                     # converting back to attenuation for mbirjax input
-                    _sino = -np.log(_sino)
+                    # _sino = -np.log(_sino)
 
                     reconstruction_array, recond_dict = ct_model_for_recon.recon(_sino,
-                                                                    print_logs=True,
+                                                                    # print_logs=True,
                                                                     # weights=None,
                                                                     )
                     # reconstruction_array, recond_dict = ct_model_for_recon.recon(corrected_array_log,
@@ -365,7 +374,6 @@ class SvmbirCliHandler:
 
                 logging.info(f"{corrected_array_log.shape = }")
                 logging.info(f"{list_of_angles_rad.shape = }")
-                logging.info(f"{sinogram_shape = }")
                 reconstruction_array = svmbir.recon(sino=corrected_array_log,
                                                     angles=list_of_angles_rad,
                                                     num_rows = corrected_array_log.shape[2],  # height,

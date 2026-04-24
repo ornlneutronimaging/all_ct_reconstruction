@@ -260,7 +260,11 @@ class ExportExtra(Parent):
             If output directories cannot be created or accessed
         """
         log_file_name: str = f"/SNS/VENUS/shared/log/{base_log_file_name}.log"
-        output_folder: str = self.parent.working_dir[DataType.extra]
+        if type(self.parent.working_dir[DataType.extra]) == list:
+            output_folder: str = self.parent.working_dir[DataType.extra][0]
+        else:
+            output_folder: str = self.parent.working_dir[DataType.extra]
+        
         try:
             shutil.copy(log_file_name, output_folder)
         except PermissionError:

@@ -531,6 +531,10 @@ class Load(Parent):
         
     def data_selected(self, top_folder):
         logging.info(f"{self.parent.current_data_type} top folder selected: {top_folder}")
+
+        if type(top_folder) == str:
+            top_folder = [top_folder]
+
         self.parent.working_dir[self.data_type] = top_folder
         # print(f"{self.data_type} top folder is: {top_folder}")
         display(HTML(f"<b>{self.data_type} folder selected</b>: {top_folder}"))
