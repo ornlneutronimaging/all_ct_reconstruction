@@ -32,11 +32,9 @@ Created: Part of CT reconstruction development workflow
 
 import ipywidgets as widgets
 from IPython.display import display
-from IPython.display import HTML
 from ipywidgets import interactive
 import logging
-from typing import List, Tuple, Any
-import numpy as np
+from typing import List, Tuple
 
 from __code.parent import Parent
 from  __code.utilities.general import retrieve_list_class_attributes_name
@@ -79,6 +77,9 @@ class ReconstructionSelection(Parent):
 
         # get all the attribute names of the ReconstructionAlgorithm class
         list_algo: List[str] = retrieve_list_class_attributes_name(ReconstructionAlgorithm)
+
+        if not self.parent.SVBMIR_MODE_FLAG:
+            list_algo.remove(ReconstructionAlgorithm.svmbir)
 
         display(widgets.HTML("<font size=5 color=blue>Select reconstruction algorithm(s)</font>"))
         display(widgets.HTML("<font size=3 color=black>Multiple selection allowed by <b>CTRL+click</b></font>"))

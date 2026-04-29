@@ -39,7 +39,12 @@ import os
 import glob
 import logging
 from typing import List, Dict, Any, Tuple, Optional, Union
-import svmbir
+try:
+    import svmbir
+    HAS_SVMBIR = True
+except ImportError:
+    HAS_SVMBIR = False
+
 import time
 import jax.numpy as jnp
 import mbirjax as mj

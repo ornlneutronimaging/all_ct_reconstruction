@@ -59,6 +59,7 @@ class System:
     @classmethod
     def select_working_dir(cls, 
                            debug: bool = False,
+                           offline: bool = False,
                           debugger_folder: str = '', 
                           system_folder: str = '',
                           ipts: Optional[str] = None,
@@ -98,6 +99,11 @@ class System:
         
         if debugging:
             print("** Using Debugging Mode! **")
+            return
+
+        if offline:
+            print("** Using Offline Mode! **")
+            cls.debugging = "~/"
             return
 
         display(HTML("""
