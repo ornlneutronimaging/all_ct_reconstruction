@@ -304,15 +304,12 @@ class Step1PrepareTimePixImages:
         logging.info(f"instrument: {self.instrument}")
 
     def update_all_paths(self) -> None:
-<<<<<<< HEAD
-=======
         top_sample_dir = self.top_sample_dir
         # self.working_dir[DataType.ipts] = os.path.basename(top_sample_dir)
         self.working_dir[DataType.ipts] = top_sample_dir
         self.working_dir[DataType.nexus] = os.path.join(top_sample_dir, "nexus")
         self.working_dir[DataType.processed] = os.path.join(top_sample_dir, "shared", "processed_data")       
         self.working_dir[DataType.normalized] = os.path.join(top_sample_dir, "shared", "processed_data", "normalized_data")
->>>>>>> origin/reconstruction_on_user_linux_machine
         
         if self.offline_flag:
             top_sample_dir = os.path.abspath("~")
