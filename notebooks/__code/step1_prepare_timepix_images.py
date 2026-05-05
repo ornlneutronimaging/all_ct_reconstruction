@@ -65,6 +65,12 @@ from numpy.typing import NDArray
 from IPython.display import display
 from IPython.display import HTML
 
+try:
+    import svmbir
+    HAS_SVMBIR = True
+except ImportError:
+    HAS_SVMBIR = False
+
 from __code import DataType, OperatingMode, DEFAULT_OPERATING_MODE, DetectorType
 from __code.utilities.logging import setup_logging
 from __code.utilities.configuration_file import Configuration
@@ -137,6 +143,8 @@ class Step1PrepareTimePixImages:
         center_of_rotation: Calculated center of rotation for geometry correction
         configuration: Configuration management for reconstruction parameters
     """
+
+    SVBMIR_MODE_FLAG = HAS_SVMBIR
 
     MODE: OperatingMode = OperatingMode.tof
 

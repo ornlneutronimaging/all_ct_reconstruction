@@ -7,7 +7,12 @@ from IPython.display import display
 import algotom.rec.reconstruction as rec
 import numpy as np
 import logging
-import svmbir
+try:
+    import svmbir
+    HAS_SVMBIR = True
+except ImportError:
+    HAS_SVMBIR = False
+
 import jax.numpy as jnp
 import mbirjax as mj
 import time
@@ -145,7 +150,13 @@ class TestReconstruction(Parent):
 
     def select_algorithms(self) -> None:
         list_algorithms = [_key for _key in ListAlgorithmsForTest.__dict__.keys() if not _key.startswith('__')]
+
         default_selection = [ListAlgorithmsForTest.astra, ListAlgorithmsForTest.svmbir]
+        if not HAS_SVMBIR:
+            logging.warning("SVMBIR library is not available. Removing SVMBIR from algorithm selection.")
+            list_algorithms.remove(ListAlgorithmsForTest.svmbir)
+            default_selection.remove(ListAlgorithmsForTest.svmbir)
+            
         self.selected_algorithms = widgets.SelectMultiple(
             options=list_algorithms,
             value=default_selection,
@@ -246,6 +257,11 @@ class TestReconstruction(Parent):
                 logging.info(f"\tusing rec.astra_reconstruction ... done in {time_end_astra - time_start_astra:.2f} seconds!")
 
             if ListAlgorithmsForTest.svmbir in list_algorithms_to_run:
+
+                if not HAS_SVMBIR:
+                    logging.warning("SVMBIR library is not available. Skipping SVMBIR reconstruction.")
+                    continue
+
                 # svmbir
                 logging.info(f"\tusing rec.svmbir_reconstruction ...")
                 projections_normalized_images_log: NDArray[np.floating] = self.parent.normalized_images_log[:, _slice:_slice+1, :]
