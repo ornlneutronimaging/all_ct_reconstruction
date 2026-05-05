@@ -34,12 +34,14 @@ def setup_logging(basename_of_log_file: str = "") -> str:
         existing logs from the same script.
     """
     USER_NAME: str = os.getlogin()  # add user name to the log file name
-
+    
     default_path: str = "/SNS/VENUS/shared/log/"
+    
     if os.path.exists(default_path) is False:
         # user home folder
         default_path = os.path.join(os.path.expanduser("~"), "log")
-    if not os.path.exists(default_path):
+    
+    else:
         os.makedirs(default_path)
 
     log_file_name: str = os.path.join(default_path, f"{basename_of_log_file}_{USER_NAME}.log")

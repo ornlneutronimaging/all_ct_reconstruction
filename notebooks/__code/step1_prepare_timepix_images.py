@@ -276,6 +276,7 @@ class Step1PrepareTimePixImages:
             - Logs initialization parameters and debug mode status
         """
 
+        self.offline_flag = system.System.offline_flag
         self.configuration = Configuration()
         setup_logging(basename_of_log_file=LOG_BASENAME_FILENAME)  
         
@@ -303,22 +304,35 @@ class Step1PrepareTimePixImages:
         logging.info(f"instrument: {self.instrument}")
 
     def update_all_paths(self) -> None:
-        top_sample_dir = self.top_sample_dir
-        # self.working_dir[DataType.ipts] = os.path.basename(top_sample_dir)
-        self.working_dir[DataType.ipts] = top_sample_dir
-        self.working_dir[DataType.nexus] = os.path.join(top_sample_dir, "nexus")
-        self.working_dir[DataType.processed] = os.path.join(top_sample_dir, "shared", "processed_data")       
-        self.working_dir[DataType.normalized] = os.path.join(top_sample_dir, "shared", "normalized_data")
         
-        if self.detector_type == DetectorType.tpx1_legacy:
-            self.working_dir[DataType.sample] = os.path.join(top_sample_dir, "shared", "autoreduce", "mcp")
-            self.working_dir[DataType.ob] = os.path.join(top_sample_dir, "shared", "autoreduce", "mcp")
-            self.working_dir[DataType.top] = os.path.join(top_sample_dir, "shared", "autoreduce", "mcp")
-      
-        elif self.detector_type in [DetectorType.tpx1, DetectorType.tpx3]:
-            self.working_dir[DataType.sample] = os.path.join(top_sample_dir, "shared", "autoreduce", "images", self.get_unix_detector_name(), 'raw', 'ct')
-            self.working_dir[DataType.ob] = os.path.join(top_sample_dir, "shared", "autoreduce", "images", self.get_unix_detector_name(), 'ob')
-            self.working_dir[DataType.top] = os.path.join(top_sample_dir, "shared", "autoreduce", "images", self.get_unix_detector_name())
+        if self.offline_flag:
+            top_sample_dir = os.path.abspath("~")
+            logging.info(f"Running in offline mode, using the following top sample dir: {top_sample_dir}")
+            self.working_dir[DataType.ipts] = top_sample_dir
+            self.working_dir[DataType.nexus] = top_sample_dir
+            self.working_dir[DataType.processed] = top_sample_dir
+            self.working_dir[DataType.normalized] = top_sample_dir
+            self.working_dir[DataType.sample] = top_sample_dir
+            self.working_dir[DataType.ob] = top_sample_dir
+            self.working_dir[DataType.top] = top_sample_dir
+            self.top_sample_dir = top_sample_dir
+
+        else:
+            top_sample_dir = self.top_sample_dir
+            self.working_dir[DataType.ipts] = top_sample_dir
+            self.working_dir[DataType.nexus] = os.path.join(top_sample_dir, "nexus")
+            self.working_dir[DataType.processed] = os.path.join(top_sample_dir, "shared", "processed_data")       
+            self.working_dir[DataType.normalized] = os.path.join(top_sample_dir, "shared", "normalized_data")
+            
+            if self.detector_type == DetectorType.tpx1_legacy:
+                self.working_dir[DataType.sample] = os.path.join(top_sample_dir, "shared", "autoreduce", "mcp")
+                self.working_dir[DataType.ob] = os.path.join(top_sample_dir, "shared", "autoreduce", "mcp")
+                self.working_dir[DataType.top] = os.path.join(top_sample_dir, "shared", "autoreduce", "mcp")
+        
+            elif self.detector_type in [DetectorType.tpx1, DetectorType.tpx3]:
+                self.working_dir[DataType.sample] = os.path.join(top_sample_dir, "shared", "autoreduce", "images", self.get_unix_detector_name(), 'raw', 'ct')
+                self.working_dir[DataType.ob] = os.path.join(top_sample_dir, "shared", "autoreduce", "images", self.get_unix_detector_name(), 'ob')
+                self.working_dir[DataType.top] = os.path.join(top_sample_dir, "shared", "autoreduce", "images", self.get_unix_detector_name())
 
         logging.info(f"Updates all paths:")
         logging.info(f"  - top_sample_dir: {top_sample_dir}")

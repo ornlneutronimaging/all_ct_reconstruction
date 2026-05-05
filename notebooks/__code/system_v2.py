@@ -56,6 +56,8 @@ class System:
     start_path: ClassVar[str] = ''
     ipts_number: ClassVar[str] = ''
 
+    offline_flag: ClassVar[bool] = False
+
     @classmethod
     def select_working_dir(cls, 
                            debug: bool = False,
@@ -85,6 +87,7 @@ class System:
             In production mode, an interactive file browser is displayed.
         """
 
+
         facility = 'SNS'
         instrument = 'VENUS'
         cls.instrument = instrument
@@ -104,6 +107,7 @@ class System:
         if offline:
             print("** Using Offline Mode! **")
             cls.debugging = "~/"
+            cls.offline_flag = True
             return
 
         display(HTML("""
