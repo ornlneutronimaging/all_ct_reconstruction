@@ -324,9 +324,23 @@ class Normalization(Parent):
 
         normalized_data = self.parent.normalized_images
 
-        master_base_folder_name = f"{os.path.basename(self.parent.working_dir[DataType.sample])}_normalized"
-        full_output_folder = os.path.join(self.parent.working_dir[DataType.normalized],
-                                          master_base_folder_name)
+        if type(self.parent.working_dir[DataType.sample]) is not str:
+            sample_base_name = os.path.basename(self.parent.working_dir[DataType.sample][0])
+        else:
+            sample_base_name = os.path.basename(self.parent.working_dir[DataType.sample])
+
+        if type(self.parent.working_dir[DataType.normalized]) is not str:
+            normalized_folder = self.parent.working_dir[DataType.normalized][0]
+        else:
+            normalized_folder = self.parent.working_dir[DataType.normalized]
+
+        logging.info(f"\tsample base name: {sample_base_name}")
+        logging.info(f"\tnormalized folder: {normalized_folder}")
+        
+        master_base_folder_name = f"{os.path.abspath(sample_base_name)}_normalized"
+        logging.info(f"\tmaster base folder name for normalized data: {master_base_folder_name}")
+        full_output_folder = os.path.join(normalized_folder, master_base_folder_name)
+        logging.info(f"\tfull output folder for normalized data: {full_output_folder}")
 
         make_or_reset_folder(full_output_folder)
 

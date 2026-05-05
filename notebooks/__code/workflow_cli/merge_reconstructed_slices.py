@@ -49,10 +49,10 @@ def live_merge_reconstructed_slices(output_data_folder="",
                   filename=full_file_name)    
 
 
-def merge_reconstructed_slices(output_data_folder: Optional[str] = None, 
+def merge_reconstructed_slices(output_data_folder: str = None, 
                               top_slice: int = 0, 
-                              list_of_output_folders: Optional[List[str]] = None, 
-                              list_of_slices_to_reconstruct: Optional[List[Tuple[int, int]]] = None) -> None:
+                              list_of_output_folders: List[str] = None, 
+                              list_of_slices_to_reconstruct: List[Tuple[int, int]] = None) -> None:
     """
     Merge reconstructed CT slices from multiple parallel reconstruction outputs.
     
@@ -76,7 +76,20 @@ def merge_reconstructed_slices(output_data_folder: Optional[str] = None,
     Process:
         1. Scan each output folder for TIFF files
         2. Map slice indices to files based on reconstruction ranges
-        3. Remove duplicate slices (keep first occurrence)
+        3. Should do a weighted merge if there are overlapping slices (not implemented here, just remove duplicates)
+           This means if the two region overlap as such
+            folder1: image0010.tiff, image0011.tiff, image0012.tiff, image0013.tiff, image0014.tiff
+            folder2:                                 image0012.tiff, image0013.tiff, image0014.tiff, image0015.tiff, image0016.tiff
+           The merged result should be:
+            output_data_folder/
+            ├── image_0010.tiff (100% from folder1)
+            ├── image_0011.tiff (100% from folder1)
+            ├── image_0012.tiff (66% from folder1, 33% from folder2)
+            ├── image_0013.tiff (50% from folder1, 50% from folder2)
+            ├── image_0014.tiff (33% from folder1, 66% from folder2)
+            ├── image_0015.tiff (100% from folder2)
+            └── image_0016.tiff (100% from folder2)
+        
         4. Rename and move slices to final output with sequential numbering
         5. Clean up temporary folders
         
@@ -114,6 +127,14 @@ def merge_reconstructed_slices(output_data_folder: Optional[str] = None,
         list_slices: np.ndarray = np.arange(top_slice_index, bottom_slice_index)
         for _tiff_index, _slice_index in enumerate(list_slices):
             if _slice_index in list_slices_already_processed:
+                # this is where we need to do the weighted merge if we want to keep both slices, but for now we just remove the duplicate slice from the second folder
+                logging.info(f"slice #{_slice_index} already processed, removing duplicate slice {os.path.basename(list_folder_tiff[_index][_tiff_index])} ... ")   
+                
+                
+                
+                
+                
+                
                 os.remove(list_folder_tiff[_index][_tiff_index]) # no need to move that slice, already processed
 
             else:

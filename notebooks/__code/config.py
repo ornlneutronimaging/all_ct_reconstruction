@@ -23,6 +23,8 @@ verbose: bool = True
 debugger_username: str = 'j35'
 imaging_team: List[str] = ["j35", "gxt"]
 
+NUMBER_OF_SLICES_TO_OVERAP = 5
+
 # Development folder paths for different users and instruments
 debugger_folder: List[str] = ['/Users/j35/HFIR/CG1D/',
                    '/Volumes/JeanHardDrive/HFIR/CG1D/']

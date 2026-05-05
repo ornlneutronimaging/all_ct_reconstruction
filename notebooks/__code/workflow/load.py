@@ -164,8 +164,8 @@ class Load(Parent):
 
         logging.info(f"\t{working_dir = }")
         if not os.path.exists(working_dir):
-            working_dir = self.parent.working_dir[DataType.ipts]
             logging.warning(f"Working directory {working_dir} does not exist!")
+            working_dir = self.parent.working_dir[DataType.ipts]
             while (not os.path.exists(working_dir)):
                 print(f"Working directory {working_dir} does not exist, trying to go up one level ...")
                 working_dir = os.path.dirname(working_dir)
@@ -181,12 +181,22 @@ class Load(Parent):
 
         try:
 
+            logging.info(f"{output_flag = }")
             if output_flag:
-                self.o_file_browser = FileFolderBrowser(working_dir=working_dir,
-                                                ipts_folder=self.parent.working_dir[DataType.ipts],
-                                                next_function=self.data_selected)
+                logging.info(f"Selecting output folder for data type {data_type} ...")
+                if data_type == DataType.normalized:
+                    self.o_file_browser = FileFolderBrowser(working_dir=working_dir,
+                                                    ipts_folder=self.parent.working_dir[DataType.ipts],
+                                                    next_function=self.close_file_browser)
+                else:
+                    self.o_file_browser = FileFolderBrowser(working_dir=working_dir,
+                                                    ipts_folder=self.parent.working_dir[DataType.ipts],
+                                                    next_function=self.data_selected)
                 self.o_file_browser.select_output_folder_with_new(instruction=f"Select Top Folder of {data_type}",)
+            
             else:
+                
+                logging.info(f"Selecting input folder for data type {data_type} ...")
                 self.o_file_browser = FileFolderBrowser(working_dir=working_dir,
                                                 next_function=self.data_selected)
                 self.o_file_browser.select_input_folder(instruction=f"Select Top Folder of {data_type} (you should see the RUN NUMBER folders listed)",
@@ -199,6 +209,11 @@ class Load(Parent):
             logging.error(f"Error selecting folder: {e}. You probably forgot to select your IPTS in the first cell!")
             display(HTML(f"<font color='red'><b>ERROR</b>: You probably forgot to select your IPTS in the first cell!</font>"))
             return
+
+    def close_file_browser(self, folder):
+        logging.info(f"We are about to export the normalized data to the folder: {folder}")
+        self.o_file_browser.list_output_folders_ui.shortcut_buttons.close() # close the jump to shared and home buttons 
+        self.parent.working_dir[self.data_type] = folder
 
     def select_images(self, data_type=DataType.ob):
         self.parent.current_data_type = data_type
@@ -1076,3 +1091,25 @@ class Load(Parent):
     #                 list_index.append(int(part))
     #     logging.info(f"List of images to exclude: {list_index}")
     #     return list_index
+
+    def select_import_normalized_folder(self):
+        """This is used when we are working with white beam data and we want to reload the normalized images after selecting the angles to use for the reconstruction."""
+        logging.info(f"Selecting folder of data to re-load and replace the normalized images ...")
+        
+        working_dir = os.path.dirname(self.parent.working_dir[DataType.sample][0])
+        self.o_file_browser = FileFolderBrowser(working_dir=working_dir,
+                                                next_function=self.reload_normalized_images)
+        self.o_file_browser.select_input_folder(instruction=f"Select Top Folder of {DataType.normalized}",
+                                        multiple_flag=False)
+                
+        self.out = widgets.Output()
+        display(self.out)
+                
+    def reload_normalized_images(self, top_folder):
+        logging.info(f"\tuser selected top folder: {top_folder} to reload the normalized images ...")
+        
+        list_of_tiff = glob.glob(os.path.join(top_folder, "*.tif*"))
+        list_of_tiff.sort()
+        list_sample_data = load_data_using_multithreading(list_of_tiff, dtype=np.float32)   
+        self.parent.master_3d_data_array[DataType.sample] = np.array(list_sample_data)
+    

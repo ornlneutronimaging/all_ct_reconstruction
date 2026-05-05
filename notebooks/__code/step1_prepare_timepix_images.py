@@ -300,7 +300,7 @@ class Step1PrepareTimePixImages:
         self.working_dir[DataType.ipts] = top_sample_dir
         self.working_dir[DataType.nexus] = os.path.join(top_sample_dir, "nexus")
         self.working_dir[DataType.processed] = os.path.join(top_sample_dir, "shared", "processed_data")       
-        self.working_dir[DataType.normalized] = os.path.join(top_sample_dir, "shared", "normalized_data")
+        self.working_dir[DataType.normalized] = os.path.join(top_sample_dir, "shared", "processed_data", "normalized_data")
         
         if self.detector_type == DetectorType.tpx1_legacy:
             self.working_dir[DataType.sample] = os.path.join(top_sample_dir, "shared", "autoreduce", "mcp")
@@ -803,6 +803,22 @@ class Step1PrepareTimePixImages:
             - Preserves TimePix-specific metadata and parameters
         """
         self.o_norm.export_images()
+
+    def select_import_normalized_folder(self) -> None:
+        """
+        Reload normalized TimePix images from export folder.
+        
+        Allows users to reload previously exported normalized TimePix images
+        for further processing or review without needing to re-run the entire
+        preparation workflow.
+        
+        Side Effects:
+            - Creates Load workflow object for reloading normalized images
+            - Launches folder browser for selecting normalized image data
+            - Updates normalized_images with reloaded data
+        """
+        o_load = Load(parent=self)
+        o_load.select_import_normalized_folder()
 
     # # chips correction
     # def chips_correction(self) -> None:

@@ -380,6 +380,7 @@ class Step1PrepareCcdImages:
 
     def export_normalized_images(self):
         self.o_norm.export_images()
+   
     # rebin
     def rebin_settings(self):
         self.o_rebin = Rebin(parent=self)
