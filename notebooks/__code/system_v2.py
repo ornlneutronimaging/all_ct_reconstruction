@@ -87,6 +87,19 @@ class System:
             In production mode, an interactive file browser is displayed.
         """
 
+        # get hostname
+        logging.info(f"Getting hostname to determine if running on analysis machine")
+        hostname = platform.node()
+        logging.info(f"Hostname: {hostname}")
+        offline = True
+        for analysis_machine in config.list_of_analysis_machines:
+            if hostname.startswith(analysis_machine):
+                logging.info(f"Running on analysis machine: {hostname}")
+                offline = False                
+                continue
+
+        if offline:
+            logging.info(f"Running in offline mode. Hostname: {hostname}")
 
         facility = 'SNS'
         instrument = 'VENUS'

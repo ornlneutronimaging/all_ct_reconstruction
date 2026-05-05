@@ -280,10 +280,10 @@ class ImagesCleaner(Parent):
     def cleaning_with_scipy(self, ignore_dc=False, ignore_ob=False):
         """scipy"""
 
-        display(HTML("Cleaning with Scipy median filter: this method will replace the outlier pixel values by the median value of the neighbor pixels ..."))
         if not self.scipy_ui.value:
             logging.info(f"cleaning using median filter: OFF")
             return  
+        display(HTML("Cleaning with Scipy median filter: this method will replace the outlier pixel values by the median value of the neighbor pixels ..."))
         
         logging.info(f"cleaning using median filter ...")
         _size = (1, 3, 3)
@@ -315,10 +315,10 @@ class ImagesCleaner(Parent):
 
     def cleaning_with_tomopy(self, ignore_dc=False, ignore_ob=False):
         
-        display(HTML("Cleaning with Tomopy: this method will replace the outlier pixel values by the median value of the neighbor pixels ..."))
         if not self.tomopy_ui.value:
             logging.info(f"cleaning using tomopy: OFF")
             return
+        display(HTML("Cleaning with Tomopy: this method will replace the outlier pixel values by the median value of the neighbor pixels ..."))
     
         logging.info(f"cleaning using tomopy ...")
         sample_data = np.array(self.parent.master_3d_data_array[DataType.sample])
@@ -363,10 +363,10 @@ class ImagesCleaner(Parent):
             
     def cleaning_by_histogram(self, ignore_dc=False, ignore_ob=False):
 
-        display(HTML("Cleaning by histogram: this method will replace the pixel values in the selected bins by the median value of the neighbor pixels ..."))
         if not self.in_house_ui.value:
             logging.info(f"cleaning by histogram: OFF")
             return
+        display(HTML("Cleaning by histogram: this method will replace the pixel values in the selected bins by the median value of the neighbor pixels ..."))
 
         logging.info(f"cleaning by histogram ...")
         self.nbr_bins, nbr_bins_to_exclude_left, nbr_bins_to_exclude_right = self.parent.display_histogram.result

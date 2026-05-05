@@ -12,7 +12,7 @@ from typing import Optional, Tuple, List, Any
 from numpy.typing import NDArray
 
 from __code import OperatingMode, DataType, STEP3_SCRIPTS
-from __code.config import DEBUG, debug_folder # , default_file_naming_convention
+from __code.config import DEBUG, debug_folder, NUMBER_OF_SLICES_TO_OVERAP # , default_file_naming_convention
 from __code.utilities.configuration_file import CropRegion
 from __code.utilities.configuration_file import select_file, loading_config_file_into_model
 from __code.utilities.logging import setup_logging
@@ -590,12 +590,12 @@ class Step2SliceCcdOrTimePixImages:
         list_slices: List[Tuple[int, int]] = []
         for _range_index in np.arange(nbr):
             _top_slice: int = top_slice + _range_index * range_size
-            if _top_slice > 0:
-                _top_slice -= 1  # to make sure we have a 2 pixels overlap between ranges of slices
+            if _top_slice > NUMBER_OF_SLICES_TO_OVERAP:
+                _top_slice -= (NUMBER_OF_SLICES_TO_OVERAP-1)  # to make sure we have an overlap between ranges of slices
 
             _bottom_slice: int = top_slice + _range_index * range_size + range_size
-            if _bottom_slice < (self.data.shape[1] - 1):
-                _bottom_slice += 1 # to make sure we have a 2 pixels overlap between ranges of slices
+            if _bottom_slice < (self.data.shape[1] - NUMBER_OF_SLICES_TO_OVERAP):
+                _bottom_slice += (NUMBER_OF_SLICES_TO_OVERAP - 1) # to make sure we have an overlap between ranges of slices
 
             list_slices.append((_top_slice, _bottom_slice))
             self.configuration.list_of_slices_to_reconstruct = list_slices
