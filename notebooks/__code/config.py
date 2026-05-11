@@ -23,8 +23,8 @@ verbose: bool = True
 debugger_username: str = 'j35'
 imaging_team: List[str] = ["j35", "gxt"]
 
-list_of_analysis_machines: List[str] = ['bl10-analysis1.sns.gov', 
-                                        'bl10-analysis2.sns.gov',
+list_of_analysis_machines: List[str] = ['bl10-analysis2.sns.gov', 
+                                        # 'bl10-analysis1.sns.gov',   # to fake running it on independent machines
                                         'analysis-node']
 
 NUMBER_OF_SLICES_TO_OVERAP = 5

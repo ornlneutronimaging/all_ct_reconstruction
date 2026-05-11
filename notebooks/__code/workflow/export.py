@@ -302,7 +302,8 @@ class ExportExtra(Parent):
         self.config_json = config_json
 
         self.sh_file_name = create_sh_file(json_file_name=config_file_name,
-                                           output_folder=output_folder)
+                                           output_folder=output_folder,
+                                           offline=self.parent.offline)
 
         # ipts_number = configuration.ipts_number
         # instrument = configuration.instrument

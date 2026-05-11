@@ -137,6 +137,9 @@ class Load(Parent):
         else:
             sample_folder = self.parent.working_dir[DataType.sample][0]
 
+        if data_type in [DataType.ob, DataType.dc]:
+            working_dir = os.path.dirname(sample_folder)
+
         if DEBUG:
             
             logging.info(f"DEBUG MODE: Selecting folder for {data_type} ...")
@@ -196,11 +199,20 @@ class Load(Parent):
             
             else:
                 
-                logging.info(f"Selecting input folder for data type {data_type} ...")
-                self.o_file_browser = FileFolderBrowser(working_dir=working_dir,
-                                                next_function=self.data_selected)
-                self.o_file_browser.select_input_folder(instruction=f"Select Top Folder of {data_type} (you should see the RUN NUMBER folders listed)",
-                                                multiple_flag=multiple_flag)
+                if data_type is DataType.nexus:
+                    logging.info(f"Selecting nexus folder ...")
+                    self.o_file_browser = FileFolderBrowser(working_dir=working_dir,
+                                                    next_function=self.nexus_folder_selected)
+                    self.o_file_browser.select_input_folder(instruction=f"Select Top Folder of {data_type}",
+                                                    multiple_flag=False)
+                    
+                else:
+                    
+                    logging.info(f"Selecting input folder for data type {data_type} ...")
+                    self.o_file_browser = FileFolderBrowser(working_dir=working_dir,
+                                                    next_function=self.data_selected)
+                    self.o_file_browser.select_input_folder(instruction=f"Select Top Folder of {data_type} (you should see the RUN NUMBER folders listed)",
+                                                    multiple_flag=multiple_flag)
                 
             self.out = widgets.Output()
             display(self.out)
@@ -544,6 +556,10 @@ class Load(Parent):
             
         return list_images_to_keep
         
+    def nexus_folder_selected(self, top_folder):
+        logging.info(f"Nexus top folder selected: {top_folder}")
+        self.parent.working_dir[DataType.nexus] = top_folder
+
     def data_selected(self, top_folder):
         logging.info(f"{self.parent.current_data_type} top folder selected: {top_folder}")
 

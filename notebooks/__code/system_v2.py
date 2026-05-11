@@ -90,6 +90,7 @@ class System:
         hostname = platform.node()
         logging.info(f"Hostname: {hostname}")
         offline = True
+        cls.offline = offline
         for analysis_machine in config.list_of_analysis_machines:
             if hostname.startswith(analysis_machine):
                 logging.info(f"Running on analysis machine: {hostname}")
@@ -559,6 +560,11 @@ class System:
             Otherwise, constructs path from start_path and UI selection.
         """
         logging.info(f"Getting working directory. Current working_dir: {cls.working_dir}")
+        if cls.offline:
+            working_dir = os.path.expanduser("~")
+            logging.info(f"offline mode: Getting working directory. Current working_dir: {working_dir}")
+            return working_dir
+
         if cls.debugging:
             logging.info(f"\tIn debugging mode, returning working_dir: {cls.working_dir}")
             return os.path.join(cls.start_path, cls.working_dir)

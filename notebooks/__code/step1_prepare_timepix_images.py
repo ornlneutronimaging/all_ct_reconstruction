@@ -279,6 +279,8 @@ class Step1PrepareTimePixImages:
         self.configuration = Configuration()
         setup_logging(basename_of_log_file=LOG_BASENAME_FILENAME)  
         
+        self.offline = system.System.offline
+        
         top_sample_dir = system.System.get_working_dir()
         self.top_sample_dir = top_sample_dir
         self.instrument = "VENUS"  
@@ -301,24 +303,40 @@ class Step1PrepareTimePixImages:
 
         logging.info(f"working_dir: {self.working_dir}")
         logging.info(f"instrument: {self.instrument}")
+        logging.info(f"offline: {self.offline}")
 
     def update_all_paths(self) -> None:
-        top_sample_dir = self.top_sample_dir
-        # self.working_dir[DataType.ipts] = os.path.basename(top_sample_dir)
-        self.working_dir[DataType.ipts] = top_sample_dir
-        self.working_dir[DataType.nexus] = os.path.join(top_sample_dir, "nexus")
-        self.working_dir[DataType.processed] = os.path.join(top_sample_dir, "shared", "processed_data")       
-        self.working_dir[DataType.normalized] = os.path.join(top_sample_dir, "shared", "processed_data", "normalized_data")
-        
-        if self.detector_type == DetectorType.tpx1_legacy:
-            self.working_dir[DataType.sample] = os.path.join(top_sample_dir, "shared", "autoreduce", "mcp")
-            self.working_dir[DataType.ob] = os.path.join(top_sample_dir, "shared", "autoreduce", "mcp")
-            self.working_dir[DataType.top] = os.path.join(top_sample_dir, "shared", "autoreduce", "mcp")
+                
+        if self.offline:
+            logging.info("offline mode: Updating all paths.")
+            top_sample_dir = os.path.expanduser("~")
+            self.working_dir[DataType.ipts] = top_sample_dir
+            self.working_dir[DataType.nexus] = top_sample_dir
+            self.working_dir[DataType.processed] = top_sample_dir  
+            self.working_dir[DataType.normalized] = top_sample_dir
+            self.working_dir[DataType.sample] = top_sample_dir
+            self.working_dir[DataType.ob] = ""
+            self.working_dir[DataType.top] = top_sample_dir
       
-        elif self.detector_type in [DetectorType.tpx1, DetectorType.tpx3]:
-            self.working_dir[DataType.sample] = os.path.join(top_sample_dir, "shared", "autoreduce", "images", self.get_unix_detector_name(), 'raw', 'ct')
-            self.working_dir[DataType.ob] = os.path.join(top_sample_dir, "shared", "autoreduce", "images", self.get_unix_detector_name(), 'ob')
-            self.working_dir[DataType.top] = os.path.join(top_sample_dir, "shared", "autoreduce", "images", self.get_unix_detector_name())
+        else:
+            logging.info("online mode: Updating all paths.")
+
+            top_sample_dir = self.top_sample_dir
+            # self.working_dir[DataType.ipts] = os.path.basename(top_sample_dir)
+            self.working_dir[DataType.ipts] = top_sample_dir
+            self.working_dir[DataType.nexus] = os.path.join(top_sample_dir, "nexus")
+            self.working_dir[DataType.processed] = os.path.join(top_sample_dir, "shared", "processed_data")       
+            self.working_dir[DataType.normalized] = os.path.join(top_sample_dir, "shared", "processed_data", "normalized_data")
+            
+            if self.detector_type == DetectorType.tpx1_legacy:
+                self.working_dir[DataType.sample] = os.path.join(top_sample_dir, "shared", "autoreduce", "mcp")
+                self.working_dir[DataType.ob] = os.path.join(top_sample_dir, "shared", "autoreduce", "mcp")
+                self.working_dir[DataType.top] = os.path.join(top_sample_dir, "shared", "autoreduce", "mcp")
+        
+            elif self.detector_type in [DetectorType.tpx1, DetectorType.tpx3]:
+                self.working_dir[DataType.sample] = os.path.join(top_sample_dir, "shared", "autoreduce", "images", self.get_unix_detector_name(), 'raw', 'ct')
+                self.working_dir[DataType.ob] = os.path.join(top_sample_dir, "shared", "autoreduce", "images", self.get_unix_detector_name(), 'ob')
+                self.working_dir[DataType.top] = os.path.join(top_sample_dir, "shared", "autoreduce", "images", self.get_unix_detector_name())
 
         logging.info(f"Updates all paths:")
         logging.info(f"  - top_sample_dir: {top_sample_dir}")
@@ -356,6 +374,25 @@ class Step1PrepareTimePixImages:
         
         o_load = Load(parent=self)
         o_load.select_folder(data_type=DataType.sample)
+        
+        # if running offline, select nexus folder
+        if self.offline:
+            self.select_nexus_folder()
+
+    def select_nexus_folder(self) -> None:
+        """
+        Launch interactive folder selection for nexus data.
+        
+        Opens a file browser interface to allow user selection of the
+        top-level folder containing nexus data files.
+        
+        Side Effects:
+            - Creates Load workflow object for nexus data selection
+            - Launches interactive folder browser widget
+            - Updates working_dir[DataType.nexus] upon selection
+        """
+        o_load = Load(parent=self)
+        o_load.select_folder(data_type=DataType.nexus)
 
     def select_top_ob_folder(self) -> None:
         """
@@ -372,7 +409,6 @@ class Step1PrepareTimePixImages:
         """
         o_load = Load(parent=self)
         o_load.select_folder(data_type=DataType.ob)
-
 
     def infos(self) -> None:
        

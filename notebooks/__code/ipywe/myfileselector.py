@@ -23,7 +23,7 @@ class MyFileSelectorPanel:
     toolbar_button_layout = ipyw.Layout(margin="5px 10px", width="100px", border='1px solid gray')
     toolbar_box_layout = ipyw.Layout(border='1px solid lightgrey', padding='3px', margin='5px 50px 5px 5px',
                                      width='100%')
-    label_layout = ipyw.Layout(width="250px")
+    label_layout = ipyw.Layout(width="100%")
     layout = ipyw.Layout()
 
     def js_alert(self, m):
