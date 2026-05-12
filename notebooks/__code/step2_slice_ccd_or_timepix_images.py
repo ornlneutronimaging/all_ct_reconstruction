@@ -11,6 +11,12 @@ from IPython.display import HTML
 from typing import Optional, Tuple, List, Any
 from numpy.typing import NDArray
 
+try:
+    import svmbir
+    HAS_SVMBIR = True
+except ImportError:
+    HAS_SVMBIR = False
+    
 from __code import OperatingMode, DataType, STEP3_SCRIPTS
 from __code.config import DEBUG, debug_folder, NUMBER_OF_SLICES_TO_OVERAP # , default_file_naming_convention
 from __code.utilities.configuration_file import CropRegion
@@ -62,6 +68,7 @@ class Step2SliceCcdOrTimePixImages:
 
     json_type_requested: str = JsonTypeRequested.undefined
     MODE = OperatingMode.white_beam
+    SVBMIR_MODE_FLAG = HAS_SVMBIR
 
     def __init__(self, system: Optional[Any] = None) -> None:
         """

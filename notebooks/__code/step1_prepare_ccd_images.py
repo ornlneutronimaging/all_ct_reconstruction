@@ -7,6 +7,12 @@ import numpy as np
 from IPython.display import display, HTML
 import ipywidgets as widgets
 
+try:
+    import svmbir
+    HAS_SVMBIR = True
+except ImportError:
+    HAS_SVMBIR = False
+
 from __code import DataType, DetectorType, OperatingMode, DEFAULT_OPERATING_MODE
 from __code.utilities.logging import setup_logging
 from __code.utilities.configuration_file import Configuration
@@ -43,6 +49,8 @@ LOG_BASENAME_FILENAME, _ = os.path.splitext(os.path.basename(__file__))
 
 
 class Step1PrepareCcdImages:
+
+    SVBMIR_MODE_FLAG = HAS_SVMBIR
 
     MODE = OperatingMode.white_beam
 
@@ -204,6 +212,10 @@ class Step1PrepareCcdImages:
 
         setup_logging(basename_of_log_file=LOG_BASENAME_FILENAME)        
 
+        # self.offline = system.System.offline
+        self.offline = False
+        logging.info(f"System offline mode: {self.offline}")
+        
     def update_all_paths(self):
         top_sample_dir = self.top_sample_dir
         detector_type = self.detector_type.lower()

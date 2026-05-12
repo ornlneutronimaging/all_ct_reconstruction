@@ -280,6 +280,7 @@ class Step1PrepareTimePixImages:
         setup_logging(basename_of_log_file=LOG_BASENAME_FILENAME)  
         
         self.offline = system.System.offline
+        logging.info(f"System offline mode: {self.offline}")
         
         top_sample_dir = system.System.get_working_dir()
         self.top_sample_dir = top_sample_dir

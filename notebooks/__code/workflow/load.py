@@ -187,7 +187,7 @@ class Load(Parent):
             logging.info(f"{output_flag = }")
             if output_flag:
                 logging.info(f"Selecting output folder for data type {data_type} ...")
-                if data_type == DataType.normalized:
+                if (data_type == DataType.normalized) or (data_type == DataType.extra):
                     self.o_file_browser = FileFolderBrowser(working_dir=working_dir,
                                                     ipts_folder=self.parent.working_dir[DataType.ipts],
                                                     next_function=self.close_file_browser)
@@ -416,7 +416,13 @@ class Load(Parent):
     def import_list_from_ascii_file(self):
         filters = {"Text files": "*.txt",
                    "All files": "*.*"}
-        o_file_browser = FileFolderBrowser(working_dir=os.path.dirname(self.parent.working_dir[DataType.sample]),
+        
+        if type(self.parent.working_dir[DataType.sample]) == str:
+            working_dir = os.path.dirname(self.parent.working_dir[DataType.sample])
+        else:
+            working_dir = os.path.dirname(self.parent.working_dir[DataType.sample][0])
+        
+        o_file_browser = FileFolderBrowser(working_dir=working_dir,
                                            next_function=self.ascii_file_selected)
         o_file_browser.select_file(instruction="Select ASCII file containing list of angles ...",
                                    filters=filters,

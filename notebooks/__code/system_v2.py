@@ -89,16 +89,18 @@ class System:
         logging.info(f"Getting hostname to determine if running on analysis machine")
         hostname = platform.node()
         logging.info(f"Hostname: {hostname}")
-        offline = True
-        cls.offline = offline
+        cls.offline = True
         for analysis_machine in config.list_of_analysis_machines:
             if hostname.startswith(analysis_machine):
                 logging.info(f"Running on analysis machine: {hostname}")
-                offline = False                
+                cls.offline = False
+                                
                 continue
 
-        if offline:
+        if cls.offline:
             logging.info(f"Running in offline mode. Hostname: {hostname}")
+        else:
+            logging.info(f"Running in online mode. Hostname: {hostname}")
 
         facility = 'SNS'
         instrument = 'VENUS'
@@ -116,7 +118,7 @@ class System:
             print("** Using Debugging Mode! **")
             return
 
-        if offline:
+        if cls.offline:
             print("** Using Offline Mode! **")
             cls.debugging = "~/"
             return
