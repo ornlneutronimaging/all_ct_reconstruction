@@ -131,7 +131,7 @@ class Rebin(Parent):
         
         sample_raw_images: NDArray[np.floating] = master_3d_data_array[DataType.sample]
         ob_raw_images: Optional[NDArray[np.floating]] = master_3d_data_array[DataType.ob]
-        dc_raw_images: Optional[NDArray[np.floating]] = master_3d_data_array[DataType.dc]
+        dc_raw_images: Optional[NDArray[np.floating]] = master_3d_data_array.get(DataType.dc)
                 
         logging.info(f"\rebinning raw data ...")
         dtype: np.dtype = sample_raw_images.dtype

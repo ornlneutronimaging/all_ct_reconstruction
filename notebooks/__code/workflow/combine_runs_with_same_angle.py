@@ -52,7 +52,8 @@ class CombineRunsWithSameAngle(Parent):
         """
         logging.info("Combining runs with same angle if requested:")
        
-        if self.parent.how_to_treat_duplicate_angles_ui.value == 'Combine (average)':
+        _ui = getattr(self.parent, 'how_to_treat_duplicate_angles_ui', None)
+        if _ui is not None and _ui.value == 'Combine (average)':
             normalized_images = self.parent.normalized_images # those are in the same order as list_angles_deg_vs_runs_dict
             list_angles_deg_vs_runs_dict = self.parent.list_angles_deg_vs_runs_dict
             # list_of_angles_deg_to_keep = self.parent.list_of_angles_of_runs_to_keep

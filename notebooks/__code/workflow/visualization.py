@@ -198,7 +198,7 @@ class Visualization(Parent):
             
         sample_data = master_3d_data_array[DataType.sample]
         ob_data = master_3d_data_array[DataType.ob]
-        dc_data = master_3d_data_array[DataType.dc]
+        dc_data = master_3d_data_array.get(DataType.dc)
         list_of_angles = self.parent.final_list_of_angles
         
         if ob_data is None:

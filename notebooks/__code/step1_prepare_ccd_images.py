@@ -44,6 +44,7 @@ from __code.utilities.logging import logging_3d_array_infos
 from __code.utilities.exceptions import MetadataError
 from __code.workflow.exclusion import Exclusion
 from __code.workflow.export_hdf5 import ExportHdf5
+from __code.workflow.checkpoint_hdf5 import CheckpointHdf5
 
 LOG_BASENAME_FILENAME, _ = os.path.splitext(os.path.basename(__file__))
 
@@ -499,8 +500,12 @@ class Step1PrepareCcdImages:
     # strips removal
     def select_range_of_data_to_test_stripes_removal(self):
         """updates: list_of_images[DataType.sample]"""
+        self.select_region_to_test_stripes_removal()
+
+    def select_region_to_test_stripes_removal(self):
+        """updates: list_of_images[DataType.sample]"""
         self.o_remove = RemoveStrips(parent=self)
-        self.o_remove.select_range_of_data_to_test_stripes_removal()
+        self.o_remove.select_region_to_test_stripes_removal()
 
     def select_remove_strips_algorithms(self):
         self.o_remove.select_algorithms()
@@ -733,7 +738,26 @@ class Step1PrepareCcdImages:
     def export_hdf5(self):
         o_export = ExportHdf5(parent=self)
         o_export.export()
-        
+
+    # HDF5 checkpoint (used between step 1 and step 2)
+
+    def select_hdf5_output_folder(self) -> None:
+        o_checkpoint = CheckpointHdf5(parent=self)
+        o_checkpoint.select_output_folder()
+
+    def export_raw_hdf5(self) -> None:
+        self.detector_name = "CCD"
+        o_checkpoint = CheckpointHdf5(parent=self)
+        o_checkpoint.export()
+
+    def select_hdf5_input_file(self) -> None:
+        o_checkpoint = CheckpointHdf5(parent=self)
+        o_checkpoint.select_input_file()
+
+    def load_from_hdf5(self) -> None:
+        o_checkpoint = CheckpointHdf5(parent=self)
+        o_checkpoint.load()
+
     @classmethod
     def legend(cls) -> None:
         display(HTML("<hr style='height:2px'/>"))

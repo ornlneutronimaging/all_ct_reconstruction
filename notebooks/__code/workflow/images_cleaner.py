@@ -154,7 +154,7 @@ class ImagesCleaner(Parent):
         else:
             self.ignore_ob = False
 
-            if self.parent.master_3d_data_array[DataType.dc] is None:
+            if self.parent.master_3d_data_array.get(DataType.dc) is None:
                 self.ignore_dc = True
             else:
                 self.ignore_dc = False

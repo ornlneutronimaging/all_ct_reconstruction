@@ -267,7 +267,7 @@ class Normalization(Parent):
 
         ob_data_combined = np.squeeze(master_3d_data[DataType.ob])
         # dc_data_combined = None if (self.parent.list_of_images[DataType.dc] is None) else np.squeeze(master_3d_data[DataType.dc])
-        dc_data_combined = None if (master_3d_data[DataType.dc] is None) else np.squeeze(master_3d_data[DataType.dc])
+        dc_data_combined = None if (master_3d_data.get(DataType.dc) is None) else np.squeeze(master_3d_data[DataType.dc])
 
         for _index, sample_data in enumerate(master_3d_data[DataType.sample]):
           

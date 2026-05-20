@@ -102,6 +102,7 @@ from __code.workflow.rotate import Rotate
 from __code.workflow.test_reconstruction import TestReconstruction
 from __code.utilities.configuration_file import ReconstructionAlgorithm
 from __code.utilities.logging import logging_3d_array_infos
+from __code.workflow.checkpoint_hdf5 import CheckpointHdf5
 
 
 LOG_BASENAME_FILENAME, _ = os.path.splitext(os.path.basename(__file__))
@@ -1555,6 +1556,25 @@ class Step1PrepareTimePixImages:
         o_export.run(base_log_file_name=LOG_BASENAME_FILENAME,
                      prefix=prefix)
         
+    # HDF5 checkpoint (used between step 1 and step 2)
+
+    def select_hdf5_output_folder(self) -> None:
+        o_checkpoint = CheckpointHdf5(parent=self)
+        o_checkpoint.select_output_folder()
+
+    def export_raw_hdf5(self) -> None:
+        self.detector_name = "TimePix"
+        o_checkpoint = CheckpointHdf5(parent=self)
+        o_checkpoint.export()
+
+    def select_hdf5_input_file(self) -> None:
+        o_checkpoint = CheckpointHdf5(parent=self)
+        o_checkpoint.select_input_file()
+
+    def load_from_hdf5(self) -> None:
+        o_checkpoint = CheckpointHdf5(parent=self)
+        o_checkpoint.load()
+
     @classmethod
     def legend(cls) -> None:
         display(HTML("<hr style='height:2px'/>"))
