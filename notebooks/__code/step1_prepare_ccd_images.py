@@ -224,7 +224,7 @@ class Step1PrepareCcdImages:
         self.working_dir[DataType.top] = os.path.join(top_sample_dir)
         self.working_dir[DataType.sample] = os.path.join(top_sample_dir, "images", detector_type, "raw", "ct")
         self.working_dir[DataType.ob] = os.path.join(top_sample_dir, "images",  detector_type, "ob")
-        self.working_dir[DataType.dc] = os.path.join(top_sample_dir, "images",  detector_type, "raw", "dc")
+        self.working_dir[DataType.dc] = os.path.join(top_sample_dir, "images",  detector_type, "dc")
         self.working_dir[DataType.nexus] = os.path.join(top_sample_dir, "nexus")
         self.working_dir[DataType.processed] = os.path.join(top_sample_dir, "shared", "processed_data")
         logging.info(f"working_dir:")

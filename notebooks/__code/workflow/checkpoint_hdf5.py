@@ -40,27 +40,27 @@ class CheckpointHdf5(Parent):
         """Let the user browse to a folder where the HDF5 will be saved."""
         from __code.utilities.file_folder_browser import FileFolderBrowser
 
-        if type(self.parent.working_dir[DataType.sample]) == str:
-            start_dir = os.path.dirname(self.parent.working_dir[DataType.sample])
-        else:
-            start_dir = os.path.dirname(self.parent.working_dir[DataType.sample][0])
-
+        start_dir = self.parent.working_dir[DataType.processed]
         logging.info(f"Selecting HDF5 output folder (start: {start_dir}) ...")
 
-        def folder_selected(folder):
-            self.parent.hdf5_output_folder = folder
-            logging.info(f"HDF5 output folder set to: {folder}")
-            display(widgets.HTML(f"<b>Selected folder:</b> {folder}"))
-
-        o_browser = FileFolderBrowser(working_dir=start_dir,
-                                      next_function=folder_selected)
-        o_browser.select_input_folder(instruction="Select folder to save HDF5 checkpoint")
-
-    def export(self) -> None:
+        self.output = widgets.Output()
+        display(self.output)
+    
+        self.o_browser = FileFolderBrowser(working_dir=start_dir,
+                                      ipts_folder=self.parent.working_dir[DataType.ipts],
+                                      next_function=self.export)
+        self.o_browser.select_output_folder_with_new(instruction="Select folder to save HDF5 checkpoint")
+    
+    def export(self, folder) -> None:
         """Save master_3d_data_array and final_list_of_angles to an HDF5 file."""
         logging.info("Exporting raw-data checkpoint to HDF5 ...")
+        self.o_browser.list_output_folders_ui.shortcut_buttons.close() # close the jump to shared and home buttons 
+        with self.output:
+            self.output.clear_output()
+            display(widgets.HTML(f"<b>Exporting checkpoint to HDF5...</b><br/>"))  
 
-        output_folder = getattr(self.parent, "hdf5_output_folder", "")
+        # output_folder = getattr(self.parent, "hdf5_output_folder", "")
+        output_folder = folder
         if not output_folder:
             if type(self.parent.working_dir[DataType.sample]) == str:
                 output_folder = os.path.dirname(self.parent.working_dir[DataType.sample])
@@ -88,9 +88,11 @@ class CheckpointHdf5(Parent):
             f["metadata"].attrs["detector"] = detector_name
 
         logging.info("Done saving raw-data checkpoint.")
-        display(widgets.HTML(
-            f"<b>Checkpoint saved to:</b><br/><code>{full_path}</code>"
-        ))
+        with self.output:
+            self.output.clear_output()
+            display(widgets.HTML(
+                f"<b>Checkpoint saved to:</b><br/><code>{full_path}</code>"
+            ))
 
     # ------------------------------------------------------------------ load
 

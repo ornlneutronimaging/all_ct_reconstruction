@@ -168,17 +168,16 @@ class Load(Parent):
         logging.info(f"\t{working_dir = }")
         if not os.path.exists(working_dir):
             logging.warning(f"Working directory {working_dir} does not exist!")
-            _sample_dir = self.parent.working_dir.get(DataType.sample, "")
-            if type(_sample_dir) != str:
-                _sample_dir = _sample_dir[0]
-            working_dir = self.parent.working_dir.get(DataType.ipts) or _sample_dir
-            while working_dir and not os.path.exists(working_dir):
+            working_dir = self.parent.working_dir[DataType.ipts]
+            while (not os.path.exists(working_dir)):
                 print(f"Working directory {working_dir} does not exist, trying to go up one level ...")
                 working_dir = os.path.dirname(working_dir)
         else:
             logging.info(f"\tWorking directory exists.")
+                
+            # working_dir = os.path.abspath(os.path.expanduser("~"))
 
-        logging.info(f"ipts_folder: {self.parent.working_dir.get(DataType.ipts, working_dir)}")
+        logging.info(f"ipts_folder: {self.parent.working_dir[DataType.ipts]}")
 
         display(HTML(f"<u>REMINDER:</u>"))
         display(HTML(f"- Sample folder: <b>{os.path.basename(sample_folder)}</b>"))
@@ -188,14 +187,13 @@ class Load(Parent):
             logging.info(f"{output_flag = }")
             if output_flag:
                 logging.info(f"Selecting output folder for data type {data_type} ...")
-                _ipts_folder = self.parent.working_dir.get(DataType.ipts, working_dir)
                 if (data_type == DataType.normalized) or (data_type == DataType.extra):
                     self.o_file_browser = FileFolderBrowser(working_dir=working_dir,
-                                                    ipts_folder=_ipts_folder,
+                                                    ipts_folder=self.parent.working_dir[DataType.ipts],
                                                     next_function=self.close_file_browser)
                 else:
                     self.o_file_browser = FileFolderBrowser(working_dir=working_dir,
-                                                    ipts_folder=_ipts_folder,
+                                                    ipts_folder=self.parent.working_dir[DataType.ipts],
                                                     next_function=self.data_selected)
                 self.o_file_browser.select_output_folder_with_new(instruction=f"Select Top Folder of {data_type}",)
             
@@ -542,6 +540,7 @@ class Load(Parent):
         dict_angle_value_to_file = {}
         list_images.sort()
         for _file in list_images:
+            logging.info(f"\t\tProcessing file: {_file}")
             base_name = os.path.basename(_file)
             path = os.path.dirname(_file)
             name_without_extension, ext = os.path.splitext(base_name)
@@ -553,7 +552,9 @@ class Load(Parent):
                 dict_angle_value_to_file[_file] = [_file]
             else:
                 key = os.path.join(path, "_".join(splitted_name[:-1]) + ext)
-                dict_angle_value_to_file[key].append(_file)
+                logging.info(f"\t\t\tFound file with revision number: {_file}, key: {key}")
+                dict_angle_value_to_file.setdefault(key, []).append(_file)
+                # dict_angle_value_to_file[key].append(_file)
             
         # keep only the last file for each key in the dictionary
         list_images_to_keep = [] 
