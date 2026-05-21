@@ -86,6 +86,7 @@ from __code.workflow.chips_correction import ChipsCorrection
 from __code.workflow.center_of_rotation_and_tilt import CenterOfRotationAndTilt
 from __code.workflow.remove_strips import RemoveStrips
 from __code.workflow.svmbir_handler import SvmbirHandler
+from __code.workflow.mbirjax_handler import MbirjaxHandler
 from __code.workflow.final_projections_review import FinalProjectionsReview
 from __code.workflow.export import ExportExtra
 from __code.workflow.visualization import Visualization
@@ -244,8 +245,10 @@ class Step1PrepareTimePixImages:
     o_norm: Optional[Any] = None
     # svmbir 
     o_svmbir: Optional[Any] = None
+    # mbirjax
+    o_mbirjax: Optional[Any] = None
 
-    # widget multi selection - list of runs to exclude before running svmbir
+    # widget multi selection - list of runs to exclude before running algo
     runs_to_exclude_ui: Optional[Any] = None
 
     # reconstructed 3D array with svmbir
@@ -1447,6 +1450,14 @@ class Step1PrepareTimePixImages:
         if ReconstructionAlgorithm.svmbir in self.configuration.reconstruction_algorithm:
             self.o_svmbir = SvmbirHandler(parent=self)
             self.o_svmbir.set_settings()
+        
+        if (ReconstructionAlgorithm.svmbir in self.configuration.reconstruction_algorithm) and (ReconstructionAlgorithm.mbirjax in self.configuration.reconstruction_algorithm):
+            # add a separator
+            display(HTML("<hr style='height:2px'/>"))
+            
+        if ReconstructionAlgorithm.mbirjax in self.configuration.reconstruction_algorithm:
+            self.o_mbirjax = MbirjaxHandler(parent=self)
+            self.o_mbirjax.set_settings()
        
     def svmbir_run(self) -> None:
         """
@@ -1531,6 +1542,9 @@ class Step1PrepareTimePixImages:
             o_fbp.export_pre_reconstruction_data()
         else:
             self.o_svmbir.export_pre_reconstruction_data()
+            
+        if self.o_mbirjax is not None:
+            self.o_mbirjax.export_pre_reconstruction_data()
 
     def export_extra_files(self, prefix: str = "") -> None:
         """

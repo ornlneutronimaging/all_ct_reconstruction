@@ -130,7 +130,7 @@ class Visualization(Parent):
         
         
 
-    def visualize_according_to_selection(self, mode: str = 'cleaned') -> None:
+    def visualize_according_to_selection(self, mode: str = 'cleaned', low_res: bool = False) -> None:
         """
         Execute visualization based on user selection and mode.
         
@@ -156,7 +156,8 @@ class Visualization(Parent):
             self.visualize_statistics()
         elif self.what_to_visualize_ui.value == '1 image at a time':
             self.visualize_1_stack(data=self.parent.master_3d_data_array[DataType.sample],
-                                   title=f"{self.mode} data")
+                                   title=f"{self.mode} data",
+                                   low_res=low_res)
         elif self.what_to_visualize_ui.value == 'Integrated intensity vs image index':
             self.visualize_integrated_intensity_vs_image_index()
 

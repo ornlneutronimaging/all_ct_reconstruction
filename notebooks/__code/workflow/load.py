@@ -540,6 +540,7 @@ class Load(Parent):
         dict_angle_value_to_file = {}
         list_images.sort()
         for _file in list_images:
+            logging.info(f"\t\tProcessing file: {_file}")
             base_name = os.path.basename(_file)
             path = os.path.dirname(_file)
             name_without_extension, ext = os.path.splitext(base_name)
@@ -551,7 +552,9 @@ class Load(Parent):
                 dict_angle_value_to_file[_file] = [_file]
             else:
                 key = os.path.join(path, "_".join(splitted_name[:-1]) + ext)
-                dict_angle_value_to_file[key].append(_file)
+                logging.info(f"\t\t\tFound file with revision number: {_file}, key: {key}")
+                dict_angle_value_to_file.setdefault(key, []).append(_file)
+                # dict_angle_value_to_file[key].append(_file)
             
         # keep only the last file for each key in the dictionary
         list_images_to_keep = [] 

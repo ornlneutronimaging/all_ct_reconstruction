@@ -75,9 +75,9 @@ class SvmbirCliHandler:
     @staticmethod
     def run_reconstruction_from_pre_data_mode(config_json_file: str, mbirjax: bool = False) -> None:
         """
-        Execute SVMBIR reconstruction from preprocessed data configuration.
+        Execute SVMBIR, or MBIRJAX reconstruction from preprocessed data configuration.
         
-        This method performs SVMBIR reconstruction using configuration data
+        This method performs SVMBIR or MBIRJAX reconstruction using configuration data
         loaded from a JSON file. It supports both traditional SVMBIR and
         JAX-accelerated mbirjax implementations.
         
@@ -156,17 +156,6 @@ class SvmbirCliHandler:
         center_of_rotation = config['center_of_rotation']
         center_offset = -(width // 2 - center_of_rotation)  # it's Shimin's formula
 
-        sharpness = config['svmbir_config']['sharpness']
-        snr_db = config['svmbir_config']['snr_db']
-        positivity = config['svmbir_config']['positivity']
-        
-        positivity = False   # DEBUG: we set positivity to False for now as it can cause issues with mbirjax reconstruction, we will investigate this later
-        
-        
-        
-        max_iterations = config['svmbir_config']['max_iterations']
-        verbose = config['svmbir_config']['verbose']
-        
         # check if SVMBIR_LIB_PATH is accessible (write permission), otherwise use the backup
         if os.access(SVMBIR_LIB_PATH, os.W_OK):
             svmbir_lib_path = SVMBIR_LIB_PATH
@@ -191,12 +180,6 @@ class SvmbirCliHandler:
 
         logging.info(f"{list_of_angles_rad = }")
         logging.info(f"{center_offset = }")
-        logging.info(f"{sharpness = }")
-        logging.info(f"{snr_db = }")
-        logging.info(f"{positivity = }")
-        logging.info(f"{max_iterations = }")
-        logging.info(f"{max_resolutions = }")
-        logging.info(f"{verbose = }")
         logging.info(f"{svmbir_lib_path = }")
         logging.info(f"{input_data_folder = }")
         logging.info(f"{output_folder = }")
@@ -205,8 +188,32 @@ class SvmbirCliHandler:
         
         if mbirjax:
             _prefix = "mbirjax"
+            sharpness = config['mbirjax_config']['sharpness']
+            snr_db = config['mbirjax_config']['snr_db']
+            positivity_flag = config['mbirjax_config']['positivity_flag']
+            max_iterations = config['mbirjax_config']['max_iterations']
+            verbose = True
+            logging.info(f"{sharpness = }")
+            logging.info(f"{snr_db = }")
+            logging.info(f"{positivity_flag = }")
+            logging.info(f"{max_iterations = }")
+            logging.info(f"{max_resolutions = }")
+            logging.info(f"{verbose = }")
+
         else:
             _prefix = "svmbir"
+            sharpness = config['svmbir_config']['sharpness']
+            snr_db = config['svmbir_config']['snr_db']
+            positivity = config['svmbir_config']['positivity']
+            max_iterations = config['svmbir_config']['max_iterations']
+            verbose = config['svmbir_config']['verbose']
+            logging.info(f"{sharpness = }")
+            logging.info(f"{snr_db = }")
+            logging.info(f"{positivity = }")
+            logging.info(f"{max_iterations = }")
+            logging.info(f"{max_resolutions = }")
+            logging.info(f"verbose = True")
+            
         output_data_folder = os.path.join(output_folder, f"{raw_data_base_folder}_{_prefix}_reconstructed_data_{get_current_time_in_special_file_name_format()}")
         logging.info(f"{output_data_folder = }")
 
@@ -233,6 +240,7 @@ class SvmbirCliHandler:
                 logging.info(f"\t{_sino.shape = }")
                     
                 if mbirjax:
+
                     sinogram_shape = _sino.shape
 
                     ct_model_for_recon = mj.ParallelBeamModel(sinogram_shape,
@@ -243,11 +251,11 @@ class SvmbirCliHandler:
                                                   verbose=verbose,
                                                   delta_det_channel=center_offset,
                                                   snr_db=snr_db,
+                                                  positivity_flag=positivity_flag,
                     )
 
                     reconstruction_array, recond_dict = ct_model_for_recon.recon(_sino,
-                                                                    # print_logs=True,
-                                                                    # weights=None,
+                                                                                 max_iterations=max_iterations,
                                                                     )
                     # reconstruction_array, recond_dict = ct_model_for_recon.recon(corrected_array_log,
                     #                                                 print_logs=False,
@@ -321,14 +329,14 @@ class SvmbirCliHandler:
                 logging.info(f"{center_offset = }")
                 logging.info(f"{snr_db = }")
                 ct_model_for_recon.set_params(sharpness=sharpness,
-                                                verbose=verbose,
-                                                det_channel_offset=center_offset,
-                                                snr_db=snr_db,
+                                            verbose=verbose,
+                                            delta_det_channel=center_offset,
+                                            snr_db=snr_db,
+                                            positivity_flag=positivity_flag,
                 )
                 # go from [angle, y, x] to [y, x, angle]
                 reconstruction_array, recond_dict = ct_model_for_recon.recon(corrected_array_log,
-                                                                print_logs=False,
-                                                                # weights=None,
+                                                                              max_iterations=max_iterations,
                                                                 )
                
                 logging.info(f"Report of reconstruction:")

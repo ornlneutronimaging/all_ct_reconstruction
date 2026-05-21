@@ -550,6 +550,15 @@ class Step1PrepareCcdImages:
     def validate_tilt_correction(self) -> None:
         self.o_tilt.validate_tilt_correction()
 
+    def manual_tilt_correction(self, tilt_angle=0):
+        if self.o_tilt is None:
+            self.o_tilt = CenterOfRotationAndTilt(parent=self)
+        self.o_tilt.manual_tilt_correction(tilt_angle=tilt_angle)
+        # self.o_tilt.display_before_after_tilt_correction()
+              
+    def validate_manual_tilt_correction(self):
+        self.o_tilt.validate_tilt_correction()
+               
     # calculate center of rotation
     def center_of_rotation_settings(self) -> None:
         """

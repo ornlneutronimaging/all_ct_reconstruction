@@ -8,6 +8,7 @@ version = "1.0.0"
 [tasks]
 lab = "jupyter lab --notebook-dir=notebooks"
 notebook = "jupyter notebook --notebook-dir=notebooks"
+config-editor = "marimo edit notebooks/config_editor.py"
 
 # ── Common dependencies (all platforms) ──────────────────────────
 [dependencies]
@@ -35,6 +36,7 @@ tomopy = ">=1.15,<2"
 xarray = ">=2026.2.0,<2027"
 pytest = ">=9.0.2,<10"
 ipykernel = ">=7.2.0,<8"
+marimo = ">=0.13,<1"
 pip = ">=26.0.1,<27"
 
 [pypi-dependencies]

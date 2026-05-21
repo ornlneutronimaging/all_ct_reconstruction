@@ -355,6 +355,37 @@ class SvmbirConfig(BaseModel):
     bottom_slice: int = 1
 
 
+class MbirjaxConfig(BaseModel):
+    """
+    Configuration for MBIRJAX (Model Based Iterative Reconstruction).
+    
+    Comprehensive parameter set for the MBIRJAX algorithm, which provides
+    high-quality reconstruction from sparse-view or limited-angle CT data
+    using iterative optimization with regularization.
+    
+    Attributes:
+        sharpness: Edge preservation parameter (default: 0)
+        snr_db: Signal-to-noise ratio in decibels (default: 30.0)
+        positivity: Enforce positivity constraint (default: True)
+        max_iterations: Maximum number of iterations (default: 200)
+        max_resolutions: Maximum resolution levels (default: 3)
+        verbose: Enable verbose output logging (default: False)
+        top_slice: Starting slice for reconstruction (default: 0)
+        bottom_slice: Ending slice for reconstruction (default: 1)
+    """
+    # higher make it sharper. to enhance edges. below 0 to make it smooth. Range should be [-1, 3]
+    sharpness: float = 0
+    
+    # if True, remove the negative values
+    positivity_flag: bool = True
+    
+    # if larger, make it sharper. stay below 40. 
+    snr_db: float = 30.0 # good default
+    
+    # increate to 20 if artifacts
+    max_iterations: int = 10
+    
+    
 class CropRegion(BaseModel):
     """
     Configuration for image cropping region.
@@ -493,7 +524,10 @@ class Configuration(BaseModel):
     center_of_rotation: float = Field(default=-1)
     center_offset: float = Field(default=0)
     
+    # reconstruction parameters
     svmbir_config: SvmbirConfig = Field(default=SvmbirConfig())
+    mbirjax_config: MbirjaxConfig = Field(default=MbirjaxConfig())
+    
     output_folder: str = Field(default="")
     reconstructed_output_folder: str = Field(default="")
     projections_pre_processing_folder: str = Field(default="")
