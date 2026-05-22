@@ -137,8 +137,8 @@ class Load(Parent):
         else:
             sample_folder = self.parent.working_dir[DataType.sample][0]
 
-        if data_type in [DataType.ob, DataType.dc]:
-            working_dir = os.path.dirname(sample_folder)
+        # if data_type in [DataType.ob, DataType.dc]:
+        #     working_dir = os.path.dirname(sample_folder)
 
         if DEBUG:
             
