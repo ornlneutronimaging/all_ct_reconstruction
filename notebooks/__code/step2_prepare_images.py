@@ -1552,20 +1552,20 @@ class Step2PrepareImages:
         
         o_export = CheckpointHdf5(parent=self)
         o_export.update_config_for_export()
+        o_export.create_hdf5_with_config_and_preprocessed_data()
         
-        
-        
-        ## NEEDS A LOT OF WORK !!!!!!
-        # update config
-        
-        # export hdf5 checkpoint + configuration files
-        
-        
+        # create scripts to run reconstruction with the exported data and configuration
+
+
+
+
+
+
         
         # self.export_pre_reconstruction_data()
         o_export = ExportExtra(parent=self)
-        # o_export.run(base_log_file_name=LOG_BASENAME_FILENAME,
-        #              prefix=prefix)
+        o_export.run(base_log_file_name=LOG_BASENAME_FILENAME,
+                     prefix=prefix)
         # o_checkpoint = CheckpointHdf5(parent=self)
         # o_checkpoint.export_end_of_step2()
         
