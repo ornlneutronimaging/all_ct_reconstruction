@@ -289,16 +289,20 @@ class Step2PrepareImages:
         top_sample_dir = system.System.get_working_dir()
         self.top_sample_dir = top_sample_dir
         self.instrument = "VENUS"  
-    
-        if DEBUG:
-            logging.info(f"WARNING!!!! we are running using DEBUG mode!")
-            _default_detector_type = default_detector_type
-        else:
-            _default_detector_type = DetectorType.tpx1
+        self.full_ipts_number = os.path.basename(top_sample_dir) 
+        self.ipts_number = self.full_ipts_number.replace("IPTS-", "")
+        
+        # if DEBUG:
+        #     logging.info(f"WARNING!!!! we are running using DEBUG mode!")
+        #     _default_detector_type = default_detector_type
+        # else:
+        #     _default_detector_type = DetectorType.tpx1
 
         self.update_all_paths()
         logging.info(f"working_dir: {self.working_dir}")
         logging.info(f"instrument: {self.instrument}")
+        logging.info(f"full_ipts_number: {self.full_ipts_number}")
+        logging.info(f"ipts_number: {self.ipts_number}")
         logging.info(f"offline: {self.offline}")
 
     def update_all_paths(self) -> None:
@@ -343,13 +347,13 @@ class Step2PrepareImages:
         logging.info(f"  - ipts: {self.working_dir[DataType.ipts]}")
         logging.info(f"  - top: {self.working_dir[DataType.top]}")
 
-    def get_unix_detector_name(self) -> str:
-        if  self.detector_type == DetectorType.tpx1:
-            return "tpx1"
-        elif self.detector_type == DetectorType.tpx3:
-            return "tpx3"
-        else:
-            raise ValueError("Detector type not recognized")
+    # def get_unix_detector_name(self) -> str:
+    #     if  self.detector_type == DetectorType.tpx1:
+    #         return "tpx1"
+    #     elif self.detector_type == DetectorType.tpx3:
+    #         return "tpx3"
+    #     else:
+    #         raise ValueError("Detector type not recognized")
 
     # Selection of data
     def select_top_sample_folder(self) -> None:
@@ -1508,9 +1512,10 @@ class Step2PrepareImages:
             - Creates Load workflow object for folder selection
             - Launches folder browser for extra files export path
         """
-        o_select = Load(parent=self)
-        o_select.select_folder(data_type=DataType.extra,
-                               output_flag=True)
+        self.o_select = Load(parent=self)
+        self.o_select.select_folder(data_type=DataType.extra,
+                                    next_function=self.export_extra_files,
+                                    output_flag=True)
 
     def export_pre_reconstruction_data(self) -> None:
         """
@@ -1550,9 +1555,15 @@ class Step2PrepareImages:
             - Uses LOG_BASENAME_FILENAME and optional prefix for organization
         """
         
+        self.o_select.o_file_browser.list_output_folders_ui.shortcut_buttons.close() # close the jump to shared and home buttons 
+              
         o_export = CheckpointHdf5(parent=self)
-        o_export.update_config_for_export()
+        o_export.update_config_for_export(data_type=DataType.extra)
         o_export.create_hdf5_with_config_and_preprocessed_data()
+        
+        
+        
+        
         
         # create scripts to run reconstruction with the exported data and configuration
 
@@ -1563,9 +1574,9 @@ class Step2PrepareImages:
 
         
         # self.export_pre_reconstruction_data()
-        o_export = ExportExtra(parent=self)
-        o_export.run(base_log_file_name=LOG_BASENAME_FILENAME,
-                     prefix=prefix)
+        # o_export = ExportExtra(parent=self)
+        # o_export.run(base_log_file_name=LOG_BASENAME_FILENAME,
+        #              prefix=prefix)
         # o_checkpoint = CheckpointHdf5(parent=self)
         # o_checkpoint.export_end_of_step2()
         

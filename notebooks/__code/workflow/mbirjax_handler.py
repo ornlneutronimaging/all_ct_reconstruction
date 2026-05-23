@@ -79,30 +79,38 @@ class MbirjaxHandler(Parent):
 
         title_label = widgets.HTML("<font size=5 color=blue>Define reconstruction settings for Mbirjax</font")
 
+        _label1 = widgets.Label("sharpness (higher is sharper")
         self.sharpness_ui = widgets.FloatSlider(min=-1,
                                            max=3,
                                            value=0,
                                            layout=widgets.Layout(width="50%"),
-                                           description="sharpness (higher is sharper)")
+        )
+        _row_widgets1 = widgets.HBox([_label1, self.sharpness_ui])
+        
+        _label2 = widgets.Label("snr db (higher is sharper, if high artifacts, increase this)")
         self.snr_db_ui = widgets.FloatSlider(min=0,
                                         max=50,
                                         value=30.0,
                                         layout=widgets.Layout(width="50%"),
-                                        description="snr db (higher is sharper)")
+        )
+        _row_widgets2 = widgets.HBox([_label2, self.snr_db_ui])
         self.positivity_ui = widgets.Checkbox(value=False,
                                          description="positivity")
+
+        _label3 = widgets.Label("max iterations (if high artifacts, increase this)")
         self.max_iterations_ui = widgets.IntSlider(value=10,
                                               min=10,
                                               max=100,
                                               layout=widgets.Layout(width="50%"),
-                                              description="max itera. (if high artifacts, increase this)")
+        )
+        _row_widgets3 = widgets.HBox([_label3, self.max_iterations_ui]) 
+                                              
         self.verbose_ui = widgets.Checkbox(value=True,
                                       description='verbose')
         
         vertical_widgets = widgets.VBox([title_label,
-                                         self.sharpness_ui,
-                                         self.snr_db_ui,
-                                         self.positivity_ui,
-                                         self.max_iterations_ui,
+                                         _row_widgets1,
+                                         _row_widgets2,
+                                         _row_widgets3,
                                          self.verbose_ui])
         display(vertical_widgets)

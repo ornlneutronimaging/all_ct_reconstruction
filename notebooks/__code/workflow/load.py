@@ -99,6 +99,7 @@ class Load(Parent):
 
     def select_folder(self, data_type: DataType = DataType.sample, 
                      multiple_flag: bool = False, 
+                     next_function: Optional[callable] = None,
                      output_flag: bool = False) -> None:
         """
         Interactive folder selection for CT data loading.
@@ -187,10 +188,14 @@ class Load(Parent):
             logging.info(f"{output_flag = }")
             if output_flag:
                 logging.info(f"Selecting output folder for data type {data_type} ...")
-                if (data_type == DataType.normalized) or (data_type == DataType.extra):
+                if (data_type == DataType.normalized):
                     self.o_file_browser = FileFolderBrowser(working_dir=working_dir,
                                                     ipts_folder=self.parent.working_dir[DataType.ipts],
                                                     next_function=self.close_file_browser)
+                elif (data_type == DataType.extra):
+                    self.o_file_browser = FileFolderBrowser(working_dir=working_dir,
+                                                    ipts_folder=self.parent.working_dir[DataType.ipts],
+                                                    next_function=next_function)
                 else:
                     self.o_file_browser = FileFolderBrowser(working_dir=working_dir,
                                                     ipts_folder=self.parent.working_dir[DataType.ipts],
