@@ -327,6 +327,30 @@ class NormalizationRoi(BaseModel):
     right: int = 1
 
 
+class MbirjaxConfig(BaseModel):
+    """
+    Configuration for MBIRJAX (Model Based Iterative Reconstruction in JAX).
+    
+    Parameters for the MBIRJAX algorithm which provides GPU-accelerated
+    iterative reconstruction using JAX. Suitable for large datasets and
+    high-quality reconstructions with flexible regularization options.
+    
+    Attributes:
+        num_iterations: Maximum number of iterations (default: 100)
+        regularization_weight: Weight for regularization term (default: 0.1)
+        use_gpu: Whether to use GPU acceleration (default: True)
+        verbose: Enable verbose output logging (default: False)
+    """
+    positivity: bool = False
+    max_iterations: int = 100
+    verbose: bool = False
+    sharpness: float = 0
+    snr_db: float = 30.0
+    # delta_det_channel: float = 1.0
+    print_logs: bool = False
+    det_channel_offset: float = 0.0 # center offset in pixels (from center of the image, positive means shift to the right)
+
+
 class SvmbirConfig(BaseModel):
     """
     Configuration for SVMBIR (Sparse View Model Based Iterative Reconstruction).
@@ -494,6 +518,7 @@ class Configuration(BaseModel):
     center_offset: float = Field(default=0)
     
     svmbir_config: SvmbirConfig = Field(default=SvmbirConfig())
+    mbirjax_config: MbirjaxConfig = Field(default=MbirjaxConfig())
     output_folder: str = Field(default="")
     reconstructed_output_folder: str = Field(default="")
     projections_pre_processing_folder: str = Field(default="")

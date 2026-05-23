@@ -86,6 +86,7 @@ from __code.workflow.chips_correction import ChipsCorrection
 from __code.workflow.center_of_rotation_and_tilt import CenterOfRotationAndTilt
 from __code.workflow.remove_strips import RemoveStrips
 from __code.workflow.svmbir_handler import SvmbirHandler
+from __code.workflow.mbirjax_handler import MbirjaxHandler
 from __code.workflow.final_projections_review import FinalProjectionsReview
 from __code.workflow.export import ExportExtra
 from __code.workflow.visualization import Visualization
@@ -245,6 +246,8 @@ class Step2PrepareImages:
     o_norm: Optional[Any] = None
     # svmbir 
     o_svmbir: Optional[Any] = None
+    # mbirjax
+    o_mbirjax: Optional[Any] = None
 
     # widget multi selection - list of runs to exclude before running svmbir
     runs_to_exclude_ui: Optional[Any] = None
@@ -1439,7 +1442,11 @@ class Step2PrepareImages:
         if ReconstructionAlgorithm.svmbir in self.configuration.reconstruction_algorithm:
             self.o_svmbir = SvmbirHandler(parent=self)
             self.o_svmbir.set_settings()
-       
+        
+        if ReconstructionAlgorithm.mbirjax in self.configuration.reconstruction_algorithm:
+            self.o_mbirjax = MbirjaxHandler(parent=self)
+            self.o_mbirjax.set_settings()
+
     def svmbir_run(self) -> None:
         """
         Execute SVMBIR reconstruction on prepared TimePix data.
@@ -1543,16 +1550,24 @@ class Step2PrepareImages:
             - Uses LOG_BASENAME_FILENAME and optional prefix for organization
         """
         
+        o_export = CheckpointHdf5(parent=self)
+        o_export.update_config_for_export()
+        
+        
+        
         ## NEEDS A LOT OF WORK !!!!!!
+        # update config
+        
+        # export hdf5 checkpoint + configuration files
         
         
         
-        self.export_pre_reconstruction_data()
+        # self.export_pre_reconstruction_data()
         o_export = ExportExtra(parent=self)
-        o_export.run(base_log_file_name=LOG_BASENAME_FILENAME,
-                     prefix=prefix)
-        o_checkpoint = CheckpointHdf5(parent=self)
-        o_checkpoint.export_end_of_step2()
+        # o_export.run(base_log_file_name=LOG_BASENAME_FILENAME,
+        #              prefix=prefix)
+        # o_checkpoint = CheckpointHdf5(parent=self)
+        # o_checkpoint.export_end_of_step2()
         
     # HDF5 checkpoint (used between step 1 and step 2)
 

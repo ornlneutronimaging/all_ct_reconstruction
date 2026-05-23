@@ -4,11 +4,13 @@ import numpy as np
 import logging
 import ipywidgets as widgets
 from IPython.display import display
+from numpy.typing import NDArray
 
 from __code.parent import Parent
 from __code import DataType
 from __code.utilities.time import get_current_time_in_special_file_name_format
 from __code.utilities.file_folder_browser import FileFolderBrowser
+from __code.utilities.configuration_file import SvmbirConfig, MbirjaxConfig
 
 
 CHECKPOINT_HDF5_FILTERS = {"HDF5 (.hdf5)": "*.hdf5", "HDF5 (.h5)": "*.h5"}
@@ -188,3 +190,45 @@ class CheckpointHdf5(Parent):
                 f"<li>Number of angles: {len(list_of_angles)}</li>"
                 f"</ul>"
             ))
+            
+    def update_config_for_export(self):
+        """Update config dictionary to export to HDF5"""
+        
+        list_of_angles: NDArray[np.floating] = np.array(self.parent.final_list_of_angles)
+        list_of_angles_rad: NDArray[np.floating] = np.array([np.deg2rad(float(_angle)) for _angle in list_of_angles])
+        self.parent.configuration.list_of_angles = list(list_of_angles_rad)
+        
+        output_folder = self.parent.working_dir[self.data_type]
+        self.parent.configuration.output_folder = output_folder
+        
+        instrument: str = self.parent.instrument
+        ipts_number: str = self.parent.ipts_number
+        self.parent.configuration.instrument = instrument
+        self.parent.configuration.ipts_number = int(ipts_number)
+
+        # svmbir parameters
+        if self.parent.o_svmbir is not None:
+            sharpness: float = self.parent.o_svmbir.sharpness_ui.value
+            snr_db: float = self.parent.o_svmbir.snr_db_ui.value
+            positivity: float = self.parent.o_svmbir.positivity_ui.value
+            max_iterations: int = self.parent.o_svmbir.max_iterations_ui.value
+            max_resolutions: int = self.parent.o_svmbir.max_resolutions_ui.value
+            verbose: int = 1 if self.parent.o_svmbir.verbose_ui.value else 0
+
+            svmbir_config: SvmbirConfig = SvmbirConfig()
+            svmbir_config.sharpness = sharpness
+            svmbir_config.snr_db = snr_db
+            svmbir_config.positivity = positivity
+            svmbir_config.max_iterations = max_iterations
+            svmbir_config.verbose = verbose
+            self.parent.configuration.svmbir_config = svmbir_config
+
+        # mbirjax parameters
+        if self.parent.o_mbirjax is not None:
+            mbirjax_config: MbirjaxConfig = MbirjaxConfig()
+            mbirjax_config.sharpness = self.parent.o_mbirjax.sharpness_ui.value
+            mbirjax_config.snr_db = self.parent.o_mbirjax.snr_db_ui.value
+            mbirjax_config.positivity = self.parent.o_mbirjax.positivity_ui.value
+            mbirjax_config.max_iterations = self.parent.o_mbirjax.max_iterations_ui.value
+            mbirjax_config.verbose = self.parent.o_mbirjax.verbose_ui.value
+            self.parent.configuration.mbirjax_config = mbirjax_config
