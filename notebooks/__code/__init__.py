@@ -45,6 +45,7 @@ class DataType:
     extra = 'extra'
     processed = "processed"
     raw= 'raw'
+    hdf5 = 'hdf5'
 
 
 class Instrument:

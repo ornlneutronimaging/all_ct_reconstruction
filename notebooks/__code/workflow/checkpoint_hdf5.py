@@ -8,6 +8,7 @@ from IPython.display import display
 from __code.parent import Parent
 from __code import DataType
 from __code.utilities.time import get_current_time_in_special_file_name_format
+from __code.utilities.file_folder_browser import FileFolderBrowser
 
 
 CHECKPOINT_HDF5_FILTERS = {"HDF5 (.hdf5)": "*.hdf5", "HDF5 (.h5)": "*.h5"}
@@ -40,7 +41,7 @@ class CheckpointHdf5(Parent):
         """Let the user browse to a folder where the HDF5 will be saved."""
         from __code.utilities.file_folder_browser import FileFolderBrowser
 
-        start_dir = self.parent.working_dir[DataType.processed]
+        start_dir = os.path.abspath(self.parent.working_dir[DataType.processed])
         logging.info(f"Selecting HDF5 output folder (start: {start_dir}) ...")
 
         self.output = widgets.Output()
@@ -51,6 +52,14 @@ class CheckpointHdf5(Parent):
                                       next_function=self.export)
         self.o_browser.select_output_folder_with_new(instruction="Select folder to save HDF5 checkpoint")
     
+    def export_end_of_step2(self) -> None:
+        """Convenience method to export HDF5 checkpoint at the end of step 2."""
+        logging.info("Exporting HDF5 checkpoint at the end of step 2 ...")
+        self.data_type = DataType.hdf5
+        # self.export(self.parent.hdf5_output_folder)
+        # FIXME
+    
+    
     def export(self, folder) -> None:
         """Save master_3d_data_array and final_list_of_angles to an HDF5 file."""
         logging.info("Exporting raw-data checkpoint to HDF5 ...")
@@ -60,7 +69,7 @@ class CheckpointHdf5(Parent):
             display(widgets.HTML(f"<b>Exporting checkpoint to HDF5...</b><br/>"))  
 
         # output_folder = getattr(self.parent, "hdf5_output_folder", "")
-        output_folder = folder
+        output_folder = os.path.abspath(folder)
         if not output_folder:
             if type(self.parent.working_dir[DataType.sample]) == str:
                 output_folder = os.path.dirname(self.parent.working_dir[DataType.sample])
@@ -75,6 +84,7 @@ class CheckpointHdf5(Parent):
 
         sample_array = self.parent.master_3d_data_array[DataType.sample]
         ob_array = self.parent.master_3d_data_array.get(DataType.ob, None)
+        dc_array = self.parent.master_3d_data_array.get(DataType.dc, None)
         list_of_angles = np.array(self.parent.final_list_of_angles, dtype=np.float32)
 
         detector_name = getattr(self.parent, "detector_name", "unknown")
@@ -83,9 +93,17 @@ class CheckpointHdf5(Parent):
             f.create_dataset("raw/sample", data=np.array(sample_array, dtype=np.float32))
             if ob_array is not None:
                 f.create_dataset("raw/ob", data=np.array(ob_array, dtype=np.float32))
+            if dc_array is not None:
+                f.create_dataset("raw/dc", data=np.array(dc_array, dtype=np.float32))
             f.create_dataset("angles/deg", data=list_of_angles)
             f.create_group("metadata")
             f["metadata"].attrs["detector"] = detector_name
+
+        logging.info("Data exported to HDF5:")
+        logging.info(f"{sample_array.shape =}")
+        logging.info(f"{ob_array.shape if ob_array is not None else 'N/A'}")
+        logging.info(f"{dc_array.shape if dc_array is not None else 'N/A'}")
+        logging.info(f"{len(list_of_angles)} angles (deg): {list_of_angles[:5]} ...")
 
         logging.info("Done saving raw-data checkpoint.")
         with self.output:
@@ -98,51 +116,56 @@ class CheckpointHdf5(Parent):
 
     def select_input_file(self) -> None:
         """Let the user browse to an existing HDF5 checkpoint file."""
-        from __code.utilities.file_folder_browser import FileFolderBrowser
 
-        if type(self.parent.working_dir[DataType.sample]) == str:
-            start_dir = self.parent.working_dir[DataType.sample]
-        else:
-            start_dir = self.parent.working_dir[DataType.sample][0]
-
+        self.data_type = DataType.hdf5
+        start_dir = self.parent.working_dir[DataType.processed]
+           
         # fall back to home if sample dir is not set yet
         if not start_dir or not os.path.exists(start_dir):
             start_dir = os.path.expanduser("~")
 
         logging.info(f"Selecting HDF5 checkpoint file (start: {start_dir}) ...")
 
-        def file_selected(file_path):
-            self.parent.hdf5_input_file = file_path
-            logging.info(f"HDF5 input file set to: {file_path}")
-            display(widgets.HTML(f"<b>Selected file:</b> {file_path}"))
+        # def file_selected(file_path):
+        #     self.parent.hdf5_input_file = file_path
+        #     logging.info(f"HDF5 input file set to: {file_path}")
+        #     display(widgets.HTML(f"<b>Selected file:</b> {file_path}"))
+
+        self.output = widgets.Output()
+        display(self.output)
 
         o_browser = FileFolderBrowser(working_dir=start_dir,
-                                      next_function=file_selected)
+                                      next_function=self.load)
         o_browser.select_file(
             instruction="Select HDF5 checkpoint file saved from Step 1",
             filters=CHECKPOINT_HDF5_FILTERS,
             default_filter="HDF5 (.hdf5)",
         )
 
-    def load(self) -> None:
+    def load(self, file_path: str) -> None:
         """Restore master_3d_data_array and final_list_of_angles from an HDF5 checkpoint."""
-        file_path = getattr(self.parent, "hdf5_input_file", "")
         if not file_path or not os.path.exists(file_path):
             raise FileNotFoundError(
                 f"HDF5 checkpoint file not found: '{file_path}'. "
                 "Please run select_hdf5_input_file() first."
             )
 
+        with self.output:
+            self.output.clear_output()
+            display(widgets.HTML(f"<b>Loading checkpoint from HDF5...</b><br/>"))
         logging.info(f"Loading raw-data checkpoint from: {file_path}")
 
         with h5py.File(file_path, "r") as f:
             sample_array = f["raw/sample"][:]
             ob_array = f["raw/ob"][:] if "raw/ob" in f else None
+            dc_array = f["raw/dc"][:] if "raw/dc" in f else None
             list_of_angles = list(f["angles/deg"][:])
 
         self.parent.master_3d_data_array[DataType.sample] = sample_array
         if ob_array is not None:
             self.parent.master_3d_data_array[DataType.ob] = ob_array
+        if dc_array is not None:
+            self.parent.master_3d_data_array[DataType.dc] = dc_array
         self.parent.final_list_of_angles = list_of_angles
         self.parent.final_list_of_angles_rad = [np.deg2rad(float(a)) for a in list_of_angles]
 
@@ -151,12 +174,17 @@ class CheckpointHdf5(Parent):
 
         logging.info(
             f"\tLoaded sample array shape : {sample_array.shape}\n"
+            f"\tLoaded OB array shape     : {ob_array.shape if ob_array is not None else 'N/A'}\n"
+            f"\tLoaded DC array shape     : {dc_array.shape if dc_array is not None else 'N/A'}\n"
             f"\tLoaded {len(list_of_angles)} angles (deg): {list_of_angles[:5]} ..."
         )
-        display(widgets.HTML(
-            f"<b>Checkpoint loaded:</b><br/>"
-            f"<ul>"
-            f"<li>Sample array shape: {sample_array.shape}</li>"
-            f"<li>Number of angles: {len(list_of_angles)}</li>"
-            f"</ul>"
-        ))
+        with self.output:
+            display(widgets.HTML(
+                f"<b>Checkpoint loaded:</b><br/>"
+                f"<ul>"
+                f"<li>Sample array shape: {sample_array.shape}</li>"
+                f"<li>OB array shape: {ob_array.shape if ob_array is not None else 'N/A'}</li>"
+                f"<li>DC array shape: {dc_array.shape if dc_array is not None else 'N/A'}</li>"
+                f"<li>Number of angles: {len(list_of_angles)}</li>"
+                f"</ul>"
+            ))
