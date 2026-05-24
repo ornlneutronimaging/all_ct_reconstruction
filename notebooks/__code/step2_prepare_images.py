@@ -1536,7 +1536,7 @@ class Step2PrepareImages:
         else:
             self.o_svmbir.export_pre_reconstruction_data()
 
-    def export_extra_files(self, prefix: str = "") -> None:
+    def export_extra_files(self, folder="") -> None:
         """
         Export additional TimePix reconstruction files and metadata.
         
@@ -1545,8 +1545,7 @@ class Step2PrepareImages:
         folder for documentation and reproducibility.
         
         Args:
-            prefix: Optional prefix to add to exported filenames for
-                   organization and identification.
+            folder: Path to the folder where extra files will be exported.
         
         Side Effects:
             - Exports pre-reconstruction data first
@@ -1555,6 +1554,7 @@ class Step2PrepareImages:
             - Uses LOG_BASENAME_FILENAME and optional prefix for organization
         """
         
+        self.working_dir[DataType.extra] = folder
         self.o_select.o_file_browser.list_output_folders_ui.shortcut_buttons.close() # close the jump to shared and home buttons 
               
         o_export = CheckpointHdf5(parent=self)
@@ -1577,8 +1577,7 @@ class Step2PrepareImages:
         # o_export = ExportExtra(parent=self)
         # o_export.run(base_log_file_name=LOG_BASENAME_FILENAME,
         #              prefix=prefix)
-        # o_checkpoint = CheckpointHdf5(parent=self)
-        # o_checkpoint.export_end_of_step2()
+
         
     # HDF5 checkpoint (used between step 1 and step 2)
 

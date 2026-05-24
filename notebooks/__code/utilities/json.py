@@ -8,7 +8,19 @@ missing files and proper type checking.
 
 import json
 import os
+import numpy as np
 from typing import Any, Dict, Union, Optional
+
+
+class NumpyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        if isinstance(obj, np.floating):
+            return float(obj)
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return super().default(obj)
 
 
 def load_json(json_file_name: str) -> Any:
