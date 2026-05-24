@@ -72,8 +72,10 @@ class CheckpointHdf5(Parent):
                 output_folder = os.path.dirname(self.parent.working_dir[DataType.sample][0])
             logging.warning(f"No output folder set – using {output_folder}")
 
+        base_name = os.path.basename(self.parent.working_dir[DataType.sample][0]) if self.parent.working_dir[DataType.sample] else "unknown"
+
         _time_ext = get_current_time_in_special_file_name_format()
-        filename = f"raw_checkpoint_{_time_ext}.hdf5"
+        filename = f"{base_name}_{_time_ext}_step1.hdf5"
         full_path = os.path.join(output_folder, filename)
         logging.info(f"\tOutput file: {full_path}")
 
