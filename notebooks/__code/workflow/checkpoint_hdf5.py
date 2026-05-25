@@ -86,7 +86,6 @@ class CheckpointHdf5(Parent):
         detector_name = getattr(self.parent, "detector_name", "unknown")
 
         CheckpointHdf5._create_hdf5(
-            sample_paths=self.parent.working_dir[DataType.sample],
             full_path=full_path,
             sample_array=sample_array,
             ob_array=ob_array,
@@ -109,6 +108,7 @@ class CheckpointHdf5(Parent):
     @staticmethod
     def _create_hdf5(full_path: str = "", 
                      sample_array: NDArray[np.floating] = None, 
+                     normalized_images_log: NDArray[np.floating] = None,
                      ob_array: NDArray[np.floating] = None, 
                      dc_array: NDArray[np.floating] = None, 
                      list_of_angles_deg: NDArray[np.floating] = None, 
@@ -130,7 +130,10 @@ class CheckpointHdf5(Parent):
         logging.info(f"{len(list_of_angles_deg)} angles (deg): {list_of_angles_deg[:5]} ...")
 
         with h5py.File(full_path, "w") as f:
-            f.create_dataset("raw/sample", data=np.array(sample_array, dtype=np.float32))
+            if sample_array is not None:
+                f.create_dataset("raw/sample", data=np.array(sample_array, dtype=np.float32))
+            if normalized_images_log is not None:
+                f.create_dataset("raw/normalized_images_log", data=np.array(normalized_images_log, dtype=np.float32))
             if ob_array is not None:
                 f.create_dataset("raw/ob", data=np.array(ob_array, dtype=np.float32))
             if dc_array is not None:
@@ -198,6 +201,7 @@ class CheckpointHdf5(Parent):
             self.parent.master_3d_data_array[DataType.dc] = dc_array
         self.parent.final_list_of_angles = list_of_angles_deg
         self.parent.final_list_of_angles_rad = [np.deg2rad(float(a)) for a in list_of_angles_deg]
+        self.parent.configuration = json.loads(config_json) if config_json is not None else None
 
         # derive working_dir so that downstream methods that rely on it work
         self.parent.working_dir = json.loads(working_dir) if working_dir is not None else {}
@@ -235,6 +239,12 @@ class CheckpointHdf5(Parent):
         ipts_number: str = self.parent.ipts_number
         self.parent.configuration.instrument = instrument
         self.parent.configuration.ipts_number = int(ipts_number)
+
+        # center of rotation
+        if self.parent.o_center_and_tilt is not None:
+            if self.parent.o_center_and_tilt.is_manual_mode():
+                self.parent.configuration.center_of_rotation = self.parent.o_center_and_tilt.get_center_of_rotation()
+
 
         # svmbir parameters
         if self.parent.o_svmbir is not None:
@@ -277,16 +287,16 @@ class CheckpointHdf5(Parent):
 
         config_dict = self.parent.configuration
 
-        filename = f"{sample_basename}_step2_{_time_ext}.hdf5"
-        full_path = os.path.join(output_folder, filename)
-        logging.info(f"\tOutput file: {full_path}")
+        hdf5_file_name = f"{sample_basename}_{_time_ext}_step2.hdf5"
+        hdf5_full_path = os.path.join(output_folder, hdf5_file_name)
+        logging.info(f"\tOutput file: {hdf5_full_path}")
 
         CheckpointHdf5._create_hdf5(
-            full_path=full_path,
-            sample_array=normalized_images_log,
+            full_path=hdf5_full_path,
+            normalized_images_log=normalized_images_log,
             list_of_angles_deg=list_of_angles_deg,
-            # detector_name=self.parent.detector_name,
             config=config_dict,
         )
-        logging.info("Done exporting HDF5 checkpoint at the end of step 2.")
+        logging.info(f"Done exporting HDF5 checkpoint ({hdf5_file_name}) at the end of step 2. in folder {output_folder}")
         
+        return hdf5_full_path

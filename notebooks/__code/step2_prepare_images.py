@@ -88,7 +88,7 @@ from __code.workflow.remove_strips import RemoveStrips
 from __code.workflow.svmbir_handler import SvmbirHandler
 from __code.workflow.mbirjax_handler import MbirjaxHandler
 from __code.workflow.final_projections_review import FinalProjectionsReview
-from __code.workflow.export import ExportExtra
+from __code.workflow.export import ExportExtra, RunningModeOptions
 from __code.workflow.visualization import Visualization
 from __code.workflow.crop import Crop
 from __code.workflow.combine_ob_dc import CombineObDc
@@ -104,6 +104,7 @@ from __code.workflow.test_reconstruction import TestReconstruction
 from __code.utilities.configuration_file import ReconstructionAlgorithm
 from __code.utilities.logging import logging_3d_array_infos
 from __code.workflow.checkpoint_hdf5 import CheckpointHdf5
+from __code.utilities.create_scripts import create_sh_file, create_sh_hsnt_file
 
 
 LOG_BASENAME_FILENAME, _ = os.path.splitext(os.path.basename(__file__))
@@ -1559,19 +1560,8 @@ class Step2PrepareImages:
               
         o_export = CheckpointHdf5(parent=self)
         o_export.update_config_for_export(data_type=DataType.extra)
-        o_export.create_hdf5_with_config_and_preprocessed_data()
-        
-        
-        
-        
-        
-        # create scripts to run reconstruction with the exported data and configuration
-
-
-
-
-
-
+        hdf5_file_name = o_export.create_hdf5_with_config_and_preprocessed_data()
+        self.what_to_do_after_exporting_extra_files(hdf5_file_name=hdf5_file_name)
         
         # self.export_pre_reconstruction_data()
         # o_export = ExportExtra(parent=self)
@@ -1580,6 +1570,48 @@ class Step2PrepareImages:
 
         
     # HDF5 checkpoint (used between step 1 and step 2)
+
+    def what_to_do_after_exporting_extra_files(self, hdf5_file_name: str) -> None:
+        self.sh_file_name = create_sh_file(hdf5_file_name=hdf5_file_name,
+                                           offline=self.parent.offline)
+
+        display(HTML(f"<font color='blue'><b>Next step</b></font>"))
+
+        list_options: List[str] = [
+                RunningModeOptions.manual_launch,
+                RunningModeOptions.go_to_step3,
+                RunningModeOptions.run_from_notebook,
+        ]
+
+        # 3 options are offered to the user
+        choices: widgets.RadioButtons = widgets.RadioButtons(
+            options=list_options,
+            value=RunningModeOptions.manual_launch, # default value
+            description='',
+            layout=widgets.Layout(width='100%'),
+            disabled=False
+        )
+        display(choices)
+
+        basename_config_file_name = os.path.basename(self.config_file_name)
+        self.instructions = widgets.Textarea(value=f"Reload the configuration file {basename_config_file_name} found in {os.path.dirname(self.config_file_name)} in the notebook {STEP2_NOTEBOOK}",
+                                             layout=widgets.Layout(width='100%', height='160px'),
+                                             disabled=True)
+        display(self.instructions) 
+
+        self.run_script = widgets.Button(
+            description='Run script',
+            disabled=False,
+            button_style='success',
+            tooltip='Run the script directly from the notebook',
+            icon='play'
+        )
+        display(self.run_script)
+
+        choices.observe(self.on_choice_change, names='value')
+        self.on_choice_change({'new': choices.value})
+        self.run_script.on_click(self.on_run_script_click)
+    
 
     def select_hdf5_output_folder(self) -> None:
         o_checkpoint = CheckpointHdf5(parent=self)

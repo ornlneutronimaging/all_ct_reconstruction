@@ -15,7 +15,7 @@ from __code.utilities.time import get_current_time_in_special_file_name_format
 from __code.config import HSNT_SCRIPTS_FOLDER, HSNT_FOLDER
 
 
-def create_sh_file(json_file_name: str, output_folder: str, offline: bool = False) -> str:
+def create_sh_file(hdf5_file_name: str, offline: bool = False) -> str:
     """
     Create a shell script to run CT reconstruction with the given configuration file.
     
@@ -24,8 +24,7 @@ def create_sh_file(json_file_name: str, output_folder: str, offline: bool = Fals
     for filenames with spaces.
     
     Args:
-        json_file_name: Path to the JSON configuration file
-        output_folder: Directory where the shell script will be created
+        hdf5_file_name: Path to the HDF5 file
         offline: Whether to create an offline script (default: False)
         
     Returns:
@@ -35,14 +34,14 @@ def create_sh_file(json_file_name: str, output_folder: str, offline: bool = Fals
         The generated script uses pixi for environment management and makes
         the script executable (chmod 755).
     """
+    output_folder = os.path.dirname(hdf5_file_name)
+    
     time_stamp: str = get_current_time_in_special_file_name_format()
     sh_file_name: str = os.path.join(output_folder, f"run_reconstruction_{time_stamp}.sh")
 
-    json_file_name_on_linux: str = json_file_name.replace(" ", "\ ")
-    json_file_name_on_linux = os.path.abspath(json_file_name_on_linux)
-
     # path of the current file
     notebooks_folder_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))    
+
     # path of the scripts 3 offline file
     step3_scripts_offline_path = os.path.join(notebooks_folder_path, STEP3_SCRIPTS_OFFLINE)
         
@@ -51,9 +50,9 @@ def create_sh_file(json_file_name: str, output_folder: str, offline: bool = Fals
         if offline:
             path_of_this_file = os.path.abspath(__file__)
             top_folder_of_this_project = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(path_of_this_file))))
-            sh_file.write(f"pixi run --manifest-path {top_folder_of_this_project} python {step3_scripts_offline_path} {json_file_name_on_linux}\n")
+            sh_file.write(f"pixi run --manifest-path {top_folder_of_this_project} python {step3_scripts_offline_path} {hdf5_file_name}\n")
         else:
-            sh_file.write(f"pixi run --manifest-path ~/notebooks/all_ct_reconstruction python {STEP3_SCRIPTS} {json_file_name_on_linux}\n")
+            sh_file.write(f"pixi run --manifest-path ~/notebooks/all_ct_reconstruction python {STEP3_SCRIPTS} {hdf5_file_name}\n")
 
     os.chmod(sh_file_name, 0o755)
     sh_file_name = os.path.abspath(sh_file_name)

@@ -53,4 +53,3 @@ if __name__ == "__main__":
     shutil.copy(full_log_file_name, output_folder)
     print(f"Reconstruction is done!")
     print(f"Log file copied to {output_folder}")
-    
