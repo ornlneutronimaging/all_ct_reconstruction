@@ -38,10 +38,10 @@ import os
 # os.environ["JAX_PLATFORMS"] = "cpu" 
 
 import glob
+import json
 import logging
-from typing import List, Dict, Any, Tuple, Optional, Union
+# from typing import List, Dict, Any, Tuple, Optional, Union
 
-from notebooks.__code.utilities import json
 try:
     import svmbir
     HAS_SVMBIR = True
@@ -56,11 +56,11 @@ from xarray import corr
 
 from __code import WhenToRemoveStripes
 from __code.workflow.export import Export
-from __code.utilities.logging import setup_logging
-from __code.utilities.files import make_or_reset_folder, remove_folder
+# from __code.utilities.logging import setup_logging
+from __code.utilities.files import make_or_reset_folder
 from __code.config import NUM_THREADS, SVMBIR_LIB_PATH, SVMBIR_LIB_PATH_BACKUP, SVMBIR_LIB_PATH_BACKUP_2, NUMBER_OF_SLICES_TO_OVERAP
-from __code.utilities.json import load_json_string
-from __code.utilities.load import load_data_using_multithreading, load_list_of_tif
+# from __code.utilities.json import load_json_string
+# from __code.utilities.load import load_data_using_multithreading, load_list_of_tif
 from __code.utilities.time import get_current_time_in_special_file_name_format
 from __code.workflow_cli.merge_reconstructed_slices import merge_reconstructed_slices, live_merge_reconstructed_slices
 from __code.workflow_cli.stripes_removal import StripesRemovalHandler
@@ -122,8 +122,6 @@ class SvmbirCliHandler:
         logging.info(f"output_folder = {output_folder}")
         logging.info(f"raw_data_base_folder = {raw_data_base_folder}")
 
-        list_tiff = glob.glob(os.path.join(input_data_folder, '*.tiff'))
-        list_tiff.sort()
         print(f"loading pre-processed data ... ", end="")
         logging.info(f"loading pre-processed data ... ")
         with h5py.File(hdf5_file, "r") as f:
@@ -131,18 +129,20 @@ class SvmbirCliHandler:
                 corrected_array_log = f["raw/normalized_images_log"][()]
             else:
                 corrected_array_log = None
-            if "raw/list_of_angles_deg" in f:
-                list_of_angles_deg = f["raw/list_of_angles_deg"][()]
+            if "angles/deg" in f:
+                list_of_angles_deg = f["angles/deg"][()]
                 list_of_angles_rad = np.deg2rad(list_of_angles_deg)
             else:
                 list_of_angles_rad = None
 
         print(f"done!")
-        logging.info(f"loading {len(list_tiff)} images ... done")
     
         if list_of_angles_rad is None:
-            logging.error(f"list_of_angles_rad is not found in the HDF5 file. Please make sure to include it in the HDF5 file.")
-            raise ValueError(f"list_of_angles_rad is not found in the HDF5 file. Please make sure to include it in the HDF5 file.")
+            if list_of_angles_deg is None:
+                logging.error(f"list_of_angles_deg is not found in the HDF5 file. Please make sure to include it in the HDF5 file.")
+                raise ValueError(f"list_of_angles_deg is not found in the HDF5 file. Please make sure to include it in the HDF5 file.")
+            else:
+                list_of_angles_rad = np.deg2rad(list_of_angles_deg)
       
         logging.info(f"Checking statistics of loaded data ...")
         for _index, _image in enumerate(corrected_array_log):
@@ -204,12 +204,6 @@ class SvmbirCliHandler:
 
         logging.info(f"{list_of_angles_rad = }")
         logging.info(f"{center_offset = }")
-        logging.info(f"{sharpness = }")
-        logging.info(f"{snr_db = }")
-        logging.info(f"{positivity = }")
-        logging.info(f"{max_iterations = }")
-        logging.info(f"{max_resolutions = }")
-        logging.info(f"{verbose = }")
         logging.info(f"{svmbir_lib_path = }")
         logging.info(f"{input_data_folder = }")
         logging.info(f"{output_folder = }")
@@ -217,20 +211,31 @@ class SvmbirCliHandler:
         logging.info(f"{list_of_slices_to_reconstruct = }")
         
         if mbirjax:
-            sharpness = configuration['mbirjax']["sharpness"]
-            snr_db = configuration['mbirjax']["snr_db"]
-            positivity = configuration['mbirjax']["positivity"]
-            max_iterations = configuration['mbirjax']["max_iterations"]
-            verbose = configuration['mbirjax']["verbose"]
+            mbirjax_config = configuration['mbirjax_config']
+            logging.info(f"Using mbirjax for reconstruction with JAX acceleration")
+            sharpness = mbirjax_config["sharpness"]
+            snr_db = mbirjax_config["snr_db"]
+            positivity = mbirjax_config["positivity"]
+            max_iterations = mbirjax_config["max_iterations"]
+            verbose = mbirjax_config["verbose"]
             _prefix = "mbirjax"
             
         else:
-            sharpness = configuration['svmbir_config']['sharpness']
-            snr_db = configuration['svmbir_config']['snr_db']
-            positivity = configuration['svmbir_config']['positivity']                    
-            max_iterations = configuration['svmbir_config']['max_iterations']
-            verbose = configuration['svmbir_config']['verbose']
+            svmbir_config = configuration['svmbir_config']
+            logging.info(f"Using svmbir for reconstruction")
+            sharpness = svmbir_config["sharpness"]
+            snr_db = svmbir_config["snr_db"]
+            positivity = svmbir_config["positivity"]
+            max_iterations = svmbir_config["max_iterations"]
+            verbose = svmbir_config["verbose"]
             _prefix = "svmbir"
+
+        logging.info(f"{sharpness = }")
+        logging.info(f"{snr_db = }")
+        logging.info(f"{positivity = }")
+        logging.info(f"{max_iterations = }")
+        logging.info(f"{verbose = }")
+        logging.info(f"{_prefix = }")
 
         output_data_folder = os.path.join(output_folder, f"{raw_data_base_folder}_{_prefix}_reconstructed_data_{get_current_time_in_special_file_name_format()}")
         logging.info(f"{output_data_folder = }")

@@ -1604,14 +1604,14 @@ class Step2PrepareImages:
             tooltip='Run the script directly from the notebook',
             icon='play'
         )
+        
+        vertical_layout = widgets.VBox([choices, self.instructions, self.run_script])        
         with self.o_select.out:
-            display(choices)
-            display(self.instructions) 
-            display(self.run_script)
+            display(vertical_layout)
 
         choices.observe(self.on_choice_change, names='value')
-        self.on_choice_change({'new': choices.value})
-        self.run_script.on_click(self.on_run_script_click)
+        # self.on_choice_change({'new': choices.value})
+        # self.run_script.on_click(self.on_run_script_click)
     
     def on_run_script_click(self, b: widgets.Button) -> None:
         """

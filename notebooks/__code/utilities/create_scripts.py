@@ -10,7 +10,7 @@ import os
 import shutil
 from typing import Optional, Any
 
-from __code import STEP3_SCRIPTS, STEP3_SCRIPTS_OFFLINE
+from __code import STEP3_SCRIPTS, STEP3_SCRIPTS_OFFLINE, PROJECT_ROOT_FOLDER
 from __code.utilities.time import get_current_time_in_special_file_name_format
 from __code.config import HSNT_SCRIPTS_FOLDER, HSNT_FOLDER
 
@@ -52,7 +52,7 @@ def create_sh_file(hdf5_file_name: str, offline: bool = False) -> str:
             top_folder_of_this_project = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(path_of_this_file))))
             sh_file.write(f"pixi run --manifest-path {top_folder_of_this_project} python {step3_scripts_offline_path} {hdf5_file_name}\n")
         else:
-            sh_file.write(f"pixi run --manifest-path ~/notebooks/all_ct_reconstruction python {STEP3_SCRIPTS} {hdf5_file_name}\n")
+            sh_file.write(f"pixi run --manifest-path {PROJECT_ROOT_FOLDER} python {STEP3_SCRIPTS} {hdf5_file_name}\n")
 
     os.chmod(sh_file_name, 0o755)
     sh_file_name = os.path.abspath(sh_file_name)

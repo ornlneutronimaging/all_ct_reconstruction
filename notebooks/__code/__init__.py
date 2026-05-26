@@ -65,14 +65,16 @@ class OperatingMode:
 path_of_this_file = os.path.abspath(__file__)
 top_folder_of_this_project = os.path.dirname(os.path.dirname(os.path.dirname(path_of_this_file)))
 if "development" in top_folder_of_this_project:
-    _root_folder = "/SNS/VENUS/shared/software/git/all_ct_reconstruction_development/notebooks/"
+    _root_folder = "/SNS/VENUS/shared/software/git/all_ct_reconstruction_development/"
 else:
-    _root_folder = "/SNS/VENUS/shared/software/git/all_ct_reconstruction/notebooks/"
-    
-STEP3_SVMBIR_SCRIPTS = os.path.join(_root_folder, "step3_reconstruction_white_beam_mode_images_using_svmbir.py")
-STEP3_FPB_SCRIPTS = os.path.join(_root_folder, "step3_reconstruction_white_beam_mode_images_using_fbp.py")
-STEP3_SCRIPTS = os.path.join(_root_folder, "step3_reconstruction_images.py")
-STEP3_NOTEBOOK = os.path.join(_root_folder, "step3_reconstruct_images.ipynb")
+    _root_folder = "/SNS/VENUS/shared/software/git/all_ct_reconstruction/"
+
+_notebook_folder = os.path.join(_root_folder, "notebooks")    
+STEP3_SVMBIR_SCRIPTS = os.path.join(_notebook_folder, "step3_reconstruction_white_beam_mode_images_using_svmbir.py")
+STEP3_FPB_SCRIPTS = os.path.join(_notebook_folder, "step3_reconstruction_white_beam_mode_images_using_fbp.py")
+STEP3_SCRIPTS = os.path.join(_notebook_folder, "step3_reconstruction_images.py")
+STEP3_NOTEBOOK = os.path.join(_notebook_folder, "step3_slice_preprocessed_images.ipynb")
+PROJECT_ROOT_FOLDER = _root_folder
 
 STEP3_SCRIPTS_OFFLINE = "step3_reconstruction_CCD_or_TimePix_images.py"
 
