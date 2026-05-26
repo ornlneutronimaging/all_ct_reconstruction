@@ -70,13 +70,13 @@ else:
     _root_folder = "/SNS/VENUS/shared/software/git/all_ct_reconstruction/"
 
 _notebook_folder = os.path.join(_root_folder, "notebooks")    
-STEP3_SVMBIR_SCRIPTS = os.path.join(_notebook_folder, "step3_reconstruction_white_beam_mode_images_using_svmbir.py")
-STEP3_FPB_SCRIPTS = os.path.join(_notebook_folder, "step3_reconstruction_white_beam_mode_images_using_fbp.py")
-STEP3_SCRIPTS = os.path.join(_notebook_folder, "step3_reconstruction_images.py")
+# STEP4_SVMBIR_SCRIPTS = os.path.join(_notebook_folder, "step3_reconstruction_white_beam_mode_images_using_svmbir.py")
+# STEP4_FPB_SCRIPTS = os.path.join(_notebook_folder, "step3_reconstruction_white_beam_mode_images_using_fbp.py")
+STEP4_SCRIPTS = os.path.join(_notebook_folder, "step4_reconstruction_images.py")
 STEP3_NOTEBOOK = os.path.join(_notebook_folder, "step3_slice_preprocessed_images.ipynb")
 PROJECT_ROOT_FOLDER = _root_folder
 
-STEP3_SCRIPTS_OFFLINE = "step3_reconstruction_CCD_or_TimePix_images.py"
+STEP4_SCRIPTS_OFFLINE = "step4_reconstruction_images.py"
 
 DEFAULT_OPERATING_MODE = OperatingMode.white_beam
 DEFAULT_RECONSTRUCTION_ALGORITHM = ["tomopy_fbp"]

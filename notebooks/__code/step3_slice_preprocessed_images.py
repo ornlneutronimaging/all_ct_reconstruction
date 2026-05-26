@@ -20,7 +20,7 @@ except ImportError:
 from __code import OperatingMode, DataType, STEP3_SCRIPTS
 from __code.config import DEBUG, debug_folder, NUMBER_OF_SLICES_TO_OVERAP # , default_file_naming_convention
 from __code.utilities.configuration_file import CropRegion
-from __code.utilities.configuration_file import select_file, loading_config_file_into_model
+from __code.utilities.configuration_file import select_file
 from __code.utilities.logging import setup_logging
 from __code.workflow.reconstruction_selection import ReconstructionSelection
 from __code.utilities.files import retrieve_list_of_tif, make_or_reset_folder
@@ -28,6 +28,8 @@ from __code.utilities.create_scripts import create_sh_file, create_sh_hsnt_file
 from __code.utilities.load import load_data_using_multithreading, load_list_of_tif
 from __code.utilities.time import get_current_time_in_special_file_name_format
 from __code.utilities.json import save_json
+from __code.workflow.checkpoint_hdf5 import CheckpointHdf5
+from __code.utilities.configuration_file import Configuration
 
 BASENAME_FILENAME, _ = os.path.splitext(os.path.basename(__file__))
 
@@ -46,7 +48,7 @@ class JsonTypeRequested:
     undefined = 'undefined'
 
 
-class Step2SliceCcdOrTimePixImages:
+class Step3SlicePreprocessedImages:
     """
     A class for processing CT image slices and generating reconstruction configuration files.
     
@@ -66,10 +68,12 @@ class Step2SliceCcdOrTimePixImages:
         output_config_file: Output directory for configuration files
     """
 
-    json_type_requested: str = JsonTypeRequested.undefined
+    # json_type_requested: str = JsonTypeRequested.undefined
     MODE = OperatingMode.white_beam
     SVBMIR_MODE_FLAG = HAS_SVMBIR
-
+    
+    normalized_images_log = None
+    
     def __init__(self, system: Optional[Any] = None) -> None:
         """
         Initialize the Step2SliceCcdOrTimePixImages class.
@@ -78,81 +82,120 @@ class Step2SliceCcdOrTimePixImages:
             system: System configuration object containing working directory and instrument info
         """
 
-        # self.configuration = Configuration()
-        self.working_dir: str = os.path.join(system.System.get_working_dir(), "shared")
-        if DEBUG:
-            self.working_dir = debug_folder[default_file_naming_convention][OperatingMode.white_beam][DataType.extra]
-
-        self.instrument: str = system.System.get_instrument_selected()
-
+        self.configuration = Configuration()
         setup_logging(BASENAME_FILENAME)      
 
+        self.offline = system.System.offline
+        logging.info(f"System offline mode: {self.offline}")
+
+        top_sample_dir = os.system.System.get_working_dir()
+        self.top_sample_dir = top_sample_dir
+        self.instrument = "VENUS"  
+        self.full_ipts_number = os.path.basename(top_sample_dir) 
+        self.ipts_number = self.full_ipts_number.replace("IPTS-", "")
+        
+        self.update_all_paths()
         logging.info(f"working_dir: {self.working_dir}")
         logging.info(f"instrument: {self.instrument}")
-        if DEBUG:
-            logging.info(f"WARNING!!!! we are running using DEBUG mode!")
+        logging.info(f"full_ipts_number: {self.full_ipts_number}")
+        logging.info(f"ipts_number: {self.ipts_number}")
+        logging.info(f"offline: {self.offline}")
 
-    def select_config_file(self) -> None:
+    def update_all_paths(self) -> None:
+                
+        if self.offline:
+            logging.info("offline mode: Updating all paths.")
+            top_sample_dir = os.path.expanduser("~")
+            self.working_dir[DataType.ipts] = top_sample_dir
+            self.working_dir[DataType.nexus] = top_sample_dir
+            self.working_dir[DataType.processed] = top_sample_dir  
+            self.working_dir[DataType.normalized] = top_sample_dir
+            self.working_dir[DataType.sample] = top_sample_dir
+            self.working_dir[DataType.ob] = ""
+            self.working_dir[DataType.top] = top_sample_dir
+      
+        else:
+            logging.info("online mode: Updating all paths.")
+
+            top_sample_dir = self.top_sample_dir
+            # self.working_dir[DataType.ipts] = os.path.basename(top_sample_dir)
+            self.working_dir[DataType.ipts] = top_sample_dir
+            self.working_dir[DataType.nexus] = os.path.join(top_sample_dir, "nexus")
+            self.working_dir[DataType.processed] = os.path.join(top_sample_dir, "shared", "processed_data")       
+            self.working_dir[DataType.normalized] = os.path.join(top_sample_dir, "shared", "processed_data", "normalized_data")
+            
+            if self.detector_type == DetectorType.tpx1_legacy:
+                self.working_dir[DataType.sample] = os.path.join(top_sample_dir, "shared", "autoreduce", "mcp")
+                self.working_dir[DataType.ob] = os.path.join(top_sample_dir, "shared", "autoreduce", "mcp")
+                self.working_dir[DataType.top] = os.path.join(top_sample_dir, "shared", "autoreduce", "mcp")
+        
+            elif self.detector_type in [DetectorType.tpx1, DetectorType.tpx3]:
+                self.working_dir[DataType.sample] = os.path.join(top_sample_dir, "shared", "autoreduce", "images", self.get_unix_detector_name(), 'raw', 'ct')
+                self.working_dir[DataType.ob] = os.path.join(top_sample_dir, "shared", "autoreduce", "images", self.get_unix_detector_name(), 'ob')
+                self.working_dir[DataType.top] = os.path.join(top_sample_dir, "shared", "autoreduce", "images", self.get_unix_detector_name())
+
+        logging.info(f"Updates all paths:")
+        logging.info(f"  - top_sample_dir: {top_sample_dir}")
+        logging.info(f"  - sample: {self.working_dir[DataType.sample]}")
+        logging.info(f"  - ob: {self.working_dir[DataType.ob]}")
+        logging.info(f"  - nexus: {self.working_dir[DataType.nexus]}")  
+        logging.info(f"  - processed: {self.working_dir[DataType.processed]}")
+        logging.info(f"  - ipts: {self.working_dir[DataType.ipts]}")
+        logging.info(f"  - top: {self.working_dir[DataType.top]}")
+
+    def select_hdf5_file(self) -> None:
         """
-        Display file selector widget to choose a configuration JSON file.
+        Display file selector widget to choose a configuration HDF5 file.
         
         Opens a file browser to select the configuration file from the working directory.
         The selected file will be passed to load_config_file method.
         """
-        select_file(top_folder=self.working_dir,
-                    next_function=self.load_config_file)
-
-    def load_config_file(self, config_file_path: str) -> None:
+        o_hdf5_file_selector = CheckpointHdf5(parent=self)
+        o_hdf5_file_selector.select_input_file()
+       
+    def load_hdf5_file(self, hdf5_file_path: str) -> None:
         """
-        Load configuration from the selected JSON file.
+        Load configuration from the selected HDF5 file.
         
         Args:
-            config_file_path: Path to the JSON configuration file
+            hdf5_file_path: Path to the HDF5 configuration file
             
         Sets:
             output_config_file: Directory containing the config file
             configuration: Loaded configuration object
             images_path: Path to projection images from configuration
         """
-        self.output_config_file: str = os.path.dirname(config_file_path)
-        logging.info(f"configuration file loaded: {config_file_path}")
-        self.configuration = loading_config_file_into_model(config_file_path)
-        self.images_path: str = self.configuration.projections_pre_processing_folder
-        print(f"Configuration file {os.path.basename(config_file_path)} loaded!")
-        self.configuration_file_name = os.path.basename(config_file_path)
-
-    def load_and_crop(self) -> None:
-        """
-        Load projection images and display cropping interface.
-        
-        This method calls load_images() followed by crop_settings() to provide
-        a complete workflow for loading data and setting up ROI selection.
-        """
-        self.load_images()
+        self.output_hdf5_file: str = os.path.dirname(hdf5_file_path)
+        logging.info(f"Loading HDF5 {hdf5_file_path} ...")
+        o_checkpoint = CheckpointHdf5(parent=self)
+        o_checkpoint.load(hdf5_file_path)
+        self.data = self.normalized_images_log
+        print(f"HDF5 file {os.path.basename(hdf5_file_path)} loaded!")
+        logging.info(f"Loaded from HDF5 file: {self.configuration}")
         self.crop_settings()
-        
-    def load_images(self) -> None:
-        """
-        Load CT projection images from the configured path.
-        
-        Loads TIFF images from the images_path directory and stores them
-        in self.data as a numpy array with shape (n_images, height, width).
-        
-        Note:
-            Currently limited to first 30 images for debugging purposes.
-        """
-        logging.info(f"images_path: {self.images_path}")
-        list_tiff: List[str] = retrieve_list_of_tif(self.images_path)
-        logging.info(f"list_tiff: {list_tiff}")
 
-        #DEBUG
-        list_tiff = list_tiff[0:30]
+    # def load_images(self) -> None:
+    #     """
+    #     Load CT projection images from the configured path.
+        
+    #     Loads TIFF images from the images_path directory and stores them
+    #     in self.data as a numpy array with shape (n_images, height, width).
+        
+    #     Note:
+    #         Currently limited to first 30 images for debugging purposes.
+    #     """
+    #     logging.info(f"images_path: {self.images_path}")
+    #     list_tiff: List[str] = retrieve_list_of_tif(self.images_path)
+    #     logging.info(f"list_tiff: {list_tiff}")
 
-        self.data: NDArray[np.float32] = load_list_of_tif(list_tiff, dtype=np.float32)
-        # self.data = load_data_using_multithreading(list_tiff)
-        # self.data = np.moveaxis(self.data, 1, 2)
-        logging.info(f"loading images done!")
-        logging.info(f"self.data.shape: {self.data.shape}")
+    #     #DEBUG
+    #     list_tiff = list_tiff[0:30]
+
+    #     self.data: NDArray[np.float32] = load_list_of_tif(list_tiff, dtype=np.float32)
+    #     # self.data = load_data_using_multithreading(list_tiff)
+    #     # self.data = np.moveaxis(self.data, 1, 2)
+    #     logging.info(f"loading images done!")
+    #     logging.info(f"self.data.shape: {self.data.shape}")
 
     def select_range_of_slices(self) -> None:
         """

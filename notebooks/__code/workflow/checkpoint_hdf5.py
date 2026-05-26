@@ -200,7 +200,7 @@ class CheckpointHdf5(Parent):
             default_filter="HDF5 (.hdf5)",
         )
 
-    def load(self, file_path: str) -> None:
+    def load(self, file_path: str, step: str = "step2") -> None:
         """Restore master_3d_data_array and final_list_of_angles from an HDF5 checkpoint."""
         if not file_path or not os.path.exists(file_path):
             raise FileNotFoundError(
@@ -214,9 +214,10 @@ class CheckpointHdf5(Parent):
         logging.info(f"Loading raw-data checkpoint from: {file_path}")
 
         with h5py.File(file_path, "r") as f:
-            sample_array = f["raw/sample"][:]
+            sample_array = f["raw/sample"][:] if "raw/sample" in f else None
             ob_array = f["raw/ob"][:] if "raw/ob" in f else None
             dc_array = f["raw/dc"][:] if "raw/dc" in f else None
+            normalized_images_log = f["raw/normalized_images_log"][:] if "raw/normalized_images_log" in f else None
             list_of_angles_deg = list(f["angles/deg"][:])
             config_json = f["metadata/config"][()] if "metadata/config" in f else None
             working_dir = f["metadata"].attrs.get("working_dir", None)
@@ -226,6 +227,8 @@ class CheckpointHdf5(Parent):
             self.parent.master_3d_data_array[DataType.ob] = ob_array
         if dc_array is not None:
             self.parent.master_3d_data_array[DataType.dc] = dc_array
+        if normalized_images_log is not None:
+            self.parent.normalized_images_log = normalized_images_log
         self.parent.final_list_of_angles = list_of_angles_deg
         self.parent.final_list_of_angles_rad = [np.deg2rad(float(a)) for a in list_of_angles_deg]
         _config_dict = json.loads(config_json) if config_json is not None else None

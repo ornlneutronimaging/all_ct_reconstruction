@@ -48,6 +48,8 @@ Created: Configuration management for CT reconstruction pipeline
 
 from pydantic import BaseModel, Field
 from typing import List, Tuple, Optional, Union
+import h5py
+import json
 
 from __code.utilities.json import load_json_string
 from __code import CleaningAlgorithm, NormalizationSettings, OperatingMode, WhenToRemoveStripes, Instrument
@@ -524,16 +526,16 @@ class Configuration(BaseModel):
     projections_pre_processing_folder: str = Field(default="")
 
 
-def loading_config_file_into_model(config_file_path: str) -> Configuration:
+def loading_hdf5_file_into_model(hdf5_file_path: str) -> Configuration:
     """
-    Load and validate a JSON configuration file into a Configuration model.
+    Load and validate an HDF5 configuration file into a Configuration model.
     
-    Reads a JSON configuration file from disk and parses it into a validated
+    Reads an HDF5 file from disk and parses it into a validated
     Configuration model instance. Provides type checking and validation of
     all configuration parameters according to the defined schema.
     
     Args:
-        config_file_path: Absolute path to the JSON configuration file
+        hdf5_file_path: Absolute path to the HDF5 configuration file
                          containing reconstruction parameters.
     
     Returns:
@@ -546,23 +548,23 @@ def loading_config_file_into_model(config_file_path: str) -> Configuration:
         JSONDecodeError: If the file contains invalid JSON syntax
     
     Example:
-        >>> config = loading_config_file_into_model("/path/to/config.json")
+        >>> config = loading_hdf5_file_into_model("/path/to/config.hdf5")
         >>> print(config.instrument)  # Access validated parameters
         'venus'
     """
-    config_dictionary = load_json_string(config_file_path)
-    my_model = Configuration.parse_obj(config_dictionary)
-    return my_model
+    config_json = None
+    with h5py.File(hdf5_file_path, "r") as f:
+        config_json = f["metadata/config"][()] if "metadata/config" in f else None
+
+    _config_dict = json.loads(config_json) if config_json is not None else None
+    configuration = Configuration.model_validate(_config_dict)        
+    return configuration
 
 
 def select_file(top_folder: Optional[str] = None, next_function: Optional[callable] = None) -> None:
     """
     Launch interactive file selection for configuration files.
-    
-    Opens a file browser interface allowing users to select JSON configuration
-    files for neutron CT reconstruction. Provides filtering to show only
-    JSON files and supports callback functions for processing selected files.
-    
+     
     Args:
         top_folder: Optional starting directory for file browser. If None,
                    uses current working directory as starting point.
@@ -584,5 +586,6 @@ def select_file(top_folder: Optional[str] = None, next_function: Optional[callab
     o_file = FileFolderBrowser(working_dir=top_folder,
                                next_function=next_function)
     o_file.select_file(instruction="Select configuration file ...",
-                       filters={"Json": "*.json"},
-                       default_filter="Json")
+                       filters={"Hdf5": "*_step2.hdf5"},
+                       default_filter="Hdf5")
+    
