@@ -43,14 +43,14 @@ from __code.utilities.json import save_json
 from __code.utilities.configuration_file import SvmbirConfig
 from __code.parent import Parent
 from __code.utilities.create_scripts import create_sh_file, create_sh_hsnt_file
-from __code import DataType, STEP2_NOTEBOOK
+from __code import DataType, STEP3_NOTEBOOK
 from __code.utilities.time import get_current_time_in_special_file_name_format
 from __code.config import imaging_team
 from __code.utilities.system import get_instrument_generic_name
 
 
 class RunningModeOptions:
-    go_to_step2 = "Divide reconstruction into several jobs and run them in the background"
+    go_to_step3 = "Divide reconstruction into several jobs and run them in the background"
     manual_launch = "Manually launch script outside notebook"
     run_from_notebook = "Launch the script directly from the notebook"
     run_on_hsnt = "Create script to run from hsnt"
@@ -336,7 +336,7 @@ class ExportExtra(Parent):
         display(choices)
 
         basename_config_file_name = os.path.basename(self.config_file_name)
-        self.instructions = widgets.Textarea(value=f"Reload the configuration file {basename_config_file_name} found in {os.path.dirname(self.config_file_name)} in the notebook {STEP2_NOTEBOOK}",
+        self.instructions = widgets.Textarea(value=f"Reload the configuration file {basename_config_file_name} found in {os.path.dirname(self.config_file_name)} in the notebook {STEP3_NOTEBOOK}",
                                              layout=widgets.Layout(width='100%', height='160px'),
                                              disabled=True)
         display(self.instructions) 

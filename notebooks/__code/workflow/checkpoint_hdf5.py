@@ -8,6 +8,7 @@ from numpy.typing import NDArray
 import json
 
 from __code.parent import Parent
+from __code.utilities.configuration_file import Configuration
 from __code import DataType
 from __code.utilities.time import get_current_time_in_special_file_name_format
 from __code.utilities.file_folder_browser import FileFolderBrowser
@@ -40,7 +41,7 @@ class CheckpointHdf5(Parent):
 
     # ------------------------------------------------------------------ save
 
-    def select_output_folder(self) -> None:
+    def select_output_folder(self, step: str = "step1") -> None:
         """Let the user browse to a folder where the HDF5 will be saved."""
         from __code.utilities.file_folder_browser import FileFolderBrowser
 
@@ -48,6 +49,7 @@ class CheckpointHdf5(Parent):
         logging.info(f"Selecting HDF5 output folder (start: {start_dir}) ...")
 
         self.output = widgets.Output()
+        self.step = step
         display(self.output)
     
         self.o_browser = FileFolderBrowser(working_dir=start_dir,
@@ -75,21 +77,30 @@ class CheckpointHdf5(Parent):
         base_name = os.path.basename(self.parent.working_dir[DataType.sample][0]) if self.parent.working_dir[DataType.sample] else "unknown"
 
         _time_ext = get_current_time_in_special_file_name_format()
-        filename = f"{base_name}_{_time_ext}_step1.hdf5"
+        filename = f"{base_name}_{_time_ext}_{self.step}.hdf5"
         full_path = os.path.join(output_folder, filename)
         logging.info(f"\tOutput file: {full_path}")
 
-        sample_array = self.parent.master_3d_data_array[DataType.sample]
-        ob_array = self.parent.master_3d_data_array.get(DataType.ob, None)
-        dc_array = self.parent.master_3d_data_array.get(DataType.dc, None)
-        list_of_angles_deg = np.array(self.parent.final_list_of_angles, dtype=np.float32)
-        detector_name = getattr(self.parent, "detector_name", "unknown")
+        if self.step == "step1":
+            sample_array = self.parent.master_3d_data_array[DataType.sample]
+            ob_array = self.parent.master_3d_data_array.get(DataType.ob, None)
+            dc_array = self.parent.master_3d_data_array.get(DataType.dc, None)
+            normalized_images_log = None            
+        else:
+            sample_array = None
+            ob_array = None
+            dc_array = None
+            normalized_images_log = self.parent.normalized_images_log
 
+        detector_name = getattr(self.parent, "detector_name", "unknown")
+        list_of_angles_deg = np.array(self.parent.final_list_of_angles, dtype=np.float32)
+    
         CheckpointHdf5._create_hdf5(
             full_path=full_path,
             sample_array=sample_array,
             ob_array=ob_array,
             dc_array=dc_array,
+            normalized_images_log=normalized_images_log,
             list_of_angles_deg=list_of_angles_deg,
             detector_name=detector_name,
             config=self.parent.configuration,
@@ -121,9 +132,25 @@ class CheckpointHdf5(Parent):
             raise ValueError("full_path must be provided to create HDF5 checkpoint.")
         
         logging.info("Data to export to HDF5:")
-        logging.info(f"{sample_array.shape =}")
-        logging.info(f"{ob_array.shape if ob_array is not None else 'N/A'}")
-        logging.info(f"{dc_array.shape if dc_array is not None else 'N/A'}")
+        if sample_array is None:
+            logging.warning("No sample array provided for HDF5 export.")
+        else:
+            logging.info(f"{sample_array.shape =}")
+        
+        if normalized_images_log is None:
+            logging.warning("No normalized_images_log provided for HDF5 export.")
+        else:
+            logging.info(f"{normalized_images_log.shape =}")
+        
+        if ob_array is None:
+            logging.warning("No ob_array provided for HDF5 export.")
+        else:
+            logging.info(f"{ob_array.shape =}")
+        
+        if dc_array is None:
+            logging.warning("No dc_array provided for HDF5 export.")
+        else:
+            logging.info(f"{dc_array.shape =}")
         logging.info(f"Detector: {detector_name}")
         logging.info(f"Config: {config}")
         logging.info(f"Working dir: {working_dir}")
@@ -201,7 +228,9 @@ class CheckpointHdf5(Parent):
             self.parent.master_3d_data_array[DataType.dc] = dc_array
         self.parent.final_list_of_angles = list_of_angles_deg
         self.parent.final_list_of_angles_rad = [np.deg2rad(float(a)) for a in list_of_angles_deg]
-        self.parent.configuration = json.loads(config_json) if config_json is not None else None
+        _config_dict = json.loads(config_json) if config_json is not None else None
+        configuration = Configuration.model_validate(_config_dict)        
+        self.parent.configuration = configuration
 
         # derive working_dir so that downstream methods that rely on it work
         self.parent.working_dir = json.loads(working_dir) if working_dir is not None else {}

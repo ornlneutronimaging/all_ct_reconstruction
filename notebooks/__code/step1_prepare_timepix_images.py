@@ -1560,7 +1560,7 @@ class Step1PrepareTimePixImages:
 
     def select_hdf5_output_folder(self) -> None:
         o_checkpoint = CheckpointHdf5(parent=self)
-        o_checkpoint.select_output_folder()
+        o_checkpoint.select_output_folder(step="step1")
 
     def export_raw_hdf5(self) -> None:
         self.detector_name = "TimePix"
