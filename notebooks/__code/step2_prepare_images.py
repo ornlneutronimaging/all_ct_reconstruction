@@ -836,6 +836,7 @@ class Step2PrepareImages:
         """
         o_select = Load(parent=self)
         o_select.select_folder(data_type=DataType.normalized,
+                               next_function=self.export_normalized_images,
                                output_flag=True)
 
     def export_normalized_images(self) -> None:
@@ -1042,6 +1043,10 @@ class Step2PrepareImages:
         self.o_crop.run()
 
     # rotate sample
+    def is_rotation_needed(self):
+        self.o_rotate = Rotate(parent=self)
+        self.o_rotate.is_rotation_needed()
+    
     def rotate_data_settings(self) -> None:
         """
         Configure rotation parameters for TimePix sample alignment.
