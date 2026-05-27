@@ -239,6 +239,10 @@ class CheckpointHdf5(Parent):
         # derive working_dir so that downstream methods that rely on it work
         self.parent.working_dir = json.loads(working_dir) if working_dir is not None else {}
 
+        # convert the key str to DataType enum if needed
+        if self.parent.working_dir and isinstance(self.parent.working_dir, dict):
+            self.parent.working_dir = {DataType(key): value for key, value in self.parent.working_dir.items()}
+
         logging.info(
             f"\tLoaded sample array shape : {sample_array.shape if sample_array is not None else 'N/A'}\n"
             f"\tLoaded OB array shape     : {ob_array.shape if ob_array is not None else 'N/A'}\n"

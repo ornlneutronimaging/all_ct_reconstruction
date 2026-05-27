@@ -349,6 +349,7 @@ class Step2PrepareImages:
         logging.info(f"  - processed: {self.working_dir[DataType.processed]}")
         logging.info(f"  - ipts: {self.working_dir[DataType.ipts]}")
         logging.info(f"  - top: {self.working_dir[DataType.top]}")
+        logging.info(f"  - normalized: {self.working_dir[DataType.normalized]}")
 
     # def get_unix_detector_name(self) -> str:
     #     if  self.detector_type == DetectorType.tpx1:
