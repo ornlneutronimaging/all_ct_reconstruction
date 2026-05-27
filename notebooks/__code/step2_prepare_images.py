@@ -213,10 +213,12 @@ class Step2PrepareImages:
     at_least_one_frame_number_not_found: bool = False
 
     master_3d_data_array: Dict[DataType, Optional[NDArray]] = {DataType.sample: None,  # [angle, y, x]
-                                                               DataType.ob: None}
+                                                               DataType.ob: None,
+                                                               DataType.dc: None}
 
     master_3d_data_array_cleaned: Dict[DataType, Optional[NDArray]] = {DataType.sample: None,  # [angle, y, x]
-                                                                       DataType.ob: None}
+                                                                       DataType.ob: None,
+                                                                       DataType.dc: None}
 
     normalized_images: Optional[NDArray] = None   # after normalization
     corrected_images: Optional[NDArray] = None  # after chips correction
@@ -341,7 +343,6 @@ class Step2PrepareImages:
                 self.working_dir[DataType.top] = os.path.join(top_sample_dir, "shared", "autoreduce", "images", self.get_unix_detector_name())
 
         logging.info(f"Updates all paths:")
-        logging.info(f"  - top_sample_dir: {top_sample_dir}")
         logging.info(f"  - sample: {self.working_dir[DataType.sample]}")
         logging.info(f"  - ob: {self.working_dir[DataType.ob]}")
         logging.info(f"  - nexus: {self.working_dir[DataType.nexus]}")  

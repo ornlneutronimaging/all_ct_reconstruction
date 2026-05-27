@@ -8,7 +8,7 @@ from IPython.display import display
 import ipywidgets as widgets
 import numpy as np
 from IPython.display import HTML
-from typing import Optional, Tuple, List, Any
+from typing import Optional, Tuple, List, Any, Dict
 from numpy.typing import NDArray
 
 try:
@@ -17,8 +17,8 @@ try:
 except ImportError:
     HAS_SVMBIR = False
     
-from __code import OperatingMode, DataType, STEP3_SCRIPTS
-from __code.config import DEBUG, debug_folder, NUMBER_OF_SLICES_TO_OVERAP # , default_file_naming_convention
+from __code import OperatingMode, DataType
+from __code.config import NUMBER_OF_SLICES_TO_OVERAP # , default_file_naming_convention
 from __code.utilities.configuration_file import CropRegion
 from __code.utilities.configuration_file import select_file
 from __code.utilities.logging import setup_logging
@@ -73,7 +73,28 @@ class Step3SlicePreprocessedImages:
     SVBMIR_MODE_FLAG = HAS_SVMBIR
     
     normalized_images_log = None
-    
+   
+    working_dir: Dict[DataType, str] = {DataType.sample: "",
+                                        DataType.ob: "",
+                                        DataType.dc: "",
+                                        DataType.ct_scans: "",
+                                        DataType.ipts: "",
+                                        DataType.top: "",
+                                        DataType.nexus: "",
+                                        DataType.cleaned_images: "",
+                                        DataType.normalized: "",
+                                        DataType.reconstructed: "",
+                                        DataType.extra: "",
+                                        DataType.processed: "",
+                                        DataType.raw: "",
+                                        DataType.hdf5: "",
+                                        }
+
+    master_3d_data_array: Dict[DataType, Optional[NDArray]] = {DataType.sample: None,  # [angle, y, x]
+                                                               DataType.ob: None,
+                                                               DataType.dc: None}
+
+
     def __init__(self, system: Optional[Any] = None) -> None:
         """
         Initialize the Step2SliceCcdOrTimePixImages class.
@@ -88,7 +109,7 @@ class Step3SlicePreprocessedImages:
         self.offline = system.System.offline
         logging.info(f"System offline mode: {self.offline}")
 
-        top_sample_dir = os.system.System.get_working_dir()
+        top_sample_dir = system.System.get_working_dir()
         self.top_sample_dir = top_sample_dir
         self.instrument = "VENUS"  
         self.full_ipts_number = os.path.basename(top_sample_dir) 
@@ -123,17 +144,8 @@ class Step3SlicePreprocessedImages:
             self.working_dir[DataType.nexus] = os.path.join(top_sample_dir, "nexus")
             self.working_dir[DataType.processed] = os.path.join(top_sample_dir, "shared", "processed_data")       
             self.working_dir[DataType.normalized] = os.path.join(top_sample_dir, "shared", "processed_data", "normalized_data")
+            self.working_dir[DataType.top] = top_sample_dir
             
-            if self.detector_type == DetectorType.tpx1_legacy:
-                self.working_dir[DataType.sample] = os.path.join(top_sample_dir, "shared", "autoreduce", "mcp")
-                self.working_dir[DataType.ob] = os.path.join(top_sample_dir, "shared", "autoreduce", "mcp")
-                self.working_dir[DataType.top] = os.path.join(top_sample_dir, "shared", "autoreduce", "mcp")
-        
-            elif self.detector_type in [DetectorType.tpx1, DetectorType.tpx3]:
-                self.working_dir[DataType.sample] = os.path.join(top_sample_dir, "shared", "autoreduce", "images", self.get_unix_detector_name(), 'raw', 'ct')
-                self.working_dir[DataType.ob] = os.path.join(top_sample_dir, "shared", "autoreduce", "images", self.get_unix_detector_name(), 'ob')
-                self.working_dir[DataType.top] = os.path.join(top_sample_dir, "shared", "autoreduce", "images", self.get_unix_detector_name())
-
         logging.info(f"Updates all paths:")
         logging.info(f"  - top_sample_dir: {top_sample_dir}")
         logging.info(f"  - sample: {self.working_dir[DataType.sample]}")

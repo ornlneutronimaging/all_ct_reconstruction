@@ -222,7 +222,8 @@ class CheckpointHdf5(Parent):
             config_json = f["metadata/config"][()] if "metadata/config" in f else None
             working_dir = f["metadata"].attrs.get("working_dir", None)
 
-        self.parent.master_3d_data_array[DataType.sample] = sample_array
+        if sample_array is not None:
+            self.parent.master_3d_data_array[DataType.sample] = sample_array
         if ob_array is not None:
             self.parent.master_3d_data_array[DataType.ob] = ob_array
         if dc_array is not None:
@@ -239,7 +240,7 @@ class CheckpointHdf5(Parent):
         self.parent.working_dir = json.loads(working_dir) if working_dir is not None else {}
 
         logging.info(
-            f"\tLoaded sample array shape : {sample_array.shape}\n"
+            f"\tLoaded sample array shape : {sample_array.shape if sample_array is not None else 'N/A'}\n"
             f"\tLoaded OB array shape     : {ob_array.shape if ob_array is not None else 'N/A'}\n"
             f"\tLoaded DC array shape     : {dc_array.shape if dc_array is not None else 'N/A'}\n"
             f"\tLoaded {len(list_of_angles_deg)} angles (deg): {list_of_angles_deg[:5]} ...\n"
@@ -250,7 +251,7 @@ class CheckpointHdf5(Parent):
             display(widgets.HTML(
                 f"<b>Checkpoint loaded:</b><br/>"
                 f"<ul>"
-                f"<li>Sample array shape: {sample_array.shape}</li>"
+                f"<li>Sample array shape: {sample_array.shape if sample_array is not None else 'N/A'}</li>"
                 f"<li>OB array shape: {ob_array.shape if ob_array is not None else 'N/A'}</li>"
                 f"<li>DC array shape: {dc_array.shape if dc_array is not None else 'N/A'}</li>"
                 f"<li>Number of angles: {len(list_of_angles_deg)}</li>"

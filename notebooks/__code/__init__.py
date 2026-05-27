@@ -1,6 +1,7 @@
 import numpy as np
 import tomopy
 import os
+from enum import Enum
 
 # Patch as_ndarray
 def patched_as_ndarray(arr, dtype=None, copy=False):
@@ -32,7 +33,7 @@ class DetectorType:
     ikonxl = "IkonXL"
 
 
-class DataType:
+class DataType(Enum):
     sample = 'sample'
     ob = 'ob'
     dc = 'dc'
