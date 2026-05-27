@@ -315,22 +315,26 @@ class CheckpointHdf5(Parent):
             mbirjax_config.verbose = self.parent.o_mbirjax.verbose_ui.value
             self.parent.configuration.mbirjax_config = mbirjax_config
 
-    def create_hdf5_with_config_and_preprocessed_data(self) -> None:
-        """Convenience method to export HDF5 checkpoint at the end of step 2."""
-        logging.info("Exporting HDF5 checkpoint at the end of step 2 ...")
+    def create_hdf5_with_config_and_preprocessed_data(self, hdf5_full_path: str = "", step="step2") -> str:
+        """Convenience method to export HDF5 checkpoint at the end of step."""
+        logging.info(f"Exporting HDF5 checkpoint at the end of {step} ...")
         self.data_type = DataType.extra
         
         normalized_images_log: NDArray[np.floating] = self.parent.normalized_images_log
         list_of_angles_deg: NDArray[np.floating] = np.array(self.parent.final_list_of_angles)
 
-        output_folder = self.parent.working_dir[self.data_type]
-        _time_ext = get_current_time_in_special_file_name_format()
-        sample_basename = os.path.basename(self.parent.working_dir[DataType.sample][0]) if self.parent.working_dir[DataType.sample] else ["unknown"]
+        if hdf5_full_path == "":
+            output_folder = self.parent.working_dir[self.data_type]
+            _time_ext = get_current_time_in_special_file_name_format()
+            sample_basename = os.path.basename(self.parent.working_dir[DataType.sample][0]) if self.parent.working_dir[DataType.sample] else ["unknown"]
+            hdf5_file_name = f"{sample_basename}_{_time_ext}_{step}.hdf5"
+            hdf5_full_path = os.path.join(output_folder, hdf5_file_name)
+        else:
+            output_folder = os.path.dirname(hdf5_full_path)
+            hdf5_file_name = os.path.basename(hdf5_full_path)
 
         config_dict = self.parent.configuration
 
-        hdf5_file_name = f"{sample_basename}_{_time_ext}_step2.hdf5"
-        hdf5_full_path = os.path.join(output_folder, hdf5_file_name)
         logging.info(f"\tOutput file: {hdf5_full_path}")
 
         CheckpointHdf5._create_hdf5(
@@ -339,6 +343,7 @@ class CheckpointHdf5(Parent):
             list_of_angles_deg=list_of_angles_deg,
             config=config_dict,
         )
-        logging.info(f"Done exporting HDF5 checkpoint ({hdf5_file_name}) at the end of step 2. in folder {output_folder}")
+        logging.info(f"Done exporting HDF5 checkpoint ({hdf5_file_name}) at the end of {step}. in folder {output_folder}")
         
         return hdf5_full_path
+    
