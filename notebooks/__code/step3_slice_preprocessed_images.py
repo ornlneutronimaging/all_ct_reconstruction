@@ -72,6 +72,8 @@ class Step3SlicePreprocessedImages:
     MODE = OperatingMode.white_beam
     SVBMIR_MODE_FLAG = HAS_SVMBIR
     
+    hdf5_input_file = None
+    
     normalized_images_log = None
    
     working_dir: Dict[DataType, str] = {DataType.sample: "",
@@ -165,26 +167,26 @@ class Step3SlicePreprocessedImages:
         o_hdf5_file_selector = CheckpointHdf5(parent=self)
         o_hdf5_file_selector.select_input_file()
        
-    def load_hdf5_file(self, hdf5_file_path: str) -> None:
-        """
-        Load configuration from the selected HDF5 file.
+    # def load_hdf5_file(self, hdf5_file_path: str) -> None:
+    #     """
+    #     Load configuration from the selected HDF5 file.
         
-        Args:
-            hdf5_file_path: Path to the HDF5 configuration file
+    #     Args:
+    #         hdf5_file_path: Path to the HDF5 configuration file
             
-        Sets:
-            output_config_file: Directory containing the config file
-            configuration: Loaded configuration object
-            images_path: Path to projection images from configuration
-        """
-        self.output_hdf5_file: str = os.path.dirname(hdf5_file_path)
-        logging.info(f"Loading HDF5 {hdf5_file_path} ...")
-        o_checkpoint = CheckpointHdf5(parent=self)
-        o_checkpoint.load(hdf5_file_path)
-        self.data = self.normalized_images_log
-        print(f"HDF5 file {os.path.basename(hdf5_file_path)} loaded!")
-        logging.info(f"Loaded from HDF5 file: {self.configuration}")
-        self.crop_settings()
+    #     Sets:
+    #         output_config_file: Directory containing the config file
+    #         configuration: Loaded configuration object
+    #         images_path: Path to projection images from configuration
+    #     """
+    #     self.output_hdf5_file: str = os.path.dirname(hdf5_file_path)
+    #     logging.info(f"Loading HDF5 {hdf5_file_path} ...")
+    #     o_checkpoint = CheckpointHdf5(parent=self)
+    #     o_checkpoint.load(hdf5_file_path)
+    #     self.data = self.normalized_images_log
+    #     print(f"HDF5 file {os.path.basename(hdf5_file_path)} loaded!")
+    #     logging.info(f"Loaded from HDF5 file: {self.configuration}")
+    #     self.crop_settings()
 
     # def load_images(self) -> None:
     #     """
@@ -244,7 +246,7 @@ class Step3SlicePreprocessedImages:
 
         max_slices = int(height/10)
 
-        def plot_images(image_index: int, top_bottom: Tuple[int, int], nbr: int, vrange: Tuple[float, float]) -> Tuple[Tuple[int, int], int]:
+        def plot_images(image_index: int, top_bottom: Tuple[int, int], nbr: int, vrange: Tuple[float, float]) -> Tuple[int, int, int]:
             """
             Inner function to plot slice ranges on the selected image.
             
@@ -339,6 +341,8 @@ class Step3SlicePreprocessedImages:
         The ROI is visualized as a colored rectangle overlaid on the selected image.
         Results are stored in self.display_roi.result.
         """
+
+        self.data = self.normalized_images_log
 
         nbr_images: int
         height: int
@@ -443,77 +447,150 @@ class Step3SlicePreprocessedImages:
                                         )
         display(self.display_roi)
   
-    def rename_or_not_configuration_files(self) -> None:
-        """
-        Display option to rename configuration files in the output directory.
+    # def rename_or_not_configuration_files(self) -> None:
+    #     """
+    #     Display option to rename configuration files in the output directory.
         
-        Provides a checkbox to choose whether to rename existing configuration
-        files in the output directory. If checked, all JSON files matching the
-        naming convention will be renamed with a timestamp suffix.
-        """
-        self.rename_ui = widgets.Checkbox(
-            value=False,
-            description='Rename base configuration file',
-            disabled=False,
-            indent=False,
-            layout=widgets.Layout(width='50%')
-        )
-        display(self.rename_ui)
-        self.rename_ui.observe(self.on_rename_ui_change, names='value')
+    #     Provides a checkbox to choose whether to rename existing configuration
+    #     files in the output directory. If checked, all JSON files matching the
+    #     naming convention will be renamed with a timestamp suffix.
+    #     """
+    #     self.rename_ui = widgets.Checkbox(
+    #         value=False,
+    #         description='Rename base configuration file',
+    #         disabled=False,
+    #         indent=False,
+    #         layout=widgets.Layout(width='50%')
+    #     )
+    #     display(self.rename_ui)
+    #     self.rename_ui.observe(self.on_rename_ui_change, names='value')
 
-        new_name_label = widgets.Label("New basename:",
-                                        layout=widgets.Layout(width='100px'))
-        self.new_name_ui = widgets.Text(
-            value=f"{BASENAME_FILENAME}",
-            layout=widgets.Layout(width='800px'),
-        )
-        hori_layout = widgets.HBox([new_name_label, self.new_name_ui])
-        self.new_name_ui.disabled = True
-        display(hori_layout)
+    #     new_name_label = widgets.Label("New basename:",
+    #                                     layout=widgets.Layout(width='100px'))
+    #     self.new_name_ui = widgets.Text(
+    #         value=f"{BASENAME_FILENAME}",
+    #         layout=widgets.Layout(width='800px'),
+    #     )
+    #     hori_layout = widgets.HBox([new_name_label, self.new_name_ui])
+    #     self.new_name_ui.disabled = True
+    #     display(hori_layout)
 
-        old_name_label = widgets.Label("Old basename:",
-                                        layout=widgets.Layout(width='100px'))
-        old_name = widgets.Label(BASENAME_FILENAME)
-        hori_layout2 = widgets.HBox([old_name_label, old_name])
-        display(hori_layout2)
+    #     old_name_label = widgets.Label("Old basename:",
+    #                                     layout=widgets.Layout(width='100px'))
+    #     old_name = widgets.Label(BASENAME_FILENAME)
+    #     hori_layout2 = widgets.HBox([old_name_label, old_name])
+    #     display(hori_layout2)
 
-    def on_rename_ui_change(self, change: dict) -> None:
-        state = change['new']
-        if state:
-            self.new_name_ui.disabled = False
-        else:
-            self.new_name_ui.disabled = True
+    # def on_rename_ui_change(self, change: dict) -> None:
+    #     state = change['new']
+    #     if state:
+    #         self.new_name_ui.disabled = False
+    #     else:
+    #         self.new_name_ui.disabled = True
 
-    def select_json_type_you_want_to_create(self) -> None:
-        """
-        Display options for selecting the type of JSON configuration files to create.
+    # def select_json_type_you_want_to_create(self) -> None:
+    #     """
+    #     Display options for selecting the type of JSON configuration files to create.
         
-        If only one slice range is selected, automatically chooses single JSON.
-        If multiple slice ranges are selected, displays radio buttons to choose between:
-        - Single JSON file for sequential reconstruction
-        - Multiple JSON files for parallel reconstruction
+    #     If only one slice range is selected, automatically chooses single JSON.
+    #     If multiple slice ranges are selected, displays radio buttons to choose between:
+    #     - Single JSON file for sequential reconstruction
+    #     - Multiple JSON files for parallel reconstruction
         
-        Updates self.json_type_requested based on selection.
-        """
+    #     Updates self.json_type_requested based on selection.
+    #     """
 
-        _, _, nbr = self.display_plot_images.result
+    #     _, _, nbr = self.display_plot_images.result
 
-        if nbr == 1:
-            display(HTML("1 single json (config file) will be created for the whole reconstruction"))
-            self.json_type_requested = JsonTypeRequested.single
+    #     if nbr == 1:
+    #         display(HTML("1 single json (config file) will be created for the whole reconstruction"))
+    #         self.json_type_requested = JsonTypeRequested.single
 
-        else:
+    #     else:
 
-            self.json_type = widgets.RadioButtons(
-                options=[JsonTypeRequested.single,
-                        JsonTypeRequested.multi],
-                value=JsonTypeRequested.single,
-                description='Json types:',
-                disabled=False,
-                style={'description_width': 'initial'},
-                layout=widgets.Layout(width='50%')
-            )
-            display(self.json_type)
+    #         self.json_type = widgets.RadioButtons(
+    #             options=[JsonTypeRequested.single,
+    #                     JsonTypeRequested.multi],
+    #             value=JsonTypeRequested.single,
+    #             description='Json types:',
+    #             disabled=False,
+    #             style={'description_width': 'initial'},
+    #             layout=widgets.Layout(width='50%')
+    #         )
+    #         display(self.json_type)
+    
+    def create_hdf5_file(self) -> None:
+        hdf5_input_file = self.hdf5_input_file
+        output_folder = os.path.dirname(hdf5_input_file)
+        hdf5_file_name = os.path.basename(hdf5_input_file)
+        new_hdf5_file_name = hdf5_file_name.replace("_step2.hdf5", f"_updated_{get_current_time_in_special_file_name_format()}_step3.hdf5")
+        output_hdf5_file = os.path.join(output_folder, new_hdf5_file_name)
+
+        logging.info(f"Creating new HDF5 file with updated configuration for step 3: {new_hdf5_file_name}")
+        logging.info(f"\t- input hdf5 file: {hdf5_input_file}")
+        logging.info(f"\t- output hdf5 file: {output_hdf5_file}")
+    
+        top_slice: int
+        bottom_slice: int
+        nbr: int
+        top_slice, bottom_slice, nbr = self.display_plot_images.result
+    
+        logging.info(f"\ttop_slice: {top_slice}")
+        logging.info(f"\tbottom_slice: {bottom_slice}")
+        logging.info(f"\tnbr_of_ranges: {nbr}")
+    
+        range_size: int = int((np.abs(top_slice - bottom_slice)) / nbr)
+
+        list_slices: List[Tuple[int, int]] = []
+        for _range_index in np.arange(nbr):
+            _top_slice: int = top_slice + _range_index * range_size
+            if _top_slice > NUMBER_OF_SLICES_TO_OVERAP:
+                _top_slice -= (NUMBER_OF_SLICES_TO_OVERAP-1)  # to make sure we have an overlap between ranges of slices
+
+            _bottom_slice: int = top_slice + _range_index * range_size + range_size
+            if _bottom_slice < (self.data.shape[1] - NUMBER_OF_SLICES_TO_OVERAP):
+                _bottom_slice += (NUMBER_OF_SLICES_TO_OVERAP - 1) # to make sure we have an overlap between ranges of slices
+
+            list_slices.append((_top_slice, _bottom_slice))
+            self.configuration.list_of_slices_to_reconstruct = list_slices
+
+        logging.info(f"list_of_slices_to_reconstruct:")
+        for _range_index, (_top_slice, _bottom_slice) in enumerate(list_slices):
+            logging.info(f"\tRange {_range_index}: top_slice: {_top_slice}, bottom_slice: {_bottom_slice}")
+
+        left: int
+        right: int
+        top: int
+        bottom: int
+        left, right, top, bottom = self.display_roi.result
+        self.configuration.crop_region = CropRegion(left=left, right=right, top=top, bottom=bottom)
+
+        # we need to recalculate the center of rotation because of the cropping
+        original_center_of_rotation = self.configuration.center_of_rotation
+        new_center_of_rotation = original_center_of_rotation - left
+        self.configuration.center_of_rotation = new_center_of_rotation
+        
+        # calculate the center offset
+        
+
+        # working_dir: str = self.output_config_file
+        # current_time: str = get_current_time_in_special_file_name_format()
+        # config_file_name: str = f"{self.BASENAME_FILENAME}_{current_time}.json"
+        # full_config_file_name: str = os.path.join(working_dir, config_file_name)
+        # config_json: str = self.configuration.model_dump_json()
+        # save_json(full_config_file_name, json_dictionary=config_json)
+        # logging.info(f"config file saved: {full_config_file_name}")
+
+        # sh_file_name: str = create_sh_file(json_file_name=full_config_file_name,
+        #                             output_folder=working_dir)
+        # display(HTML(f"Next and final step. Launch the following script from the command line:"))
+        # display(HTML(f"config file name: <font color='blue'>{config_file_name}</font>"))
+        # display(HTML(f"<font color='green'>{sh_file_name}</font>"))
+
+    
+    
+    
+    
     
     def export_config_file(self) -> None:
         """

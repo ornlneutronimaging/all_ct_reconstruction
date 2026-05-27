@@ -212,6 +212,9 @@ class CheckpointHdf5(Parent):
             self.output.clear_output()
             display(widgets.HTML(f"<b>Loading checkpoint from HDF5...</b><br/>"))
         logging.info(f"Loading raw-data checkpoint from: {file_path}")
+        
+        self.parent.hdf5_input_file = file_path
+        logging.info(f"HDF5 input file set to: {file_path}")
 
         with h5py.File(file_path, "r") as f:
             sample_array = f["raw/sample"][:] if "raw/sample" in f else None
@@ -247,6 +250,7 @@ class CheckpointHdf5(Parent):
             f"\tLoaded sample array shape : {sample_array.shape if sample_array is not None else 'N/A'}\n"
             f"\tLoaded OB array shape     : {ob_array.shape if ob_array is not None else 'N/A'}\n"
             f"\tLoaded DC array shape     : {dc_array.shape if dc_array is not None else 'N/A'}\n"
+            f"\tLoaded normalized_images_log shape: {normalized_images_log.shape if normalized_images_log is not None else 'N/A'}\n"
             f"\tLoaded {len(list_of_angles_deg)} angles (deg): {list_of_angles_deg[:5]} ...\n"
             f"\tconfig: {config_json =}\n"
             f"\tworking_dir: {working_dir =}\n"
@@ -258,6 +262,7 @@ class CheckpointHdf5(Parent):
                 f"<li>Sample array shape: {sample_array.shape if sample_array is not None else 'N/A'}</li>"
                 f"<li>OB array shape: {ob_array.shape if ob_array is not None else 'N/A'}</li>"
                 f"<li>DC array shape: {dc_array.shape if dc_array is not None else 'N/A'}</li>"
+                f"<li>Normalized images log shape: {normalized_images_log.shape if normalized_images_log is not None else 'N/A'}</li>"
                 f"<li>Number of angles: {len(list_of_angles_deg)}</li>"
                 f"</ul>"
             ))
