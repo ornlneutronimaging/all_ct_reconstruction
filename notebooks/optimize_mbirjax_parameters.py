@@ -154,6 +154,7 @@ def _(h5py, json, mo, selected_hdf5_file):
 def _(
     angles_deg,
     bottom_line_slider,
+    colormap_selector,
     mo,
     normalized_images_log,
     plt,
@@ -176,7 +177,13 @@ def _(
     vmin, vmax = z_range_slider.value
 
     fig, ax = plt.subplots(figsize=(6, 6))
-    ax.imshow(first_image, cmap="gray", aspect="auto", vmin=vmin, vmax=vmax)
+    ax.imshow(
+        first_image,
+        cmap=colormap_selector.value,
+        aspect="auto",
+        vmin=vmin,
+        vmax=vmax,
+    )
     ax.axhspan(
         top_line_slider.value - band_half,
         top_line_slider.value + band_half,
@@ -240,8 +247,67 @@ def _(mo, normalized_images_log):
         show_value=True,
         full_width=True,
     )
-    mo.vstack([top_line_slider, bottom_line_slider, z_range_slider])
-    return bottom_line_slider, top_line_slider, z_range_slider
+    colormap_selector = mo.ui.dropdown(
+        options=[
+            "gray",
+            "viridis",
+            "plasma",
+            "inferno",
+            "magma",
+            "cividis",
+            "jet",
+            "turbo",
+            "seismic",
+        ],
+        value="gray",
+        label="Colormap:",
+        searchable=True,
+    )
+    mo.vstack(
+        [top_line_slider, bottom_line_slider, z_range_slider, colormap_selector]
+    )
+    return bottom_line_slider, colormap_selector, top_line_slider, z_range_slider
+
+
+@app.cell
+def _(config, mo):
+    mbirjax_params = (config or {}).get("mbirjax_config", {})
+
+    mo.stop(
+        not mbirjax_params,
+        mo.md("*No `mbirjax_config` parameters found in the config.*"),
+    )
+
+    def make_mbirjax_widget(name, value):
+        if isinstance(value, bool):
+            return mo.ui.checkbox(value=value, label=name)
+        if isinstance(value, int):
+            return mo.ui.number(value=value, step=1, label=name)
+        if isinstance(value, float):
+            return mo.ui.number(value=value, step=0.1, label=name)
+        return mo.ui.text(value=str(value), label=name)
+
+    mbirjax_widgets = mo.ui.dictionary(
+        {
+            name: make_mbirjax_widget(name, value)
+            for name, value in mbirjax_params.items()
+        }
+    )
+    mo.vstack(
+        [
+            mo.md("### MBIRJAX parameters"),
+            *mbirjax_widgets.elements.values(),
+        ]
+    ).style(
+        {
+            "background-color": "#eef2f7",
+            "color": "#1a1a1a",
+            "padding": "1rem",
+            "border-radius": "8px",
+            "border": "1px solid #c5d0dd",
+        }
+    )
+    return (mbirjax_widgets,)
 
 
 if __name__ == "__main__":
