@@ -17,8 +17,10 @@ def _():
     import re
     import json
     import h5py
+    import numpy as np
     import matplotlib.pyplot as plt
-    return glob, h5py, json, os, plt, re
+    from scipy.ndimage import rotate
+    return glob, h5py, json, np, os, plt, re, rotate
 
 
 @app.cell
@@ -132,20 +134,33 @@ def _(h5py, json, mo, selected_hdf5_file):
         ),
     )
 
-    mo.md(
-        f"""
-        Loaded from `{selected_hdf5_file}`:
+    mo.vstack(
+        [
+            mo.md("### **ℹ️ Infos**"),
+            mo.md(
+                f"""
+                Loaded from `{selected_hdf5_file}`:
 
-        - **config** (`metadata/config`): {"loaded" if config is not None else "missing"}
-        - **normalized_images_log** (`raw/normalized_images_log`): {
-            normalized_images_log.shape
-            if normalized_images_log is not None
-            else "missing"
+                - **config** (`metadata/config`): {"loaded" if config is not None else "missing"}
+                - **normalized_images_log** (`raw/normalized_images_log`): {
+                    normalized_images_log.shape
+                    if normalized_images_log is not None
+                    else "missing"
+                }
+                - **angles** (`angles/deg`): {
+                    len(angles_deg) if angles_deg is not None else "missing"
+                }
+                """
+            ),
+        ]
+    ).style(
+        {
+            "background-color": "#eef2f7",
+            "color": "#1a1a1a",
+            "padding": "1rem",
+            "border-radius": "8px",
+            "border": "1px solid #c5d0dd",
         }
-        - **angles** (`angles/deg`): {
-            len(angles_deg) if angles_deg is not None else "missing"
-        }
-        """
     )
     return angles_deg, config, normalized_images_log
 
@@ -155,9 +170,15 @@ def _(
     angles_deg,
     bottom_line_slider,
     colormap_selector,
+    mbirjax_widgets,
     mo,
     normalized_images_log,
+    np,
+    perform_tilt_switch,
     plt,
+    rotate,
+    show_grid_toggle,
+    tilt_slider,
     top_line_slider,
     z_range_slider,
 ):
@@ -176,9 +197,25 @@ def _(
     )
     vmin, vmax = z_range_slider.value
 
+    tilt_angle = tilt_slider.value
+    perform_tilt = perform_tilt_switch.value
+
+    # rotate(+tilt) straightens a feature aligned with the grid drawn at -tilt
+    display_image = (
+        rotate(
+            first_image,
+            angle=tilt_angle,
+            reshape=False,
+            order=1,
+            mode="nearest",
+        )
+        if perform_tilt and tilt_angle != 0
+        else first_image
+    )
+
     fig, ax = plt.subplots(figsize=(6, 6))
     ax.imshow(
-        first_image,
+        display_image,
         cmap=colormap_selector.value,
         aspect="auto",
         vmin=vmin,
@@ -198,6 +235,44 @@ def _(
         alpha=0.25,
     )
     ax.axhline(bottom_line_slider.value, color="cyan", linewidth=1.0)
+
+    center_column = first_image.shape[1] / 2
+    det_channel_offset = mbirjax_widgets.value.get("det_channel_offset")
+    if det_channel_offset is not None:
+        ax.axvline(
+            center_column + det_channel_offset,
+            color="white",
+            linestyle="--",
+            linewidth=1.0,
+        )
+
+    if show_grid_toggle.value:
+        # grid is tilted by tilt_angle until the tilt is performed, then straight
+        grid_angle = 0.0 if perform_tilt else tilt_angle
+        n_rows, n_cols = first_image.shape
+        center = np.array([n_cols / 2.0, n_rows / 2.0])
+        theta = np.deg2rad(-grid_angle)
+        # display: +x to the right, +y downward; +angle is up so row decreases
+        along = np.array([np.cos(theta), -np.sin(theta)])
+        across = np.array([np.sin(theta), np.cos(theta)])
+        diag = float(np.hypot(n_rows, n_cols))
+        spacing = max(n_rows, n_cols) / 10.0
+        n_lines = int(diag / spacing) + 1
+        for k in range(-n_lines, n_lines + 1):
+            for direction, offset_dir in ((along, across), (across, along)):
+                base = center + k * spacing * offset_dir
+                p0 = base - diag * direction
+                p1 = base + diag * direction
+                ax.plot(
+                    [p0[0], p1[0]],
+                    [p0[1], p1[1]],
+                    color="yellow",
+                    linewidth=0.5,
+                    alpha=0.6,
+                )
+        ax.set_xlim(-0.5, n_cols - 0.5)
+        ax.set_ylim(n_rows - 0.5, -0.5)
+
     ax.set_title(
         f"Projection at {first_angle:.3f}°"
         if first_angle is not None
@@ -263,10 +338,40 @@ def _(mo, normalized_images_log):
         label="Colormap:",
         searchable=True,
     )
-    mo.vstack(
-        [top_line_slider, bottom_line_slider, z_range_slider, colormap_selector]
+    tilt_slider = mo.ui.slider(
+        start=-5.0,
+        stop=5.0,
+        step=0.01,
+        value=0.0,
+        label="Tilt (°):",
+        show_value=True,
+        full_width=True,
     )
-    return bottom_line_slider, colormap_selector, top_line_slider, z_range_slider
+    show_grid_toggle = mo.ui.switch(label="Show grid")
+    perform_tilt_switch = mo.ui.switch(label="Perform tilt")
+    mo.vstack(
+        [
+            top_line_slider,
+            bottom_line_slider,
+            z_range_slider,
+            colormap_selector,
+            tilt_slider,
+            mo.hstack(
+                [show_grid_toggle, perform_tilt_switch],
+                justify="start",
+                gap=2,
+            ),
+        ]
+    )
+    return (
+        bottom_line_slider,
+        colormap_selector,
+        perform_tilt_switch,
+        show_grid_toggle,
+        tilt_slider,
+        top_line_slider,
+        z_range_slider,
+    )
 
 
 @app.cell
@@ -295,7 +400,7 @@ def _(config, mo):
     )
     mo.vstack(
         [
-            mo.md("### MBIRJAX parameters"),
+            mo.md("### **⚙️ MBIRJAX parameters**"),
             *mbirjax_widgets.elements.values(),
         ]
     ).style(
