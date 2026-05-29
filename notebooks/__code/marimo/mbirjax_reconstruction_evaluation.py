@@ -1,3 +1,4 @@
+import time
 import numpy as np
 import mbirjax as mj
 import os
@@ -49,14 +50,14 @@ class MbirjaxReconstructionEvaluation:
             bottom_slice = n_slices - MARIMO_TEST_RECONSTRUCTION_WIDTH // 2
         
         # reconstruction of top slices
-        top_reconstruction_slice, top_recond_dict = self._reconstruct_slices(from_slice=top_slice-MARIMO_TEST_RECONSTRUCTION_WIDTH//2, 
+        top_reconstruction_slice, top_recond_dict, top_reconstruction_time = self._reconstruct_slices(from_slice=top_slice-MARIMO_TEST_RECONSTRUCTION_WIDTH//2, 
                                                                              to_slice=top_slice+MARIMO_TEST_RECONSTRUCTION_WIDTH//2)
         
         # reconstruction of bottom slices
-        bottom_reconstruction_slice, bottom_recond_dict = self._reconstruct_slices(from_slice=bottom_slice-MARIMO_TEST_RECONSTRUCTION_WIDTH//2, 
+        bottom_reconstruction_slice, bottom_recond_dict, bottom_reconstruction_time = self._reconstruct_slices(from_slice=bottom_slice-MARIMO_TEST_RECONSTRUCTION_WIDTH//2, 
                                                                                    to_slice=bottom_slice+MARIMO_TEST_RECONSTRUCTION_WIDTH//2)
         
-        return top_reconstruction_slice, bottom_reconstruction_slice
+        return top_reconstruction_slice, bottom_reconstruction_slice, top_reconstruction_time, bottom_reconstruction_time
            
     def _reconstruct_slices(self, from_slice, to_slice):
         
@@ -77,9 +78,12 @@ class MbirjaxReconstructionEvaluation:
                                 snr_db=self.snr_db, 
                                 det_channel_offset=self.det_channel_offset,
                                 positivity_flag=self.positivity)
+        start_time = time.perf_counter()
         reconstruction_array, recond_dict = top_ct_model.recon(_sinogram, max_iterations=self.max_iterations)
         reconstruction_array = np.swapaxes(reconstruction_array, 0, 2)  # swap rows and cols to match the original orientation
         logging.info(f"\t{reconstruction_array.shape = }")
+        elapsed_time = time.perf_counter() - start_time
+        logging.info(f"\tReconstruction time: {elapsed_time:.2f} s")
         
         middle_slice = MARIMO_TEST_RECONSTRUCTION_WIDTH // 2
         logging.info(f"\tReconstruction of middle slice {middle_slice} completed.")
@@ -87,4 +91,4 @@ class MbirjaxReconstructionEvaluation:
         logging.info(f"\t{slice.shape = }")
         logging.info(f"\t{type(slice) = }")
         
-        return slice, recond_dict
+        return slice, recond_dict, elapsed_time

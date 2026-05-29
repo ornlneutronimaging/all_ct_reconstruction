@@ -255,7 +255,7 @@ def _(
     fig.add_hline(y=bottom_line_slider.value, line_color="cyan", line_width=1.0)
 
     center_column = first_image.shape[1] / 2
-    det_channel_offset = mbirjax_widgets.value.get("det_channel_offset (rotation center column offset)", 0)
+    det_channel_offset = mbirjax_widgets.value.get("det_channel_offset", 0)
     if det_channel_offset is not None:
         fig.add_vline(
             x=center_column + det_channel_offset,
@@ -410,7 +410,7 @@ def _(mo, normalized_images_log):
 
 
 @app.cell
-def _(config, mo):
+def _(config, mo, normalized_images_log):
     mbirjax_params = dict((config or {}).get("mbirjax_config", {}))
 
     mo.stop(
@@ -422,7 +422,61 @@ def _(config, mo):
     mbirjax_params.setdefault("row_scale", 1.0)
     mbirjax_params.setdefault("col_scale", 1.0)
 
+    from __code.utilities.configuration_file import MbirjaxConfigRanges
+
+    _ranges = MbirjaxConfigRanges()
+    # parameters rendered as sliders, with (range, step, is_integer) from the config ranges
+    slider_specs = {
+        "max_iterations": (_ranges.max_iterations, 1, True),
+        "sharpness": (_ranges.sharpness, 0.1, False),
+        "snr_db": (_ranges.snr_db, 1, False),
+        "row_scale": (_ranges.row_scale, 0.1, False),
+        "col_scale": (_ranges.col_scale, 0.1, False),
+    }
+
+    # det_channel_offset is an offset from the image center, so its slider spans
+    # +/- half the image width (fall back to a sane default if no image is loaded)
+    if normalized_images_log is not None and len(normalized_images_log):
+        offset_limit = float(normalized_images_log[0].shape[1]) / 2
+    else:
+        offset_limit = 256.0
+
     def make_mbirjax_widget(name, value):
+        if name == "det_channel_offset":
+            current = float(value) if value is not None else 0.0
+            current = max(-offset_limit, min(offset_limit, current))
+            return mo.ui.slider(
+                start=-offset_limit,
+                stop=offset_limit,
+                step=0.5,
+                value=current,
+                label=name,
+                show_value=True,
+                full_width=True,
+            )
+        if name in slider_specs:
+            rng, step, is_int = slider_specs[name]
+            current = float(value) if value is not None else float(rng.default)
+            current = max(rng.min, min(rng.max, current))
+            if is_int:
+                return mo.ui.slider(
+                    start=int(rng.min),
+                    stop=int(rng.max),
+                    step=int(step),
+                    value=int(round(current)),
+                    label=name,
+                    show_value=True,
+                    full_width=True,
+                )
+            return mo.ui.slider(
+                start=rng.min,
+                stop=rng.max,
+                step=step,
+                value=current,
+                label=name,
+                show_value=True,
+                full_width=True,
+            )
         if isinstance(value, bool):
             return mo.ui.checkbox(value=value, label=name)
         if isinstance(value, int):
@@ -439,6 +493,25 @@ def _(config, mo):
             if name not in excluded_mbirjax_params
         }
     )
+
+    # render each widget; det_channel_offset gets an explanatory label to its right
+    widget_rows = []
+    for name, element in mbirjax_widgets.elements.items():
+        if name == "det_channel_offset":
+            widget_rows.append(
+                mo.hstack(
+                    [
+                        element,
+                        mo.md("(Center of rotation offset from center of image)"),
+                    ],
+                    justify="start",
+                    align="center",
+                    gap=0.5,
+                )
+            )
+        else:
+            widget_rows.append(element)
+
     mo.vstack(
         [
             mo.hstack(
@@ -453,7 +526,7 @@ def _(config, mo):
                 justify="space-between",
                 align="center",
             ),
-            *mbirjax_widgets.elements.values(),
+            *widget_rows,
         ]
     ).style(
         {
@@ -626,16 +699,14 @@ def _(
 
     mo.vstack(
         [
-            mo.md("### **🚀 Ready to evaluate CT reconstruction**"),
+            mo.md("### **🚀 CT reconstruction will be evaluated using those parameters**"),
             mo.hstack(
                 [
                     mo.md(
                         "**General parameters:**\n"
                         f"""
                 - **top / bottom slice:** {reconstruction_parameters["top_slice"]} / {reconstruction_parameters["bottom_slice"]}
-                - **z range:** {reconstruction_parameters["z_range"]}
                 - **tilt (°):** {reconstruction_parameters["tilt"]}
-                - **config:** {"loaded" if reconstruction_config is not None else "missing"}
                 - **3D data:** {reconstruction_data.shape if reconstruction_data is not None else "missing"}
                 - **angles:** {len(reconstruction_angles) if reconstruction_angles is not None else "missing"}
                 - **size of input data for reconstruction:** {reconstruction_data.shape if reconstruction_data is not None else "missing"}
@@ -690,12 +761,9 @@ def _(
             list_angles_deg=reconstruction_angles,
             reconstruction_parameters=reconstruction_parameters,
         )
-        top_reconstruction_slice, bottom_reconstruction_slice = (
+        top_reconstruction_slice, bottom_reconstruction_slice, top_reconstruction_time, bottom_reconstruction_time = (
             reconstruction_evaluation.evaluate()
         )
-
-    print(f"{np.shape(top_reconstruction_slice)=}")
-    print(f"{np.shape(bottom_reconstruction_slice)=}")
 
     # append this reconstruction so it is rendered as a new row below the others
     set_reconstruction_history(
@@ -705,6 +773,8 @@ def _(
                 "top": top_reconstruction_slice,
                 "bottom": bottom_reconstruction_slice,
                 "mbirjax_config": dict(reconstruction_parameters["mbirjax_config"]),
+                "top_reconstruction_time": top_reconstruction_time,
+                "bottom_reconstruction_time": bottom_reconstruction_time,
             }
         ]
     )
@@ -766,13 +836,19 @@ def _(
         )
         return _fig
 
-    def _params_panel(mbirjax_config, use_configuration_button):
+    def _params_panel(entry, use_configuration_button):
         _mbirjax_lines = "\n".join(
-            f"- **{name}:** {value}" for name, value in mbirjax_config.items()
+            f"- **{name}:** {value}" for name, value in entry["mbirjax_config"].items()
+        )
+        _time_lines = (
+            "**reconstruction time:**<br>"
+            f"**top:** {entry['top_reconstruction_time']:.2f} s<br>"
+            f"**bottom:** {entry['bottom_reconstruction_time']:.2f} s"
         )
         return mo.vstack(
             [
                 mo.md("**mbirjax parameters used:**\n" + _mbirjax_lines),
+                mo.md(_time_lines),
                 use_configuration_button,
             ],
             justify="space-between",
@@ -793,7 +869,7 @@ def _(
             [
                 _central_slice_figure(entry["top"], "Central slice of top range"),
                 _central_slice_figure(entry["bottom"], "Central slice of bottom range"),
-                _params_panel(entry["mbirjax_config"], use_configuration_button),
+                _params_panel(entry, use_configuration_button),
             ],
             widths=[3, 3, 2],
             gap=1,

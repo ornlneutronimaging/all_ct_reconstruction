@@ -353,6 +353,46 @@ class MbirjaxConfig(BaseModel):
     det_channel_offset: float = 0.0 # center offset in pixels (from center of the image, positive means shift to the right)
 
 
+class MinMaxRange(BaseModel):
+    """
+    Configuration for minimum and maximum value ranges.
+    
+    Defines the minimum and maximum values for various parameters in the
+    reconstruction pipeline, allowing for flexible range specifications.
+    
+    Attributes:
+        min: Minimum value (default: 0)
+        max: Maximum value (default: 1)
+    """
+    min: float = 0
+    max: float = 1
+    default: float = 0
+
+
+class MbirjaxConfigRanges(BaseModel):
+    """
+    Ranges for MBIRJAX configuration parameters for optimization.
+    
+    Defines the parameter ranges to explore when optimizing MBIRJAX
+    reconstruction parameters for best image quality and reconstruction
+    performance.
+    
+    Attributes:
+        sharpness: Range of sharpness values to test (default: [0, 0.5, 1.0])
+        snr_db: Range of SNR values in dB to test (default: [20, 30, 40])
+        positivity: Whether to enforce positivity constraint (default: True)
+        max_iterations: Range of maximum iterations to test (default: [50, 100, 200])
+        det_channel_offset: Range of detector channel offsets to test (default: [-5, 0, 5])
+    """
+    sharpness: MinMaxRange = Field(default=MinMaxRange(min=-1, max=3, default=0))
+    snr_db: MinMaxRange = Field(default=MinMaxRange(min=10, max=40, default=30))
+    positivity: bool = True
+    max_iterations: MinMaxRange = Field(default=MinMaxRange(min=10, max=200, default=20))
+    det_channel_offset: MinMaxRange = Field(default=MinMaxRange(min=-200, max=200, default=0))
+    row_scale: MinMaxRange = Field(default=MinMaxRange(min=0.5, max=2.0, default=1.0))
+    col_scale: MinMaxRange = Field(default=MinMaxRange(min=0.5, max=2.0, default=1.0))
+
+
 class SvmbirConfig(BaseModel):
     """
     Configuration for SVMBIR (Sparse View Model Based Iterative Reconstruction).
