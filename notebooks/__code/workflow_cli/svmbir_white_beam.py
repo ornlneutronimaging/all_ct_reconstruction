@@ -267,6 +267,7 @@ class SvmbirCliHandler:
                                                                                         list_of_angles_rad=list_of_angles_rad,
                                                                                         center_offset=center_offset,
                                                                                         sharpness=sharpness,
+                                                                                        positivity=positivity,
                                                                                         snr_db=snr_db,
                                                                                         verbose=verbose,
                                                                                         row_scale=1.1,
@@ -325,6 +326,7 @@ class SvmbirCliHandler:
                                                                                     list_of_angles_rad=list_of_angles_rad,
                                                                                     center_offset=center_offset,
                                                                                     sharpness=sharpness,
+                                                                                    positivity=positivity,
                                                                                     snr_db=snr_db,
                                                                                     verbose=verbose,
                                                                                     row_scale=1.1,
@@ -376,6 +378,7 @@ class SvmbirCliHandler:
                                     list_of_angles_rad=None, 
                                     center_offset=0.0, 
                                     sharpness=0.0, 
+                                    positivity=True,
                                     snr_db=40.0, 
                                     verbose=False,
                                     row_scale=1.1,
@@ -391,6 +394,7 @@ class SvmbirCliHandler:
                                         verbose=verbose,
                                         det_channel_offset=center_offset,
                                         snr_db=snr_db,
+                                        positivity_flag=positivity
         )
         reconstruction_array, recond_dict = ct_model_for_recon.recon(sinogram,
                                                                     )

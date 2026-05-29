@@ -198,7 +198,8 @@ def _(
         mo.md("**No `raw/normalized_images_log` data to display.**"),
     )
 
-    band_half = 5
+    from __code.config import MARIMO_TEST_RECONSTRUCTION_WIDTH
+    band_half = int(MARIMO_TEST_RECONSTRUCTION_WIDTH / 2)
 
     first_image = normalized_images_log[0]
     first_angle = (
@@ -410,12 +411,16 @@ def _(mo, normalized_images_log):
 
 @app.cell
 def _(config, mo):
-    mbirjax_params = (config or {}).get("mbirjax_config", {})
+    mbirjax_params = dict((config or {}).get("mbirjax_config", {}))
 
     mo.stop(
         not mbirjax_params,
         mo.md("*No `mbirjax_config` parameters found in the config.*"),
     )
+
+    # scale factors default to 1 when absent from the loaded config
+    mbirjax_params.setdefault("row_scale", 1.0)
+    mbirjax_params.setdefault("col_scale", 1.0)
 
     def make_mbirjax_widget(name, value):
         if isinstance(value, bool):
@@ -436,7 +441,18 @@ def _(config, mo):
     )
     mo.vstack(
         [
-            mo.md("### **⚙️ MBIRJAX parameters**"),
+            mo.hstack(
+                [
+                    mo.md("### **⚙️ MBIRJAX parameters**"),
+                    mo.md(
+                        '<a href="https://mbirjax.readthedocs.io/en/latest/'
+                        'usr_parameters.html#positivity-flag" target="_blank" '
+                        'title="MBIRJAX parameters documentation">🌐</a>'
+                    ),
+                ],
+                justify="space-between",
+                align="center",
+            ),
             *mbirjax_widgets.elements.values(),
         ]
     ).style(
@@ -469,14 +485,12 @@ def _(first_image, mo):
 def _(
     angles_deg,
     bottom_line_slider,
-    colormap_selector,
     config,
     evaluate_reconstruction_button,
     mbirjax_widgets,
     mo,
     normalized_images_log,
     perform_tilt_switch,
-    show_grid_toggle,
     tilt_slider,
     top_line_slider,
     z_range_slider,
@@ -488,12 +502,10 @@ def _(
 
     # parameters recovered from the widgets
     reconstruction_parameters = {
-        "top_line": top_line_slider.value,
-        "bottom_line": bottom_line_slider.value,
+        "top_slice": top_line_slider.value,
+        "bottom_slice": bottom_line_slider.value,
         "z_range": z_range_slider.value,
-        "colormap": colormap_selector.value,
         "tilt": tilt_slider.value,
-        "show_grid": show_grid_toggle.value,
         "perform_tilt": perform_tilt_switch.value,
         "mbirjax_config": dict(mbirjax_widgets.value),
     }
@@ -502,8 +514,6 @@ def _(
     reconstruction_config = config  # metadata/config
     reconstruction_data = normalized_images_log  # 3D stack (n_angles, rows, cols)
     reconstruction_angles = angles_deg  # projection angles (deg)
-
-    # TODO: launch CT reconstruction of the selected slices
 
     mbirjax_lines = "\n".join(
         f"- **{name}:** {value}"
@@ -515,12 +525,13 @@ def _(
             mo.md("### **🚀 Ready to evaluate CT reconstruction**"),
             mo.md(
                 f"""
-                - **top / bottom line:** {reconstruction_parameters["top_line"]} / {reconstruction_parameters["bottom_line"]}
+                - **top / bottom slice:** {reconstruction_parameters["top_slice"]} / {reconstruction_parameters["bottom_slice"]}
                 - **z range:** {reconstruction_parameters["z_range"]}
                 - **tilt (°):** {reconstruction_parameters["tilt"]}
                 - **config:** {"loaded" if reconstruction_config is not None else "missing"}
                 - **3D data:** {reconstruction_data.shape if reconstruction_data is not None else "missing"}
                 - **angles:** {len(reconstruction_angles) if reconstruction_angles is not None else "missing"}
+                - **size of input data for reconstruction:** {reconstruction_data.shape if reconstruction_data is not None else "missing"}
                 """
             ),
             mo.md("\n**mbirjax parameters:**\n" + mbirjax_lines).style(
@@ -536,6 +547,7 @@ def _(
             "border": "1px solid #c5d0dd",
         }
     )
+    
     return (
         reconstruction_angles,
         reconstruction_config,
@@ -543,6 +555,29 @@ def _(
         reconstruction_parameters,
     )
 
+
+@app.cell
+def _(mo, 
+      evaluate_reconstruction_button, 
+      reconstruction_angles, 
+      reconstruction_config, 
+      reconstruction_data, 
+      reconstruction_parameters,
+      np):
+    mo.stop(
+        not evaluate_reconstruction_button.value,
+    )
+
+    from __code.marimo.mbirjax_reconstruction_evaluation import MbirjaxReconstructionEvaluation
+    reconstruction_evaluation = MbirjaxReconstructionEvaluation(
+        data=reconstruction_data,
+        list_angles_deg=reconstruction_angles,
+        reconstruction_parameters=reconstruction_parameters,
+        )    
+    top_reconstruction_array, bottom_reconstruction_array = reconstruction_evaluation.evaluate()
+    
+    print(f"{np.shape(top_reconstruction_array)=}")
+    print(f"{np.shape(bottom_reconstruction_array)=}")
 
 if __name__ == "__main__":
     app.run()
