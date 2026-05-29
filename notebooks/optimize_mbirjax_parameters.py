@@ -18,9 +18,19 @@ def _():
     import json
     import h5py
     import numpy as np
-    import matplotlib.pyplot as plt
+    import matplotlib
+    import plotly.graph_objects as go
     from scipy.ndimage import rotate
-    return glob, h5py, json, np, os, plt, re, rotate
+
+    def mpl_colormap_to_plotly(name, n=64):
+        cmap = matplotlib.colormaps[name]
+        samples = cmap(np.linspace(0, 1, n))
+        return [
+            [i / (n - 1), f"rgb({int(r * 255)}, {int(g * 255)}, {int(b * 255)})"]
+            for i, (r, g, b, _) in enumerate(samples)
+        ]
+
+    return glob, go, h5py, json, mpl_colormap_to_plotly, np, os, re, rotate
 
 
 @app.cell
@@ -118,7 +128,7 @@ def _(hdf5_selector, mo):
 def _(h5py, json, mo, selected_hdf5_file):
     with h5py.File(selected_hdf5_file, "r") as f:
         config_raw = f["metadata/config"][()] if "metadata/config" in f else None
-        config = json.loads(config_raw) if config_raw is not None else None
+        config = json.loads(config_raw) if config_raw is not None else None        
         normalized_images_log = (
             f["raw/normalized_images_log"][:]
             if "raw/normalized_images_log" in f
@@ -170,12 +180,13 @@ def _(
     angles_deg,
     bottom_line_slider,
     colormap_selector,
+    go,
     mbirjax_widgets,
     mo,
+    mpl_colormap_to_plotly,
     normalized_images_log,
     np,
     perform_tilt_switch,
-    plt,
     rotate,
     show_grid_toggle,
     tilt_slider,
@@ -213,43 +224,48 @@ def _(
         else first_image
     )
 
-    fig, ax = plt.subplots(figsize=(6, 6))
-    ax.imshow(
-        display_image,
-        cmap=colormap_selector.value,
-        aspect="auto",
-        vmin=vmin,
-        vmax=vmax,
+    n_rows, n_cols = first_image.shape
+
+    fig = go.Figure(
+        go.Heatmap(
+            z=display_image,
+            colorscale=mpl_colormap_to_plotly(colormap_selector.value),
+            zmin=vmin,
+            zmax=vmax,
+            colorbar=dict(title="intensity"),
+        )
     )
-    ax.axhspan(
-        top_line_slider.value - band_half,
-        top_line_slider.value + band_half,
-        color="red",
-        alpha=0.25,
+
+    fig.add_hrect(
+        y0=top_line_slider.value - band_half,
+        y1=top_line_slider.value + band_half,
+        fillcolor="red",
+        opacity=0.25,
+        line_width=0,
     )
-    ax.axhline(top_line_slider.value, color="red", linewidth=1.0)
-    ax.axhspan(
-        bottom_line_slider.value - band_half,
-        bottom_line_slider.value + band_half,
-        color="cyan",
-        alpha=0.25,
+    fig.add_hline(y=top_line_slider.value, line_color="red", line_width=1.0)
+    fig.add_hrect(
+        y0=bottom_line_slider.value - band_half,
+        y1=bottom_line_slider.value + band_half,
+        fillcolor="cyan",
+        opacity=0.25,
+        line_width=0,
     )
-    ax.axhline(bottom_line_slider.value, color="cyan", linewidth=1.0)
+    fig.add_hline(y=bottom_line_slider.value, line_color="cyan", line_width=1.0)
 
     center_column = first_image.shape[1] / 2
-    det_channel_offset = mbirjax_widgets.value.get("det_channel_offset")
+    det_channel_offset = mbirjax_widgets.value.get("det_channel_offset (rotation center column offset)", 0)
     if det_channel_offset is not None:
-        ax.axvline(
-            center_column + det_channel_offset,
-            color="white",
-            linestyle="--",
-            linewidth=1.0,
+        fig.add_vline(
+            x=center_column + det_channel_offset,
+            line_color="white",
+            line_dash="dash",
+            line_width=1.0,
         )
 
     if show_grid_toggle.value:
         # grid is tilted by tilt_angle until the tilt is performed, then straight
         grid_angle = 0.0 if perform_tilt else tilt_angle
-        n_rows, n_cols = first_image.shape
         center = np.array([n_cols / 2.0, n_rows / 2.0])
         theta = np.deg2rad(-grid_angle)
         # display: +x to the right, +y downward; +angle is up so row decreases
@@ -258,28 +274,46 @@ def _(
         diag = float(np.hypot(n_rows, n_cols))
         spacing = max(n_rows, n_cols) / 10.0
         n_lines = int(diag / spacing) + 1
+        grid_x = []
+        grid_y = []
         for k in range(-n_lines, n_lines + 1):
             for direction, offset_dir in ((along, across), (across, along)):
                 base = center + k * spacing * offset_dir
                 p0 = base - diag * direction
                 p1 = base + diag * direction
-                ax.plot(
-                    [p0[0], p1[0]],
-                    [p0[1], p1[1]],
-                    color="yellow",
-                    linewidth=0.5,
-                    alpha=0.6,
-                )
-        ax.set_xlim(-0.5, n_cols - 0.5)
-        ax.set_ylim(n_rows - 0.5, -0.5)
+                grid_x += [p0[0], p1[0], None]
+                grid_y += [p0[1], p1[1], None]
+        fig.add_trace(
+            go.Scatter(
+                x=grid_x,
+                y=grid_y,
+                mode="lines",
+                line=dict(color="yellow", width=0.5),
+                opacity=0.6,
+                hoverinfo="skip",
+                showlegend=False,
+            )
+        )
 
-    ax.set_title(
-        f"Projection at {first_angle:.3f}°"
-        if first_angle is not None
-        else "First projection"
+    fig.update_layout(
+        title=(
+            f"Projection at {first_angle:.3f}°"
+            if first_angle is not None
+            else "First projection"
+        ),
+        height=600,
+        margin=dict(l=60, r=20, t=50, b=50),
     )
-    ax.set_xlabel("column")
-    ax.set_ylabel("row")
+    fig.update_xaxes(
+        title_text="column", range=[-0.5, n_cols - 0.5], constrain="domain"
+    )
+    fig.update_yaxes(
+        title_text="row",
+        range=[n_rows - 0.5, -0.5],
+        scaleanchor="x",
+        scaleratio=1,
+        constrain="domain",
+    )
     fig
     return (first_image,)
 
@@ -392,10 +426,12 @@ def _(config, mo):
             return mo.ui.number(value=value, step=0.1, label=name)
         return mo.ui.text(value=str(value), label=name)
 
+    excluded_mbirjax_params = {"verbose", "print_logs"}
     mbirjax_widgets = mo.ui.dictionary(
         {
             name: make_mbirjax_widget(name, value)
             for name, value in mbirjax_params.items()
+            if name not in excluded_mbirjax_params
         }
     )
     mo.vstack(
