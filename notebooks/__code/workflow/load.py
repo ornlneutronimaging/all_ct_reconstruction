@@ -1129,7 +1129,7 @@ class Load(Parent):
         working_dir = os.path.dirname(self.parent.working_dir[DataType.sample][0])
         self.o_file_browser = FileFolderBrowser(working_dir=working_dir,
                                                 next_function=self.reload_normalized_images)
-        self.o_file_browser.select_input_folder(instruction=f"Select Top Folder of {DataType.normalized}",
+        self.o_file_browser.select_input_folder(instruction=f"Select Top Folder of {DataType.normalized.value}",
                                         multiple_flag=False)
                 
         self.out = widgets.Output()

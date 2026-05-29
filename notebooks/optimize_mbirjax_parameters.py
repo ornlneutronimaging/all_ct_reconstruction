@@ -469,7 +469,13 @@ def _(config, mo):
 
 
 @app.cell
-def _(first_image, mo):
+def _(mo):
+    get_show_log, set_show_log = mo.state(False)
+    return get_show_log, set_show_log
+
+
+@app.cell
+def _(first_image, get_show_log, mo, set_show_log):
     mo.stop(first_image is None)
 
     evaluate_reconstruction_button = mo.ui.run_button(
@@ -477,8 +483,63 @@ def _(first_image, mo):
         kind="success",
         full_width=True,
     )
-    evaluate_reconstruction_button
-    return (evaluate_reconstruction_button,)
+
+    _log_shown = get_show_log()
+    preview_log_button = mo.ui.button(
+        label="📕 Hide log" if _log_shown else "📖 Preview of log",
+        kind="neutral",
+        on_change=lambda _: set_show_log(not _log_shown),
+    )
+
+    mo.hstack(
+        [evaluate_reconstruction_button, preview_log_button],
+        justify="space-between",
+        align="center",
+        gap=0.75,
+    )
+    return evaluate_reconstruction_button, preview_log_button
+
+
+@app.cell
+def _(get_show_log, mo, os):
+    import getpass
+    import html
+
+    mo.stop(not get_show_log())
+
+    _user_id = getpass.getuser()
+    _log_path = (
+        f"/SNS/VENUS/shared/log/mbirjax_reconstruction_evaluation_{_user_id}.log"
+    )
+
+    if os.path.exists(_log_path):
+        with open(_log_path, "r") as _f:
+            _log_content = _f.read()
+        _log_body = mo.Html(
+            "<pre style='white-space:pre-wrap; word-break:break-word; "
+            "margin:0; font-family:monospace; font-size:0.8rem; "
+            "max-height:400px; overflow-y:auto;'>"
+            f"{html.escape(_log_content) or '(log file is empty)'}</pre>"
+        )
+    else:
+        _log_body = mo.md(f"*Log file not found: `{_log_path}`*")
+
+    mo.vstack(
+        [
+            mo.md(f"### **📜 Log preview** — `{_log_path}`"),
+            _log_body,
+        ]
+    ).style(
+        {
+            "background-color": "#eef2f7",
+            "color": "#1a1a1a",
+            "padding": "1rem",
+            "border-radius": "8px",
+            "border": "1px solid #c5d0dd",
+            "margin-top": "1rem",
+        }
+    )
+    return
 
 
 @app.cell

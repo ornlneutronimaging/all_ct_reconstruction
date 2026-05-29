@@ -118,7 +118,7 @@ class Visualization(Parent):
         
         
         
-        display(HTML(f"<h2>How to visualize the {data_type} data?</h2>"))
+        display(HTML(f"<h2>How to visualize the {data_type.value if isinstance(data_type, DataType) else data_type} data?</h2>"))
         display(HTML(f"<b>Choose one of the following options and then execute the next cell to display:</b>"))
         
         self.what_to_visualize_ui = widgets.ToggleButtons(options=['All images', 
