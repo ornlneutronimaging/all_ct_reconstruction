@@ -475,29 +475,48 @@ def _(mo):
 
 
 @app.cell
-def _(first_image, get_show_log, mo, set_show_log):
+def _(first_image, mo, set_show_log):
     mo.stop(first_image is None)
 
     evaluate_reconstruction_button = mo.ui.run_button(
-        label="Evaluate CT reconstruction of selected slices",
+        label="Click to evaluate CT reconstruction of selected slices",
         kind="success",
         full_width=True,
     )
 
-    _log_shown = get_show_log()
-    preview_log_button = mo.ui.button(
-        label="📕 Hide log" if _log_shown else "📖 Preview of log",
+    display_log_button = mo.ui.button(
+        label="📖 display log",
         kind="neutral",
-        on_change=lambda _: set_show_log(not _log_shown),
+        on_change=lambda _: set_show_log(True),
     )
+    hide_log_button = mo.ui.button(
+        label="📕 hide log",
+        kind="neutral",
+        on_change=lambda _: set_show_log(False),
+    )
+    return display_log_button, evaluate_reconstruction_button, hide_log_button
+
+
+@app.cell
+def _(
+    display_log_button,
+    evaluate_reconstruction_button,
+    get_show_log,
+    hide_log_button,
+    mo,
+):
+    _log_button = hide_log_button if get_show_log() else display_log_button
 
     mo.hstack(
-        [evaluate_reconstruction_button, preview_log_button],
+        [
+            evaluate_reconstruction_button,
+            _log_button.style({"width": "200px"}),
+        ],
         justify="space-between",
         align="center",
         gap=0.75,
     )
-    return evaluate_reconstruction_button, preview_log_button
+    return
 
 
 @app.cell
@@ -516,10 +535,12 @@ def _(get_show_log, mo, os):
         with open(_log_path, "r") as _f:
             _log_content = _f.read()
         _log_body = mo.Html(
-            "<pre style='white-space:pre-wrap; word-break:break-word; "
-            "margin:0; font-family:monospace; font-size:0.8rem; "
+            "<div style='display:flex; flex-direction:column-reverse; "
             "max-height:400px; overflow-y:auto;'>"
+            "<pre style='white-space:pre-wrap; word-break:break-word; "
+            "margin:0; font-family:monospace; font-size:0.8rem;'>"
             f"{html.escape(_log_content) or '(log file is empty)'}</pre>"
+            "</div>"
         )
     else:
         _log_body = mo.md(f"*Log file not found: `{_log_path}`*")
@@ -558,7 +579,6 @@ def _(
 ):
     mo.stop(
         not evaluate_reconstruction_button.value,
-        mo.md("*Click the button above to evaluate the CT reconstruction.*"),
     )
 
     # parameters recovered from the widgets
