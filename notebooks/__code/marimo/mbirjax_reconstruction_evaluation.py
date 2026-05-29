@@ -83,5 +83,8 @@ class MbirjaxReconstructionEvaluation:
         
         middle_slice = MARIMO_TEST_RECONSTRUCTION_WIDTH // 2
         logging.info(f"\tReconstruction of middle slice {middle_slice} completed.")
+        slice = reconstruction_array[middle_slice, :, :]
+        logging.info(f"\t{slice.shape = }")
+        logging.info(f"\t{type(slice) = }")
         
-        return reconstruction_array[middle_slice:middle_slice+1, :, :], recond_dict
+        return slice, recond_dict

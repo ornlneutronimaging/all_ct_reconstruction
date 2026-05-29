@@ -681,12 +681,18 @@ def _(
     )
 
     from __code.marimo.mbirjax_reconstruction_evaluation import MbirjaxReconstructionEvaluation
-    reconstruction_evaluation = MbirjaxReconstructionEvaluation(
-        data=reconstruction_data,
-        list_angles_deg=reconstruction_angles,
-        reconstruction_parameters=reconstruction_parameters,
+
+    # spinner shows "Reconstruction in progress ..." below the button while the
+    # reconstruction runs, and is removed once it completes
+    with mo.status.spinner(title="Reconstruction in progress ..."):
+        reconstruction_evaluation = MbirjaxReconstructionEvaluation(
+            data=reconstruction_data,
+            list_angles_deg=reconstruction_angles,
+            reconstruction_parameters=reconstruction_parameters,
         )
-    top_reconstruction_slice, bottom_reconstruction_slice = reconstruction_evaluation.evaluate()
+        top_reconstruction_slice, bottom_reconstruction_slice = (
+            reconstruction_evaluation.evaluate()
+        )
 
     print(f"{np.shape(top_reconstruction_slice)=}")
     print(f"{np.shape(bottom_reconstruction_slice)=}")
@@ -712,23 +718,37 @@ def _(
     go,
     mo,
     mpl_colormap_to_plotly,
+    np,
     use_configuration_buttons,
 ):
     _history = get_reconstruction_history()
     mo.stop(
         not _history,
-        mo.md("*No reconstruction yet — click the button above to evaluate.*"),
     )
 
+    # downsample the displayed slice to keep each plotly figure small (plotly
+    # sends z as JSON text); the full-resolution array stays in the history
+    _max_display_dim = 256
+
     def _central_slice_figure(reconstruction_slice, title):
+        # reconstruction slice is a 2D (rows, cols) array
+        reconstruction_slice = np.asarray(
+            np.squeeze(reconstruction_slice), dtype=np.float32
+        )
+        _n_rows, _n_cols = reconstruction_slice.shape
+        # stride keeps both axes at or below _max_display_dim samples
+        _stride = max(1, int(np.ceil(max(_n_rows, _n_cols) / _max_display_dim)))
+        _rows = np.arange(_n_rows)[::_stride]
+        _cols = np.arange(_n_cols)[::_stride]
         _fig = go.Figure(
             go.Heatmap(
-                z=reconstruction_slice,
+                z=reconstruction_slice[::_stride, ::_stride],
+                x=_cols,
+                y=_rows,
                 colorscale=mpl_colormap_to_plotly(colormap_selector.value),
                 colorbar=dict(title="intensity"),
             )
         )
-        _n_rows, _n_cols = reconstruction_slice.shape
         _fig.update_layout(
             title=title,
             height=450,
@@ -771,8 +791,8 @@ def _(
     def _reconstruction_row(entry, use_configuration_button):
         return mo.hstack(
             [
-                _central_slice_figure(entry["top"], "Top range — central slice"),
-                _central_slice_figure(entry["bottom"], "Bottom range — central slice"),
+                _central_slice_figure(entry["top"], "Central slice of top range"),
+                _central_slice_figure(entry["bottom"], "Central slice of bottom range"),
                 _params_panel(entry["mbirjax_config"], use_configuration_button),
             ],
             widths=[3, 3, 2],
