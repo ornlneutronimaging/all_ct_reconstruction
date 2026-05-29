@@ -410,9 +410,102 @@ def _(config, mo):
             "padding": "1rem",
             "border-radius": "8px",
             "border": "1px solid #c5d0dd",
+            "margin-top": "2rem",
         }
     )
     return (mbirjax_widgets,)
+
+
+@app.cell
+def _(first_image, mo):
+    mo.stop(first_image is None)
+
+    evaluate_reconstruction_button = mo.ui.run_button(
+        label="Evaluate CT reconstruction of selected slices",
+        kind="success",
+        full_width=True,
+    )
+    evaluate_reconstruction_button
+    return (evaluate_reconstruction_button,)
+
+
+@app.cell
+def _(
+    angles_deg,
+    bottom_line_slider,
+    colormap_selector,
+    config,
+    evaluate_reconstruction_button,
+    mbirjax_widgets,
+    mo,
+    normalized_images_log,
+    perform_tilt_switch,
+    show_grid_toggle,
+    tilt_slider,
+    top_line_slider,
+    z_range_slider,
+):
+    mo.stop(
+        not evaluate_reconstruction_button.value,
+        mo.md("*Click the button above to evaluate the CT reconstruction.*"),
+    )
+
+    # parameters recovered from the widgets
+    reconstruction_parameters = {
+        "top_line": top_line_slider.value,
+        "bottom_line": bottom_line_slider.value,
+        "z_range": z_range_slider.value,
+        "colormap": colormap_selector.value,
+        "tilt": tilt_slider.value,
+        "show_grid": show_grid_toggle.value,
+        "perform_tilt": perform_tilt_switch.value,
+        "mbirjax_config": dict(mbirjax_widgets.value),
+    }
+
+    # data recovered from the selected HDF5 file
+    reconstruction_config = config  # metadata/config
+    reconstruction_data = normalized_images_log  # 3D stack (n_angles, rows, cols)
+    reconstruction_angles = angles_deg  # projection angles (deg)
+
+    # TODO: launch CT reconstruction of the selected slices
+
+    mbirjax_lines = "\n".join(
+        f"- **{name}:** {value}"
+        for name, value in reconstruction_parameters["mbirjax_config"].items()
+    )
+
+    mo.vstack(
+        [
+            mo.md("### **🚀 Ready to evaluate CT reconstruction**"),
+            mo.md(
+                f"""
+                - **top / bottom line:** {reconstruction_parameters["top_line"]} / {reconstruction_parameters["bottom_line"]}
+                - **z range:** {reconstruction_parameters["z_range"]}
+                - **tilt (°):** {reconstruction_parameters["tilt"]}
+                - **config:** {"loaded" if reconstruction_config is not None else "missing"}
+                - **3D data:** {reconstruction_data.shape if reconstruction_data is not None else "missing"}
+                - **angles:** {len(reconstruction_angles) if reconstruction_angles is not None else "missing"}
+                """
+            ),
+            mo.md("\n**mbirjax parameters:**\n" + mbirjax_lines).style(
+                {"margin-top": "2rem"}
+            ),
+        ]
+    ).style(
+        {
+            "background-color": "#eef2f7",
+            "color": "#1a1a1a",
+            "padding": "1rem",
+            "border-radius": "8px",
+            "border": "1px solid #c5d0dd",
+        }
+    )
+    return (
+        reconstruction_angles,
+        reconstruction_config,
+        reconstruction_data,
+        reconstruction_parameters,
+    )
 
 
 if __name__ == "__main__":
