@@ -475,6 +475,13 @@ def _(mo):
 
 
 @app.cell
+def _(mo):
+    # accumulated reconstructions; each click appends one entry, rendered as a row
+    get_reconstruction_history, set_reconstruction_history = mo.state([])
+    return get_reconstruction_history, set_reconstruction_history
+
+
+@app.cell
 def _(first_image, mo, set_show_log):
     mo.stop(first_image is None)
 
@@ -495,6 +502,22 @@ def _(first_image, mo, set_show_log):
         on_change=lambda _: set_show_log(False),
     )
     return display_log_button, evaluate_reconstruction_button, hide_log_button
+
+
+@app.cell
+def _(get_reconstruction_history, mo):
+    # one "use this configuration" button per reconstruction in the history
+    use_configuration_buttons = mo.ui.array(
+        [
+            mo.ui.run_button(
+                label="👉 Use this configuration",
+                kind="success",
+                full_width=True,
+            )
+            for _ in get_reconstruction_history()
+        ]
+    )
+    return (use_configuration_buttons,)
 
 
 @app.cell
@@ -604,8 +627,11 @@ def _(
     mo.vstack(
         [
             mo.md("### **🚀 Ready to evaluate CT reconstruction**"),
-            mo.md(
-                f"""
+            mo.hstack(
+                [
+                    mo.md(
+                        "**General parameters:**\n"
+                        f"""
                 - **top / bottom slice:** {reconstruction_parameters["top_slice"]} / {reconstruction_parameters["bottom_slice"]}
                 - **z range:** {reconstruction_parameters["z_range"]}
                 - **tilt (°):** {reconstruction_parameters["tilt"]}
@@ -614,9 +640,12 @@ def _(
                 - **angles:** {len(reconstruction_angles) if reconstruction_angles is not None else "missing"}
                 - **size of input data for reconstruction:** {reconstruction_data.shape if reconstruction_data is not None else "missing"}
                 """
-            ),
-            mo.md("\n**mbirjax parameters:**\n" + mbirjax_lines).style(
-                {"margin-top": "2rem"}
+                    ),
+                    mo.md("**mbirjax parameters:**\n" + mbirjax_lines),
+                ],
+                widths="equal",
+                gap=2,
+                align="start",
             ),
         ]
     ).style(
@@ -638,13 +667,15 @@ def _(
 
 
 @app.cell
-def _(mo, 
-      evaluate_reconstruction_button, 
-      reconstruction_angles, 
-      reconstruction_config, 
-      reconstruction_data, 
-      reconstruction_parameters,
-      np):
+def _(
+    evaluate_reconstruction_button,
+    mo,
+    np,
+    reconstruction_angles,
+    reconstruction_data,
+    reconstruction_parameters,
+    set_reconstruction_history,
+):
     mo.stop(
         not evaluate_reconstruction_button.value,
     )
@@ -654,11 +685,110 @@ def _(mo,
         data=reconstruction_data,
         list_angles_deg=reconstruction_angles,
         reconstruction_parameters=reconstruction_parameters,
-        )    
-    top_reconstruction_array, bottom_reconstruction_array = reconstruction_evaluation.evaluate()
-    
-    print(f"{np.shape(top_reconstruction_array)=}")
-    print(f"{np.shape(bottom_reconstruction_array)=}")
+        )
+    top_reconstruction_slice, bottom_reconstruction_slice = reconstruction_evaluation.evaluate()
+
+    print(f"{np.shape(top_reconstruction_slice)=}")
+    print(f"{np.shape(bottom_reconstruction_slice)=}")
+
+    # append this reconstruction so it is rendered as a new row below the others
+    set_reconstruction_history(
+        lambda prev: prev
+        + [
+            {
+                "top": top_reconstruction_slice,
+                "bottom": bottom_reconstruction_slice,
+                "mbirjax_config": dict(reconstruction_parameters["mbirjax_config"]),
+            }
+        ]
+    )
+    return
+
+
+@app.cell
+def _(
+    colormap_selector,
+    get_reconstruction_history,
+    go,
+    mo,
+    mpl_colormap_to_plotly,
+    use_configuration_buttons,
+):
+    _history = get_reconstruction_history()
+    mo.stop(
+        not _history,
+        mo.md("*No reconstruction yet — click the button above to evaluate.*"),
+    )
+
+    def _central_slice_figure(reconstruction_slice, title):
+        _fig = go.Figure(
+            go.Heatmap(
+                z=reconstruction_slice,
+                colorscale=mpl_colormap_to_plotly(colormap_selector.value),
+                colorbar=dict(title="intensity"),
+            )
+        )
+        _n_rows, _n_cols = reconstruction_slice.shape
+        _fig.update_layout(
+            title=title,
+            height=450,
+            margin=dict(l=50, r=20, t=50, b=50),
+        )
+        _fig.update_xaxes(
+            title_text="column", range=[-0.5, _n_cols - 0.5], constrain="domain"
+        )
+        _fig.update_yaxes(
+            title_text="row",
+            range=[_n_rows - 0.5, -0.5],
+            scaleanchor="x",
+            scaleratio=1,
+            constrain="domain",
+        )
+        return _fig
+
+    def _params_panel(mbirjax_config, use_configuration_button):
+        _mbirjax_lines = "\n".join(
+            f"- **{name}:** {value}" for name, value in mbirjax_config.items()
+        )
+        return mo.vstack(
+            [
+                mo.md("**mbirjax parameters used:**\n" + _mbirjax_lines),
+                use_configuration_button,
+            ],
+            justify="space-between",
+        ).style(
+            {
+                "background-color": "#eef2f7",
+                "color": "#1a1a1a",
+                "padding": "1rem",
+                "border-radius": "8px",
+                "border": "1px solid #c5d0dd",
+                "min-width": "260px",
+                "height": "100%",
+            }
+        )
+
+    def _reconstruction_row(entry, use_configuration_button):
+        return mo.hstack(
+            [
+                _central_slice_figure(entry["top"], "Top range — central slice"),
+                _central_slice_figure(entry["bottom"], "Bottom range — central slice"),
+                _params_panel(entry["mbirjax_config"], use_configuration_button),
+            ],
+            widths=[3, 3, 2],
+            gap=1,
+            align="stretch",
+        )
+
+    mo.vstack(
+        [
+            _reconstruction_row(entry, use_configuration_buttons[_i])
+            for _i, entry in enumerate(_history)
+        ],
+        gap=2,
+    )
+    return
+
 
 if __name__ == "__main__":
     app.run()

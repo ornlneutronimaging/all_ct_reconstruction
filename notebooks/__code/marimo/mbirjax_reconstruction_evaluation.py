@@ -49,14 +49,14 @@ class MbirjaxReconstructionEvaluation:
             bottom_slice = n_slices - MARIMO_TEST_RECONSTRUCTION_WIDTH // 2
         
         # reconstruction of top slices
-        top_reconstruction_array, top_recond_dict = self._reconstruct_slices(from_slice=top_slice-MARIMO_TEST_RECONSTRUCTION_WIDTH//2, 
+        top_reconstruction_slice, top_recond_dict = self._reconstruct_slices(from_slice=top_slice-MARIMO_TEST_RECONSTRUCTION_WIDTH//2, 
                                                                              to_slice=top_slice+MARIMO_TEST_RECONSTRUCTION_WIDTH//2)
         
         # reconstruction of bottom slices
-        bottom_reconstruction_array, bottom_recond_dict = self._reconstruct_slices(from_slice=bottom_slice-MARIMO_TEST_RECONSTRUCTION_WIDTH//2, 
+        bottom_reconstruction_slice, bottom_recond_dict = self._reconstruct_slices(from_slice=bottom_slice-MARIMO_TEST_RECONSTRUCTION_WIDTH//2, 
                                                                                    to_slice=bottom_slice+MARIMO_TEST_RECONSTRUCTION_WIDTH//2)
         
-        return top_reconstruction_array, bottom_reconstruction_array
+        return top_reconstruction_slice, bottom_reconstruction_slice
            
     def _reconstruct_slices(self, from_slice, to_slice):
         
@@ -79,5 +79,9 @@ class MbirjaxReconstructionEvaluation:
                                 positivity_flag=self.positivity)
         reconstruction_array, recond_dict = top_ct_model.recon(_sinogram, max_iterations=self.max_iterations)
         reconstruction_array = np.swapaxes(reconstruction_array, 0, 2)  # swap rows and cols to match the original orientation
+        logging.info(f"\t{reconstruction_array.shape = }")
         
-        return reconstruction_array, recond_dict
+        middle_slice = MARIMO_TEST_RECONSTRUCTION_WIDTH // 2
+        logging.info(f"\tReconstruction of middle slice {middle_slice} completed.")
+        
+        return reconstruction_array[middle_slice:middle_slice+1, :, :], recond_dict
