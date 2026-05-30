@@ -886,5 +886,40 @@ def _(
     return
 
 
+@app.cell
+def _(mo):
+    # bottom-of-screen actions for the selected reconstruction configuration;
+    # defined in their own cell so clicking one does not re-run the definition
+    create_new_hdf5_button = mo.ui.run_button(
+        label="Create new HDF5 with selected configuration",
+        kind="success",
+    )
+    overwrite_hdf5_button = mo.ui.run_button(
+        label="Overwrite current HDF5 with selected configuration",
+        kind="warn",
+    )
+    return create_new_hdf5_button, overwrite_hdf5_button
+
+
+@app.cell
+def _(
+    create_new_hdf5_button,
+    get_reconstruction_history,
+    mo,
+    overwrite_hdf5_button,
+):
+    # only shown once at least one reconstruction has been evaluated
+    mo.stop(
+        not get_reconstruction_history(),
+    )
+
+    mo.hstack(
+        [create_new_hdf5_button, overwrite_hdf5_button],
+        justify="start",
+        gap=2,
+    )
+    return
+
+
 if __name__ == "__main__":
     app.run()
