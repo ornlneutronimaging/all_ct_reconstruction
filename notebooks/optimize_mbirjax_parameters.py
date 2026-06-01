@@ -187,6 +187,7 @@ def _(
     normalized_images_log,
     np,
     perform_tilt_switch,
+    projection_selector,
     rotate,
     show_grid_toggle,
     tilt_slider,
@@ -202,120 +203,158 @@ def _(
     band_half = int(MARIMO_TEST_RECONSTRUCTION_WIDTH / 2)
 
     first_image = normalized_images_log[0]
-    first_angle = (
-        float(angles_deg[0])
-        if angles_deg is not None and len(angles_deg)
-        else None
-    )
-    vmin, vmax = z_range_slider.value
 
+    # find index closest to 180°
+    if angles_deg is not None and len(angles_deg):
+        idx_180 = int(np.argmin(np.abs(angles_deg - 180.0)))
+    else:
+        idx_180 = 0
+
+    sel = projection_selector.value
+    if sel == "180°":
+        selected_indices = [idx_180]
+    elif sel == "0° and 180°":
+        selected_indices = [0, idx_180]
+    else:  # "0°"
+        selected_indices = [0]
+
+    vmin, vmax = z_range_slider.value
     tilt_angle = tilt_slider.value
     perform_tilt = perform_tilt_switch.value
-
-    # rotate(+tilt) straightens a feature aligned with the grid drawn at -tilt
-    display_image = (
-        rotate(
-            first_image,
-            angle=tilt_angle,
-            reshape=False,
-            order=1,
-            mode="nearest",
-        )
-        if perform_tilt and tilt_angle != 0
-        else first_image
-    )
-
     n_rows, n_cols = first_image.shape
-
-    fig = go.Figure(
-        go.Heatmap(
-            z=display_image,
-            colorscale=mpl_colormap_to_plotly(colormap_selector.value),
-            zmin=vmin,
-            zmax=vmax,
-            colorbar=dict(title="intensity"),
-        )
-    )
-
-    fig.add_hrect(
-        y0=top_line_slider.value - band_half,
-        y1=top_line_slider.value + band_half,
-        fillcolor="red",
-        opacity=0.25,
-        line_width=0,
-    )
-    fig.add_hline(y=top_line_slider.value, line_color="red", line_width=1.0)
-    fig.add_hrect(
-        y0=bottom_line_slider.value - band_half,
-        y1=bottom_line_slider.value + band_half,
-        fillcolor="cyan",
-        opacity=0.25,
-        line_width=0,
-    )
-    fig.add_hline(y=bottom_line_slider.value, line_color="cyan", line_width=1.0)
-
     center_column = first_image.shape[1] / 2
     det_channel_offset = mbirjax_widgets.value.get("det_channel_offset", 0)
-    if det_channel_offset is not None:
-        fig.add_vline(
-            x=center_column + det_channel_offset,
-            line_color="white",
-            line_dash="dash",
-            line_width=1.0,
+
+    def _get_display_image(idx):
+        raw_img = normalized_images_log[idx]
+        return (
+            rotate(raw_img, angle=tilt_angle, reshape=False, order=1, mode="nearest")
+            if perform_tilt and tilt_angle != 0
+            else raw_img
         )
 
-    if show_grid_toggle.value:
-        # grid is tilted by tilt_angle until the tilt is performed, then straight
-        grid_angle = 0.0 if perform_tilt else tilt_angle
-        center = np.array([n_cols / 2.0, n_rows / 2.0])
-        theta = np.deg2rad(-grid_angle)
-        # display: +x to the right, +y downward; +angle is up so row decreases
-        along = np.array([np.cos(theta), -np.sin(theta)])
-        across = np.array([np.sin(theta), np.cos(theta)])
-        diag = float(np.hypot(n_rows, n_cols))
-        spacing = max(n_rows, n_cols) / 10.0
-        n_lines = int(diag / spacing) + 1
-        grid_x = []
-        grid_y = []
-        for k in range(-n_lines, n_lines + 1):
-            for direction, offset_dir in ((along, across), (across, along)):
-                base = center + k * spacing * offset_dir
-                p0 = base - diag * direction
-                p1 = base + diag * direction
-                grid_x += [p0[0], p1[0], None]
-                grid_y += [p0[1], p1[1], None]
-        fig.add_trace(
-            go.Scatter(
-                x=grid_x,
-                y=grid_y,
-                mode="lines",
-                line=dict(color="yellow", width=0.5),
-                opacity=0.6,
-                hoverinfo="skip",
-                showlegend=False,
+    def _add_overlays(f):
+        f.add_hrect(
+            y0=top_line_slider.value - band_half,
+            y1=top_line_slider.value + band_half,
+            fillcolor="red",
+            opacity=0.25,
+            line_width=0,
+        )
+        f.add_hline(y=top_line_slider.value, line_color="red", line_width=1.0)
+        f.add_hrect(
+            y0=bottom_line_slider.value - band_half,
+            y1=bottom_line_slider.value + band_half,
+            fillcolor="cyan",
+            opacity=0.25,
+            line_width=0,
+        )
+        f.add_hline(y=bottom_line_slider.value, line_color="cyan", line_width=1.0)
+        if det_channel_offset is not None:
+            f.add_vline(
+                x=center_column + det_channel_offset,
+                line_color="white",
+                line_dash="dash",
+                line_width=1.0,
+            )
+        if show_grid_toggle.value:
+            grid_angle = 0.0 if perform_tilt else tilt_angle
+            _center = np.array([n_cols / 2.0, n_rows / 2.0])
+            theta = np.deg2rad(-grid_angle)
+            along = np.array([np.cos(theta), -np.sin(theta)])
+            across = np.array([np.sin(theta), np.cos(theta)])
+            diag = float(np.hypot(n_rows, n_cols))
+            spacing = max(n_rows, n_cols) / 10.0
+            n_lines = int(diag / spacing) + 1
+            grid_x = []
+            grid_y = []
+            for k in range(-n_lines, n_lines + 1):
+                for direction, offset_dir in ((along, across), (across, along)):
+                    base = _center + k * spacing * offset_dir
+                    p0 = base - diag * direction
+                    p1 = base + diag * direction
+                    grid_x += [p0[0], p1[0], None]
+                    grid_y += [p0[1], p1[1], None]
+            f.add_trace(
+                go.Scatter(
+                    x=grid_x,
+                    y=grid_y,
+                    mode="lines",
+                    line=dict(color="yellow", width=0.5),
+                    opacity=0.6,
+                    hoverinfo="skip",
+                    showlegend=False,
+                )
+            )
+
+    def _finalize_fig(f, title):
+        f.update_layout(title=title, height=600, margin=dict(l=60, r=20, t=50, b=50))
+        f.update_xaxes(
+            title_text="column", range=[-0.5, n_cols - 0.5], constrain="domain"
+        )
+        f.update_yaxes(
+            title_text="row",
+            range=[n_rows - 0.5, -0.5],
+            scaleanchor="x",
+            scaleratio=1,
+            constrain="domain",
+        )
+
+    def _angle_label(idx):
+        if angles_deg is not None and len(angles_deg) > idx:
+            return f"{float(angles_deg[idx]):.3f}°"
+        return f"#{idx}"
+
+    if sel == "0° and 180°":
+        # overlay: average both images into a single heatmap
+        avg_img = (_get_display_image(0) + _get_display_image(idx_180)) / 2.0
+        fig = go.Figure(
+            go.Heatmap(
+                z=avg_img,
+                colorscale=mpl_colormap_to_plotly(colormap_selector.value),
+                zmin=vmin,
+                zmax=vmax,
+                colorbar=dict(title="intensity"),
             )
         )
+        _add_overlays(fig)
+        _finalize_fig(
+            fig,
+            f"Overlay: {_angle_label(0)} and {_angle_label(idx_180)} (averaged)",
+        )
+        figs = [fig]
+    else:
+        idx = selected_indices[0]
+        fig = go.Figure(
+            go.Heatmap(
+                z=_get_display_image(idx),
+                colorscale=mpl_colormap_to_plotly(colormap_selector.value),
+                zmin=vmin,
+                zmax=vmax,
+                colorbar=dict(title="intensity"),
+            )
+        )
+        _add_overlays(fig)
+        _finalize_fig(fig, f"Projection at {_angle_label(idx)}")
+        figs = [fig]
 
-    fig.update_layout(
-        title=(
-            f"Projection at {first_angle:.3f}°"
-            if first_angle is not None
-            else "First projection"
-        ),
-        height=600,
-        margin=dict(l=60, r=20, t=50, b=50),
+    mo.vstack(
+        [
+            projection_selector,
+            mo.hstack(
+                [
+                    *figs,
+                    mo.vstack(
+                        [z_range_slider.style({"height": "500px"}), colormap_selector],
+                        align="center",
+                    ),
+                ],
+                align="center",
+                justify="start",
+                gap=1,
+            ),
+        ]
     )
-    fig.update_xaxes(
-        title_text="column", range=[-0.5, n_cols - 0.5], constrain="domain"
-    )
-    fig.update_yaxes(
-        title_text="row",
-        range=[n_rows - 0.5, -0.5],
-        scaleanchor="x",
-        scaleratio=1,
-        constrain="domain",
-    )
-    fig
     return (first_image,)
 
 
@@ -355,7 +394,7 @@ def _(mo, normalized_images_log):
         value=[intensity_min, intensity_max],
         label="z range (intensity):",
         show_value=True,
-        full_width=True,
+        orientation="vertical",
     )
     colormap_selector = mo.ui.dropdown(
         options=[
@@ -384,12 +423,16 @@ def _(mo, normalized_images_log):
     )
     show_grid_toggle = mo.ui.switch(label="Show grid")
     perform_tilt_switch = mo.ui.switch(label="Perform tilt")
+    projection_selector = mo.ui.radio(
+        options=["0°", "180°", "0° and 180°"],
+        value="0°",
+        label="**Projection:**",
+        inline=True,
+    )
     mo.vstack(
         [
             top_line_slider,
             bottom_line_slider,
-            z_range_slider,
-            colormap_selector,
             tilt_slider,
             mo.hstack(
                 [show_grid_toggle, perform_tilt_switch],
@@ -402,6 +445,7 @@ def _(mo, normalized_images_log):
         bottom_line_slider,
         colormap_selector,
         perform_tilt_switch,
+        projection_selector,
         show_grid_toggle,
         tilt_slider,
         top_line_slider,
@@ -555,13 +599,26 @@ def _(mo):
 
 
 @app.cell
-def _(first_image, mo, set_show_log):
+def _(mo):
+    # True while a reconstruction runs on a background thread, so the rest of the
+    # app stays interactive; drives the progress indicator below the run button
+    get_is_reconstructing, set_is_reconstructing = mo.state(False)
+    return get_is_reconstructing, set_is_reconstructing
+
+
+@app.cell
+def _(first_image, get_is_reconstructing, mo, set_show_log):
     mo.stop(first_image is None)
 
+    # disabled while a reconstruction is running so a second one can't be
+    # launched mid-run; re-enabled when the background thread clears the flag
+    _reconstructing = get_is_reconstructing()
     evaluate_reconstruction_button = mo.ui.run_button(
         label="Click to evaluate CT reconstruction of selected slices",
         kind="success",
         full_width=True,
+        disabled=_reconstructing,
+        tooltip="Reconstruction in progress ..." if _reconstructing else None,
     )
 
     display_log_button = mo.ui.button(
@@ -609,6 +666,24 @@ def _(
             _log_button.style({"width": "200px"}),
         ],
         justify="space-between",
+        align="center",
+        gap=0.75,
+    )
+    return
+
+
+@app.cell
+def _(get_is_reconstructing, mo):
+    # shown while the background reconstruction thread is running; the flag is
+    # cleared by the thread on completion, which removes this indicator
+    mo.stop(not get_is_reconstructing())
+
+    mo.hstack(
+        [
+            mo.status.spinner(title="Reconstruction in progress ..."),
+            mo.md("*You can keep adjusting parameters while this runs.*"),
+        ],
+        justify="start",
         align="center",
         gap=0.75,
     )
@@ -741,10 +816,10 @@ def _(
 def _(
     evaluate_reconstruction_button,
     mo,
-    np,
     reconstruction_angles,
     reconstruction_data,
     reconstruction_parameters,
+    set_is_reconstructing,
     set_reconstruction_history,
 ):
     mo.stop(
@@ -753,31 +828,42 @@ def _(
 
     from __code.marimo.mbirjax_reconstruction_evaluation import MbirjaxReconstructionEvaluation
 
-    # spinner shows "Reconstruction in progress ..." below the button while the
-    # reconstruction runs, and is removed once it completes
-    with mo.status.spinner(title="Reconstruction in progress ..."):
-        reconstruction_evaluation = MbirjaxReconstructionEvaluation(
-            data=reconstruction_data,
-            list_angles_deg=reconstruction_angles,
-            reconstruction_parameters=reconstruction_parameters,
-        )
-        top_reconstruction_slice, bottom_reconstruction_slice, top_reconstruction_time, bottom_reconstruction_time = (
-            reconstruction_evaluation.evaluate()
-        )
+    # snapshot the inputs for this run so the background thread is unaffected by
+    # later widget changes while the reconstruction is in progress
+    _data = reconstruction_data
+    _angles = reconstruction_angles
+    _parameters = reconstruction_parameters
 
-    # append this reconstruction so it is rendered as a new row below the others
-    set_reconstruction_history(
-        lambda prev: prev
-        + [
-            {
-                "top": top_reconstruction_slice,
-                "bottom": bottom_reconstruction_slice,
-                "mbirjax_config": dict(reconstruction_parameters["mbirjax_config"]),
-                "top_reconstruction_time": top_reconstruction_time,
-                "bottom_reconstruction_time": bottom_reconstruction_time,
-            }
-        ]
-    )
+    def _run_reconstruction():
+        # runs on a mo.Thread; JAX releases the GIL during XLA compute, so the
+        # rest of the app stays interactive while this runs
+        try:
+            evaluation = MbirjaxReconstructionEvaluation(
+                data=_data,
+                list_angles_deg=_angles,
+                reconstruction_parameters=_parameters,
+            )
+            top_slice, bottom_slice, top_time, bottom_time = evaluation.evaluate()
+
+            # state set from a mo.Thread re-runs the dependent (display) cells,
+            # appending this reconstruction as a new row below the others
+            set_reconstruction_history(
+                lambda prev: prev
+                + [
+                    {
+                        "top": top_slice,
+                        "bottom": bottom_slice,
+                        "mbirjax_config": dict(_parameters["mbirjax_config"]),
+                        "top_reconstruction_time": top_time,
+                        "bottom_reconstruction_time": bottom_time,
+                    }
+                ]
+            )
+        finally:
+            set_is_reconstructing(False)
+
+    set_is_reconstructing(True)
+    mo.Thread(target=_run_reconstruction).start()
     return
 
 
