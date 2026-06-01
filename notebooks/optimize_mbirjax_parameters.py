@@ -828,36 +828,37 @@ def _(
 
     from __code.marimo.mbirjax_reconstruction_evaluation import MbirjaxReconstructionEvaluation
 
-    # snapshot the inputs for this run so the background thread is unaffected by
-    # later widget changes while the reconstruction is in progress
-    _data = reconstruction_data
-    _angles = reconstruction_angles
-    _parameters = reconstruction_parameters
-
-    def _run_reconstruction():
+    # Use default argument values to capture inputs immediately at definition
+    # time. This avoids closure over _-prefixed cell-level variables, which
+    # marimo mangles (e.g. _parameters -> _cell_Vxnm_parameters) making them
+    # unavailable when the thread actually executes.
+    def _run_reconstruction(
+        snap_data=reconstruction_data,
+        snap_angles=reconstruction_angles,
+        snap_parameters=reconstruction_parameters,
+    ):
         # runs on a mo.Thread; JAX releases the GIL during XLA compute, so the
         # rest of the app stays interactive while this runs
         try:
             evaluation = MbirjaxReconstructionEvaluation(
-                data=_data,
-                list_angles_deg=_angles,
-                reconstruction_parameters=_parameters,
+                data=snap_data,
+                list_angles_deg=snap_angles,
+                reconstruction_parameters=snap_parameters,
             )
             top_slice, bottom_slice, top_time, bottom_time = evaluation.evaluate()
+
+            new_entry = {
+                "top": top_slice,
+                "bottom": bottom_slice,
+                "mbirjax_config": dict(snap_parameters["mbirjax_config"]),
+                "top_reconstruction_time": top_time,
+                "bottom_reconstruction_time": bottom_time,
+            }
 
             # state set from a mo.Thread re-runs the dependent (display) cells,
             # appending this reconstruction as a new row below the others
             set_reconstruction_history(
-                lambda prev: prev
-                + [
-                    {
-                        "top": top_slice,
-                        "bottom": bottom_slice,
-                        "mbirjax_config": dict(_parameters["mbirjax_config"]),
-                        "top_reconstruction_time": top_time,
-                        "bottom_reconstruction_time": bottom_time,
-                    }
-                ]
+                lambda prev, entry=new_entry: prev + [entry]
             )
         finally:
             set_is_reconstructing(False)
@@ -896,11 +897,16 @@ def _(
         _stride = max(1, int(np.ceil(max(_n_rows, _n_cols) / _max_display_dim)))
         _rows = np.arange(_n_rows)[::_stride]
         _cols = np.arange(_n_cols)[::_stride]
+        _z_disp = reconstruction_slice[::_stride, ::_stride]
+        _zmin = float(np.percentile(_z_disp, 1))
+        _zmax = float(np.percentile(_z_disp, 99))
         _fig = go.Figure(
             go.Heatmap(
-                z=reconstruction_slice[::_stride, ::_stride],
+                z=_z_disp,
                 x=_cols,
                 y=_rows,
+                zmin=_zmin,
+                zmax=_zmax,
                 colorscale=mpl_colormap_to_plotly(colormap_selector.value),
                 colorbar=dict(title="intensity"),
             )
