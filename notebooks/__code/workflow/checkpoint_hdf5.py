@@ -286,7 +286,11 @@ class CheckpointHdf5(Parent):
         instrument: str = self.parent.instrument
         ipts_number: str = self.parent.ipts_number
         self.parent.configuration.instrument = instrument
-        self.parent.configuration.ipts_number = int(ipts_number)
+        try:
+            self.parent.configuration.ipts_number = int(ipts_number)
+        except (ValueError, TypeError):
+            logging.warning(f"Invalid ipts_number: {ipts_number}")
+            self.parent.configuration.ipts_number = None
 
         # center of rotation
         if self.parent.o_center_and_tilt is not None:

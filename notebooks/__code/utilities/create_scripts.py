@@ -48,6 +48,7 @@ def create_sh_file(hdf5_file_name: str, offline: bool = False) -> str:
     with open(sh_file_name, 'w') as sh_file:
         sh_file.write("#!/bin/bash\n")
         if offline:
+            sh_file.write('echo "Running offline reconstruction script"\n')
             path_of_this_file = os.path.abspath(__file__)
             top_folder_of_this_project = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(path_of_this_file))))
             sh_file.write(f"pixi run --manifest-path {top_folder_of_this_project} python {step4_scripts_offline_path} {hdf5_file_name}\n")
