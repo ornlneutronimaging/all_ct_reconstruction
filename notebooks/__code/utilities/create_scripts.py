@@ -40,7 +40,7 @@ def create_sh_file(hdf5_file_name: str, offline: bool = False) -> str:
     sh_file_name: str = os.path.join(output_folder, f"run_reconstruction_{time_stamp}.sh")
 
     # path of the current file
-    notebooks_folder_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))    
+    notebooks_folder_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
     # path of the scripts 4 offline file
     step4_scripts_offline_path = os.path.join(notebooks_folder_path, STEP4_SCRIPTS_OFFLINE)
