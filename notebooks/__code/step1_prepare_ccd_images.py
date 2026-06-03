@@ -198,8 +198,7 @@ class Step1PrepareCcdImages:
         # o_init.configuration()
 
         self.top_sample_dir = system.System.get_working_dir()
-        self.instrument = system.System.get_instrument_selected()
-        self.ipts_number = system.System.get_ipts_number()
+        self.instrument = 'MARS'
 
         display(HTML("<span style='color:blue; font-size:16px'>Select detector type</span>"))
         self.detector_type_widget = widgets.Dropdown(
@@ -231,7 +230,6 @@ class Step1PrepareCcdImages:
         for _key, _value in self.working_dir.items():
             logging.info(f"\t{_key}: {_value}")
         logging.info(f"instrument: {self.instrument}")
-        logging.info(f"ipts_number: {self.ipts_number}")
         if DEBUG:
             logging.info(f"WARNING!!!! we are running using DEBUG mode!")
         

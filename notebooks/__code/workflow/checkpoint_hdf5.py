@@ -171,12 +171,12 @@ class CheckpointHdf5(Parent):
             f.create_dataset("metadata/config", data=json.dumps(config.model_dump(), cls=NumpyEncoder))
             f["metadata"].attrs["detector"] = detector_name
             # DataType is an Enum; its members are not JSON-serializable as dict keys,
-        # so serialize using their string values (load() converts them back via DataType(key)).
-        serializable_working_dir = {
-            (key.value if isinstance(key, DataType) else key): value
-            for key, value in (working_dir or {}).items()
-        }
-        f["metadata"].attrs["working_dir"] = json.dumps(serializable_working_dir)
+            # so serialize using their string values (load() converts them back via DataType(key)).
+            serializable_working_dir = {
+                (key.value if isinstance(key, DataType) else key): value
+                for key, value in (working_dir or {}).items()
+            }
+            f["metadata"].attrs["working_dir"] = json.dumps(serializable_working_dir)
         
     def select_input_file(self) -> None:
         """Let the user browse to an existing HDF5 checkpoint file."""

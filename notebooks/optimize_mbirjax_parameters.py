@@ -600,6 +600,13 @@ def _(mo):
 
 @app.cell
 def _(mo):
+    # reconstruction_parameters dict chosen by the user via "Use this configuration"
+    get_selected_config, set_selected_config = mo.state(None)
+    return get_selected_config, set_selected_config
+
+
+@app.cell
+def _(mo):
     # True while a reconstruction runs on a background thread, so the rest of the
     # app stays interactive; drives the progress indicator below the run button
     get_is_reconstructing, set_is_reconstructing = mo.state(False)
@@ -648,6 +655,17 @@ def _(get_reconstruction_history, mo):
         ]
     )
     return (use_configuration_buttons,)
+
+
+@app.cell
+def _(get_reconstruction_history, set_selected_config, use_configuration_buttons):
+    # detect which "Use this configuration" button was clicked and record the
+    # full reconstruction_parameters for that history entry
+    _history = get_reconstruction_history()
+    for _i, _btn in enumerate(use_configuration_buttons):
+        if _btn.value and _i < len(_history):
+            set_selected_config(_history[_i]["reconstruction_parameters"])
+    return
 
 
 @app.cell
@@ -850,6 +868,7 @@ def _(
             new_entry = {
                 "top": top_slice,
                 "bottom": bottom_slice,
+                "reconstruction_parameters": snap_parameters,
                 "mbirjax_config": dict(snap_parameters["mbirjax_config"]),
                 "top_reconstruction_time": top_time,
                 "bottom_reconstruction_time": bottom_time,
@@ -932,6 +951,10 @@ def _(
         _mbirjax_lines = "\n".join(
             f"- **{name}:** {value}" for name, value in entry["mbirjax_config"].items()
         )
+        _rp = entry.get("reconstruction_parameters", {})
+        _tilt = _rp.get("tilt", 0.0)
+        _perform_tilt = _rp.get("perform_tilt", False)
+        _tilt_line = f"**tilt (°):** {_tilt}" + (" *(applied)*" if _perform_tilt else " *(not applied)*")
         _time_lines = (
             "**reconstruction time:**<br>"
             f"**top:** {entry['top_reconstruction_time']:.2f} s<br>"
@@ -940,6 +963,7 @@ def _(
         return mo.vstack(
             [
                 mo.md("**mbirjax parameters used:**\n" + _mbirjax_lines),
+                mo.md(_tilt_line),
                 mo.md(_time_lines),
                 use_configuration_button,
             ],
@@ -997,6 +1021,7 @@ def _(mo):
 def _(
     create_new_hdf5_button,
     get_reconstruction_history,
+    get_selected_config,
     mo,
     overwrite_hdf5_button,
 ):
@@ -1005,10 +1030,115 @@ def _(
         not get_reconstruction_history(),
     )
 
-    mo.hstack(
-        [create_new_hdf5_button, overwrite_hdf5_button],
-        justify="start",
-        gap=2,
+    _cfg = get_selected_config()
+    if _cfg is not None:
+        _mbirjax_lines = "\n".join(
+            f"- **{name}:** {value}"
+            for name, value in _cfg["mbirjax_config"].items()
+        )
+        _selected_box = mo.vstack(
+            [
+                mo.md("### **✅ Selected configuration**"),
+                mo.hstack(
+                    [
+                        mo.md(
+                            "**General parameters:**\n"
+                            f"- **top / bottom slice:** {_cfg['top_slice']} / {_cfg['bottom_slice']}\n"
+                            f"- **tilt (°):** {_cfg['tilt']}\n"
+                            f"- **perform tilt:** {_cfg['perform_tilt']}"
+                        ),
+                        mo.md("**mbirjax parameters:**\n" + _mbirjax_lines),
+                    ],
+                    widths="equal",
+                    gap=2,
+                    align="start",
+                ),
+            ]
+        ).style(
+            {
+                "background-color": "#e8f5e9",
+                "color": "#1a1a1a",
+                "padding": "1rem",
+                "border-radius": "8px",
+                "border": "1px solid #81c784",
+            }
+        )
+    else:
+        _selected_box = mo.callout(
+            mo.md("*No configuration selected yet — click **👉 Use this configuration** on a reconstruction above.*"),
+            kind="info",
+        )
+
+    mo.vstack(
+        [
+            _selected_box,
+            mo.hstack(
+                [create_new_hdf5_button, overwrite_hdf5_button],
+                justify="start",
+                gap=2,
+            ),
+        ],
+        gap=1,
+    )
+    return
+
+
+@app.cell
+def _(create_new_hdf5_button, get_selected_config, mo, os, selected_hdf5_file):
+    mo.stop(not create_new_hdf5_button.value)
+
+    _cfg = get_selected_config()
+    mo.stop(
+        _cfg is None,
+        mo.callout(
+            mo.md("*No configuration selected — click **👉 Use this configuration** on a reconstruction first.*"),
+            kind="warn",
+        ),
+    )
+
+    from __code.marimo.export_new_configuration_to_hdf5 import ExportNewConfigurationToHDF5
+
+    _base, _ext = os.path.splitext(selected_hdf5_file)
+    _new_hdf5_path = _base + "_new_mbirjax_config" + _ext
+
+    ExportNewConfigurationToHDF5(
+        new_configuration=_cfg,
+        hdf5_file_path=_new_hdf5_path,
+        source_hdf5_file_path=selected_hdf5_file,
+        new_hdf5_flag=True,
+    ).export()
+
+    mo.callout(
+        mo.md(f"New HDF5 file created: `{os.path.basename(_new_hdf5_path)}`"),
+        kind="success",
+    )
+    return
+
+
+@app.cell
+def _(get_selected_config, mo, overwrite_hdf5_button, selected_hdf5_file):
+    mo.stop(not overwrite_hdf5_button.value)
+
+    _cfg = get_selected_config()
+    mo.stop(
+        _cfg is None,
+        mo.callout(
+            mo.md("*No configuration selected — click **👉 Use this configuration** on a reconstruction first.*"),
+            kind="warn",
+        ),
+    )
+
+    from __code.marimo.export_new_configuration_to_hdf5 import ExportNewConfigurationToHDF5 as _ExportNewConfigurationToHDF5
+
+    _ExportNewConfigurationToHDF5(
+        new_configuration=_cfg,
+        hdf5_file_path=selected_hdf5_file,
+        new_hdf5_flag=False,
+    ).export()
+
+    mo.callout(
+        mo.md(f"HDF5 configuration updated in-place: `{os.path.basename(selected_hdf5_file)}`"),
+        kind="warn",
     )
     return
 
