@@ -264,6 +264,7 @@ class Step2PrepareImages:
 
     default_distance_source_detector: float = DISTANCE_SOURCE_DETECTOR
     tof_array = None
+    sinogram_normalized_images_log = None
 
     def __init__(self, system: Optional[Any] = None) -> None:
         """
@@ -1154,6 +1155,21 @@ class Step2PrepareImages:
                                   right=self.normalized_images_log,
                                   vmin_right=None,
                                   vmax_right=None,)
+
+    def create_sinograms(self):
+        """creates: sinogram_normalized_images_log"""
+        self.sinogram_normalized_images_log = np.moveaxis(self.normalized_images_log, 1, 0)
+
+    def visualize_sinograms(self):
+        if self.sinogram_normalized_images_log is None:
+            self.create_sinograms()
+
+        logging.debug(f"sinogram_normalized_images_log shape: {self.sinogram_normalized_images_log.shape}")
+
+        o_vizu = Visualization(parent=self)
+        o_vizu.visualize_1_stack(data=self.sinogram_normalized_images_log,
+                                 title="Sinograms",
+                                 low_res=False)
 
     # strips removal
     def select_region_to_test_stripes_removal(self) -> None:
