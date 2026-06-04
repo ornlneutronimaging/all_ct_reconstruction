@@ -144,9 +144,16 @@ def _(h5py, json, mo, selected_hdf5_file):
         ),
     )
 
-    mo.vstack(
+    def _format_config(cfg):
+        if cfg is None:
+            return "missing"
+        lines = []
+        for k, v in cfg.items():
+            lines.append(f"  - **{k}**: `{v}`")
+        return "\n".join(lines)
+
+    _info_content = mo.vstack(
         [
-            mo.md("### **ℹ️ Infos**"),
             mo.md(
                 f"""
                 Loaded from `{selected_hdf5_file}`:
@@ -160,6 +167,8 @@ def _(h5py, json, mo, selected_hdf5_file):
                 - **angles** (`angles/deg`): {
                     len(angles_deg) if angles_deg is not None else "missing"
                 }
+
+                {("**Config dictionary:**\n\n" + _format_config(config)) if config is not None else ""}
                 """
             ),
         ]
@@ -172,6 +181,8 @@ def _(h5py, json, mo, selected_hdf5_file):
             "border": "1px solid #c5d0dd",
         }
     )
+
+    mo.accordion({"ℹ️ Infos": _info_content})
     return angles_deg, config, normalized_images_log
 
 

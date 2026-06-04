@@ -2,7 +2,7 @@
 authors = ["Jean Bilheux <bilheuxjm@ornl.gov>", "Chen Zhang <zhangc@ornl.gov>"]
 channels = ["conda-forge", "pypi"]
 name = "all_ct_reconstruction"
-platforms = ["linux-64", "osx-arm64"]
+platforms = ["linux-64"]
 version = "1.0.0"
 
 [tasks]
@@ -52,8 +52,8 @@ svmbir = ">=0.4.0,<0.5"
 mkl-fft = ">=2.0.0, <3"
 jax = { version = ">=0.9", extras = ["cuda13"] }
 
-[target.osx-arm64.pypi-dependencies]
-jax = { version = ">=0.9"}
+# [target.osx-arm64.pypi-dependencies]
+# jax = { version = ">=0.9"}
 
 #[target.linux-64.host-dependencies]
 #cuda = "13.0"
