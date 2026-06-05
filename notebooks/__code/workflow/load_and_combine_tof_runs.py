@@ -255,7 +255,7 @@ class LoadAndCombineTofRuns(Parent):
             else:
                 logging.info(f"\twe reject that runs!")
 
-        master_3d_data_array[DataType.ob] = np.array(list_ob_data)
+        master_3d_data_array[DataType.ob] = np.array(list_ob_data) if list_ob_data else None
 
         self.parent.master_3d_data_array = master_3d_data_array
         self.parent.final_list_of_angles = list(list_of_angles_of_runs_to_keep)
@@ -303,9 +303,9 @@ class LoadAndCombineTofRuns(Parent):
 
         # load data
         # data = load_list_of_tif(list_tif)
-        data: NDArray[np.floating] = load_data_using_multithreading(list_tif, 
-                                                                    combine_tof=True, 
-                                                                    index_integration_range=self.parent.index_integration_range)
+        data: NDArray[np.floating] = load_data_using_multithreading(list_tif,
+                                                                    combine_tof=True,
+                                                                    index_integration_range=getattr(self.parent, 'index_integration_range', None))
 
         if detector_type in [DetectorType.tpx1, DetectorType.tpx1_legacy]:
             config = default_config_timepix1
