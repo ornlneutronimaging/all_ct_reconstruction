@@ -532,7 +532,7 @@ class CheckingData(Parent):
                     y=self.list_proton_charge_c[DataType.sample],
                     mode='markers',
                     marker=dict(symbol='cross', size=10, color='green'),
-                    name=DataType.sample
+                    name=DataType.sample.value
                 ))
                 
                 # OB data points
@@ -542,7 +542,7 @@ class CheckingData(Parent):
                     y=self.list_proton_charge_c[DataType.ob],
                     mode='markers',
                     marker=dict(symbol='circle', size=8, color='blue'),
-                    name=DataType.ob
+                    name=DataType.ob.value
                 ))
                 
                 # Sample proton charge target line

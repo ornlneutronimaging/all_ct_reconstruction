@@ -130,7 +130,7 @@ class RecapData(Parent):
 
         final_list_of_sample_runs: List[str] = []
         for _run in list_of_runs[DataType.sample].keys():
-            logging.info(f"Working with {DataType.sample}")
+            logging.info(f"Working with {DataType.sample.value}")
 
             if list_of_runs[DataType.sample][_run][Run.use_it]:
     
@@ -154,7 +154,7 @@ class RecapData(Parent):
 
         final_list_of_ob_runs: List[str] = []
         for _run in list_of_runs[DataType.ob].keys():
-            logging.info(f"Working with {DataType.ob}")
+            logging.info(f"Working with {DataType.ob.value}")
 
             if list_of_runs[DataType.ob][_run][Run.use_it]:
                 _pc: float = list_of_runs[DataType.ob][_run][Run.proton_charge_c]

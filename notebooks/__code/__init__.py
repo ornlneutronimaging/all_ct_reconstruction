@@ -1,5 +1,7 @@
 import numpy as np
 import tomopy
+import os
+from enum import Enum
 
 # Patch as_ndarray
 def patched_as_ndarray(arr, dtype=None, copy=False):
@@ -31,7 +33,7 @@ class DetectorType:
     ikonxl = "IkonXL"
 
 
-class DataType:
+class DataType(Enum):
     sample = 'sample'
     ob = 'ob'
     dc = 'dc'
@@ -45,6 +47,7 @@ class DataType:
     extra = 'extra'
     processed = "processed"
     raw= 'raw'
+    hdf5 = 'hdf5'
 
 
 class Instrument:
@@ -58,13 +61,23 @@ class OperatingMode:
     white_beam = 'white_beam'
 
 
-STEP3_SVMBIR_SCRIPTS = "/SNS/VENUS/shared/software/git/all_ct_reconstruction/notebooks/step3_reconstruction_white_beam_mode_images_using_svmbir.py"
-STEP3_FPB_SCRIPTS = "/SNS/VENUS/shared/software/git/all_ct_reconstruction/notebooks/step3_reconstruction_white_beam_mode_images_using_fbp.py"
+# is project in development or not? This variable is used to decide which script to use for reconstruction (development or stable)
+# get name of top folder of this project
+path_of_this_file = os.path.abspath(__file__)
+top_folder_of_this_project = os.path.dirname(os.path.dirname(os.path.dirname(path_of_this_file)))
+if "development" in top_folder_of_this_project:
+    _root_folder = "/SNS/VENUS/shared/software/git/all_ct_reconstruction_development/"
+else:
+    _root_folder = "/SNS/VENUS/shared/software/git/all_ct_reconstruction/"
 
-STEP3_SCRIPTS = "/SNS/VENUS/shared/software/git/all_ct_reconstruction/notebooks/step3_reconstruction_CCD_or_TimePix_images.py"
-STEP3_SCRIPTS_OFFLINE = "step3_reconstruction_CCD_or_TimePix_images.py"
+_notebook_folder = os.path.join(_root_folder, "notebooks")    
+# STEP4_SVMBIR_SCRIPTS = os.path.join(_notebook_folder, "step3_reconstruction_white_beam_mode_images_using_svmbir.py")
+# STEP4_FPB_SCRIPTS = os.path.join(_notebook_folder, "step3_reconstruction_white_beam_mode_images_using_fbp.py")
+STEP4_SCRIPTS = os.path.join(_notebook_folder, "step4_reconstruction_images.py")
+STEP3_NOTEBOOK = os.path.join(_notebook_folder, "step3_slice_preprocessed_images.ipynb")
+PROJECT_ROOT_FOLDER = _root_folder
 
-STEP2_NOTEBOOK = "/SNS/VENUS/shared/software/git/all_ct_reconstruction/notebooks/step2_slice_CCD_or_TimePix_images.ipynb"
+STEP4_SCRIPTS_OFFLINE = "step4_reconstruction_images.py"
 
 DEFAULT_OPERATING_MODE = OperatingMode.white_beam
 DEFAULT_RECONSTRUCTION_ALGORITHM = ["tomopy_fbp"]

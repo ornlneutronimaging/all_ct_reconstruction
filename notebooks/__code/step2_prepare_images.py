@@ -56,6 +56,7 @@ Created: Part of Step 1 preparation workflow for TimePix-based neutron CT
 import os
 import glob
 import logging
+import subprocess
 import ipywidgets as widgets
 from collections import OrderedDict
 from typing import Optional, Dict, List, Any, Union
@@ -71,7 +72,7 @@ try:
 except ImportError:
     HAS_SVMBIR = False
 
-from __code import DataType, OperatingMode, DEFAULT_OPERATING_MODE, DetectorType
+from __code import STEP3_NOTEBOOK, DataType, OperatingMode, DEFAULT_OPERATING_MODE, DetectorType
 from __code.utilities.logging import setup_logging
 from __code.utilities.configuration_file import Configuration
 from __code.config import DEBUG, default_detector_type, DISTANCE_SOURCE_DETECTOR
@@ -86,8 +87,9 @@ from __code.workflow.chips_correction import ChipsCorrection
 from __code.workflow.center_of_rotation_and_tilt import CenterOfRotationAndTilt
 from __code.workflow.remove_strips import RemoveStrips
 from __code.workflow.svmbir_handler import SvmbirHandler
+from __code.workflow.mbirjax_handler import MbirjaxHandler
 from __code.workflow.final_projections_review import FinalProjectionsReview
-from __code.workflow.export import ExportExtra
+from __code.workflow.export import ExportExtra, RunningModeOptions
 from __code.workflow.visualization import Visualization
 from __code.workflow.crop import Crop
 from __code.workflow.combine_ob_dc import CombineObDc
@@ -103,12 +105,13 @@ from __code.workflow.test_reconstruction import TestReconstruction
 from __code.utilities.configuration_file import ReconstructionAlgorithm
 from __code.utilities.logging import logging_3d_array_infos
 from __code.workflow.checkpoint_hdf5 import CheckpointHdf5
+from __code.utilities.create_scripts import create_sh_file, create_sh_hsnt_file
 
 
 LOG_BASENAME_FILENAME, _ = os.path.splitext(os.path.basename(__file__))
 
 
-class Step1PrepareTimePixImages:
+class Step2PrepareImages:
     """
     Complete preparation workflow for TimePix detector neutron CT reconstruction.
     
@@ -210,10 +213,12 @@ class Step1PrepareTimePixImages:
     at_least_one_frame_number_not_found: bool = False
 
     master_3d_data_array: Dict[DataType, Optional[NDArray]] = {DataType.sample: None,  # [angle, y, x]
-                                                               DataType.ob: None}
+                                                               DataType.ob: None,
+                                                               DataType.dc: None}
 
     master_3d_data_array_cleaned: Dict[DataType, Optional[NDArray]] = {DataType.sample: None,  # [angle, y, x]
-                                                                       DataType.ob: None}
+                                                                       DataType.ob: None,
+                                                                       DataType.dc: None}
 
     normalized_images: Optional[NDArray] = None   # after normalization
     corrected_images: Optional[NDArray] = None  # after chips correction
@@ -245,6 +250,8 @@ class Step1PrepareTimePixImages:
     o_norm: Optional[Any] = None
     # svmbir 
     o_svmbir: Optional[Any] = None
+    # mbirjax
+    o_mbirjax: Optional[Any] = None
 
     # widget multi selection - list of runs to exclude before running svmbir
     runs_to_exclude_ui: Optional[Any] = None
@@ -257,6 +264,7 @@ class Step1PrepareTimePixImages:
 
     default_distance_source_detector: float = DISTANCE_SOURCE_DETECTOR
     tof_array = None
+    sinogram_normalized_images_log = None
 
     def __init__(self, system: Optional[Any] = None) -> None:
         """
@@ -286,25 +294,20 @@ class Step1PrepareTimePixImages:
         top_sample_dir = system.System.get_working_dir()
         self.top_sample_dir = top_sample_dir
         self.instrument = "VENUS"  
-    
-        if DEBUG:
-            logging.info(f"WARNING!!!! we are running using DEBUG mode!")
-            _default_detector_type = default_detector_type
-        else:
-            _default_detector_type = DetectorType.tpx1
+        self.full_ipts_number = os.path.basename(top_sample_dir) 
+        self.ipts_number = self.full_ipts_number.replace("IPTS-", "")
+        
+        # if DEBUG:
+        #     logging.info(f"WARNING!!!! we are running using DEBUG mode!")
+        #     _default_detector_type = default_detector_type
+        # else:
+        #     _default_detector_type = DetectorType.tpx1
 
-        display(HTML("<span style='color:blue; font-size:16px'>Select detector type</span>"))
-        self.detector_type_widget = widgets.Dropdown(
-            options=[DetectorType.tpx1_legacy, DetectorType.tpx1, DetectorType.tpx3],
-            value=_default_detector_type,
-            layout=widgets.Layout(width="400px"),
-            disabled=False,
-        )
-        display(self.detector_type_widget)
-        self.detector_type = self.detector_type_widget.value
-
+        self.update_all_paths()
         logging.info(f"working_dir: {self.working_dir}")
         logging.info(f"instrument: {self.instrument}")
+        logging.info(f"full_ipts_number: {self.full_ipts_number}")
+        logging.info(f"ipts_number: {self.ipts_number}")
         logging.info(f"offline: {self.offline}")
 
     def update_all_paths(self) -> None:
@@ -341,21 +344,21 @@ class Step1PrepareTimePixImages:
                 self.working_dir[DataType.top] = os.path.join(top_sample_dir, "shared", "autoreduce", "images", self.get_unix_detector_name())
 
         logging.info(f"Updates all paths:")
-        logging.info(f"  - top_sample_dir: {top_sample_dir}")
         logging.info(f"  - sample: {self.working_dir[DataType.sample]}")
         logging.info(f"  - ob: {self.working_dir[DataType.ob]}")
         logging.info(f"  - nexus: {self.working_dir[DataType.nexus]}")  
         logging.info(f"  - processed: {self.working_dir[DataType.processed]}")
         logging.info(f"  - ipts: {self.working_dir[DataType.ipts]}")
         logging.info(f"  - top: {self.working_dir[DataType.top]}")
+        logging.info(f"  - normalized: {self.working_dir[DataType.normalized]}")
 
-    def get_unix_detector_name(self) -> str:
-        if  self.detector_type == DetectorType.tpx1:
-            return "tpx1"
-        elif self.detector_type == DetectorType.tpx3:
-            return "tpx3"
-        else:
-            raise ValueError("Detector type not recognized")
+    # def get_unix_detector_name(self) -> str:
+    #     if  self.detector_type == DetectorType.tpx1:
+    #         return "tpx1"
+    #     elif self.detector_type == DetectorType.tpx3:
+    #         return "tpx3"
+    #     else:
+    #         raise ValueError("Detector type not recognized")
 
     # Selection of data
     def select_top_sample_folder(self) -> None:
@@ -834,6 +837,7 @@ class Step1PrepareTimePixImages:
         """
         o_select = Load(parent=self)
         o_select.select_folder(data_type=DataType.normalized,
+                               next_function=self.export_normalized_images,
                                output_flag=True)
 
     def export_normalized_images(self) -> None:
@@ -1040,6 +1044,10 @@ class Step1PrepareTimePixImages:
         self.o_crop.run()
 
     # rotate sample
+    def is_rotation_needed(self):
+        self.o_rotate = Rotate(parent=self)
+        self.o_rotate.is_rotation_needed()
+    
     def rotate_data_settings(self) -> None:
         """
         Configure rotation parameters for TimePix sample alignment.
@@ -1147,6 +1155,21 @@ class Step1PrepareTimePixImages:
                                   right=self.normalized_images_log,
                                   vmin_right=None,
                                   vmax_right=None,)
+
+    def create_sinograms(self):
+        """creates: sinogram_normalized_images_log"""
+        self.sinogram_normalized_images_log = np.moveaxis(self.normalized_images_log, 1, 0)
+
+    def visualize_sinograms(self):
+        if self.sinogram_normalized_images_log is None:
+            self.create_sinograms()
+
+        logging.debug(f"sinogram_normalized_images_log shape: {self.sinogram_normalized_images_log.shape}")
+
+        o_vizu = Visualization(parent=self)
+        o_vizu.visualize_1_stack(data=self.sinogram_normalized_images_log,
+                                 title="Sinograms",
+                                 low_res=False)
 
     # strips removal
     def select_region_to_test_stripes_removal(self) -> None:
@@ -1448,54 +1471,58 @@ class Step1PrepareTimePixImages:
         if ReconstructionAlgorithm.svmbir in self.configuration.reconstruction_algorithm:
             self.o_svmbir = SvmbirHandler(parent=self)
             self.o_svmbir.set_settings()
-       
-    def svmbir_run(self) -> None:
-        """
-        Execute SVMBIR reconstruction on prepared TimePix data.
         
-        Runs the complete SVMBIR iterative reconstruction algorithm
-        using the prepared and corrected TimePix data. Displays
-        reconstructed slices for immediate quality assessment.
-        
-        Side Effects:
-            - Executes SVMBIR reconstruction using self.o_svmbir
-            - Updates reconstruction_array with 3D reconstructed volume
-            - Displays reconstructed slices for immediate review
-            - Logs reconstruction progress and completion statistics
-        """
-        self.o_svmbir.run_reconstruction()
-        self.o_svmbir.display_slices()
+        if ReconstructionAlgorithm.mbirjax in self.configuration.reconstruction_algorithm:
+            self.o_mbirjax = MbirjaxHandler(parent=self)
+            self.o_mbirjax.set_settings()
 
-    # export slices
-    def select_export_slices_folder(self) -> None:
-        """
-        Select output folder for TimePix reconstructed slice export.
+    # def svmbir_run(self) -> None:
+    #     """
+    #     Execute SVMBIR reconstruction on prepared TimePix data.
         
-        Opens folder selection interface for choosing where to export
-        the final reconstructed CT slices from TimePix data. These are
-        the primary output of the reconstruction process.
+    #     Runs the complete SVMBIR iterative reconstruction algorithm
+    #     using the prepared and corrected TimePix data. Displays
+    #     reconstructed slices for immediate quality assessment.
         
-        Side Effects:
-            - Creates Load workflow object for folder selection
-            - Launches folder browser for reconstructed slice export path
-        """
-        o_select = Load(parent=self)
-        o_select.select_folder(data_type=DataType.reconstructed)
+    #     Side Effects:
+    #         - Executes SVMBIR reconstruction using self.o_svmbir
+    #         - Updates reconstruction_array with 3D reconstructed volume
+    #         - Displays reconstructed slices for immediate review
+    #         - Logs reconstruction progress and completion statistics
+    #     """
+    #     self.o_svmbir.run_reconstruction()
+    #     self.o_svmbir.display_slices()
 
-    def export_slices(self) -> None:
-        """
-        Export reconstructed TimePix slices to selected folder.
+    # # export slices
+    # def select_export_slices_folder(self) -> None:
+    #     """
+    #     Select output folder for TimePix reconstructed slice export.
         
-        Saves the final reconstructed CT slices from TimePix data to the
-        user-selected folder with appropriate file formats and metadata.
-        These are the primary deliverable of the reconstruction workflow.
+    #     Opens folder selection interface for choosing where to export
+    #     the final reconstructed CT slices from TimePix data. These are
+    #     the primary output of the reconstruction process.
         
-        Side Effects:
-            - Exports reconstructed slices using self.o_svmbir
-            - Creates output files in selected export folder
-            - Preserves TimePix-specific metadata and reconstruction parameters
-        """
-        self.o_svmbir.export_images()
+    #     Side Effects:
+    #         - Creates Load workflow object for folder selection
+    #         - Launches folder browser for reconstructed slice export path
+    #     """
+    #     o_select = Load(parent=self)
+    #     o_select.select_folder(data_type=DataType.reconstructed)
+
+    # def export_slices(self) -> None:
+    #     """
+    #     Export reconstructed TimePix slices to selected folder.
+        
+    #     Saves the final reconstructed CT slices from TimePix data to the
+    #     user-selected folder with appropriate file formats and metadata.
+    #     These are the primary deliverable of the reconstruction workflow.
+        
+    #     Side Effects:
+    #         - Exports reconstructed slices using self.o_svmbir
+    #         - Creates output files in selected export folder
+    #         - Preserves TimePix-specific metadata and reconstruction parameters
+    #     """
+    #     self.o_svmbir.export_images()
 
     # export extra files
     def select_export_extra_files(self) -> None:
@@ -1510,30 +1537,31 @@ class Step1PrepareTimePixImages:
             - Creates Load workflow object for folder selection
             - Launches folder browser for extra files export path
         """
-        o_select = Load(parent=self)
-        o_select.select_folder(data_type=DataType.extra,
-                               output_flag=True)
+        self.o_select = Load(parent=self)
+        self.o_select.select_folder(data_type=DataType.extra,
+                                    next_function=self.export_extra_files,
+                                    output_flag=True)
 
-    def export_pre_reconstruction_data(self) -> None:
-        """
-        Export pre-reconstruction TimePix data and parameters.
+    # def export_pre_reconstruction_data(self) -> None:
+    #     """
+    #     Export pre-reconstruction TimePix data and parameters.
         
-        Saves processed TimePix data and parameters that will be used
-        for reconstruction. Supports both SVMBIR and FBP workflows
-        depending on the selected reconstruction algorithm.
+    #     Saves processed TimePix data and parameters that will be used
+    #     for reconstruction. Supports both SVMBIR and FBP workflows
+    #     depending on the selected reconstruction algorithm.
         
-        Side Effects:
-            - Uses FbpHandler if o_svmbir is None (FBP workflow)
-            - Uses SvmbirHandler if available (SVMBIR workflow)
-            - Exports pre-reconstruction data and parameters
-        """
-        if self.o_svmbir is None:
-            o_fbp = FbpHandler(parent=self)
-            o_fbp.export_pre_reconstruction_data()
-        else:
-            self.o_svmbir.export_pre_reconstruction_data()
+    #     Side Effects:
+    #         - Uses FbpHandler if o_svmbir is None (FBP workflow)
+    #         - Uses SvmbirHandler if available (SVMBIR workflow)
+    #         - Exports pre-reconstruction data and parameters
+    #     """
+    #     if self.o_svmbir is None:
+    #         o_fbp = FbpHandler(parent=self)
+    #         o_fbp.export_pre_reconstruction_data()
+    #     else:
+    #         self.o_svmbir.export_pre_reconstruction_data()
 
-    def export_extra_files(self, prefix: str = "") -> None:
+    def export_extra_files(self, folder="") -> None:
         """
         Export additional TimePix reconstruction files and metadata.
         
@@ -1542,8 +1570,7 @@ class Step1PrepareTimePixImages:
         folder for documentation and reproducibility.
         
         Args:
-            prefix: Optional prefix to add to exported filenames for
-                   organization and identification.
+            folder: Path to the folder where extra files will be exported.
         
         Side Effects:
             - Exports pre-reconstruction data first
@@ -1551,21 +1578,149 @@ class Step1PrepareTimePixImages:
             - Exports configuration files, logs, and TimePix metadata
             - Uses LOG_BASENAME_FILENAME and optional prefix for organization
         """
-        self.export_pre_reconstruction_data()
-        o_export = ExportExtra(parent=self)
-        o_export.run(base_log_file_name=LOG_BASENAME_FILENAME,
-                     prefix=prefix)
+        
+        self.working_dir[DataType.extra] = folder
+        self.o_select.o_file_browser.list_output_folders_ui.shortcut_buttons.close() # close the jump to shared and home buttons 
+              
+        o_export = CheckpointHdf5(parent=self)
+        o_export.update_config_for_export(data_type=DataType.extra)
+        hdf5_file_name = o_export.create_hdf5_with_config_and_preprocessed_data()
+        self.what_to_do_after_exporting_extra_files(hdf5_file_name=hdf5_file_name)
         
     # HDF5 checkpoint (used between step 1 and step 2)
 
+    def what_to_do_after_exporting_extra_files(self, hdf5_file_name: str) -> None:
+        logging.info("What to do after exporting extra files...")
+        self.hdf5_file_name = hdf5_file_name
+        self.sh_file_name = create_sh_file(hdf5_file_name=hdf5_file_name,
+                                           offline=self.offline)
+        logging.info(f"\tShell script created: {self.sh_file_name}")
+
+        with self.o_select.out:
+            self.o_select.out.clear_output()
+            display(HTML(f"<font color='blue'><b>Next step</b></font>"))
+
+        list_options: List[str] = [
+                RunningModeOptions.manual_launch,
+                RunningModeOptions.go_to_step3,
+                RunningModeOptions.run_from_notebook,
+        ]
+
+        # 3 options are offered to the user
+        choices: widgets.RadioButtons = widgets.RadioButtons(
+            options=list_options,
+            value=RunningModeOptions.manual_launch, # default value
+            description='',
+            layout=widgets.Layout(width='100%'),
+            disabled=False
+        )
+
+        basename_hdf5_file_name = os.path.basename(self.hdf5_file_name)
+        self.instructions = widgets.Textarea(value=f"Reload the HDF5 file {basename_hdf5_file_name} found in {os.path.dirname(self.hdf5_file_name)} in the notebook {STEP3_NOTEBOOK}",
+                                             layout=widgets.Layout(width='100%', height='160px'),
+                                             disabled=True)
+
+        self.run_script = widgets.Button(
+            description='Run script',
+            disabled=False,
+            button_style='success',
+            tooltip='Run the script directly from the notebook',
+            icon='play'
+        )
+        
+        vertical_layout = widgets.VBox([choices, self.instructions, self.run_script])        
+        with self.o_select.out:
+            display(vertical_layout)
+
+        choices.observe(self.on_choice_change, names='value')
+        self.on_choice_change({'new': choices.value})
+        # self.run_script.on_click(self.on_run_script_click)
+    
+    def on_run_script_click(self, b: widgets.Button) -> None:
+        """
+        Execute reconstruction script directly from notebook interface.
+        
+        Launches the generated shell script in an external xterm terminal
+        window for direct execution. Provides immediate feedback and allows
+        monitoring of reconstruction progress.
+        
+        Parameters
+        ----------
+        b : widgets.Button
+            Button widget that triggered the callback (unused)
+            
+        Notes
+        -----
+        - Uses xterm terminal for script execution
+        - Script runs with exec bash for proper environment
+        - Provides console output for progress monitoring
+        
+        Raises
+        ------
+        subprocess.CalledProcessError
+            If script execution fails or xterm cannot be launched
+        """
+        print("Running the script directly from the notebook...")
+        logging.info("Running the script directly from the notebook...")
+        logging.info(f"Executing: xterm -e bash {self.sh_file_name}")
+        # subprocess.run(["xterm", "-e", f"bash {self.sh_file_name}"], check=True)
+        subprocess.Popen(["gnome-terminal", "--", "bash", "-c", f"bash {self.sh_file_name}; exec bash"])
+
+        # display(HTML(f"<font color='blue'>From this point you have 3 options:</font>"))
+        # display(HTML(f"<font color='blue'> 1. reload the configuration file </font>(<font color='green'>{config_file_name}</font>) in the notebook <font color='green'> {STEP2_NOTEBOOK}</font>"))
+        # display(HTML(f"<br>"))
+        # display(HTML(f"<font color='blue'> 2. launch the following script from the command line"))
+        # display(HTML(f"<font color='green'>{sh_file_name}</font>"))
+        # display(HTML(f"<br>"))
+   
+    def on_choice_change(self, change: Dict[str, Any]) -> None:
+        """
+        Handle workflow selection changes in radio button widget.
+        
+        Updates UI state and instruction text based on selected execution mode.
+        Enables or disables the run script button and provides appropriate
+        instructions for each workflow option.
+        
+        Parameters
+        ----------
+        change : Dict[str, Any]
+            Widget change event containing 'new' key with selected value
+            
+        Notes
+        -----
+        Updates:
+        - run_script button enabled state
+        - instructions widget text content
+        - Workflow-specific command instructions
+        """
+        if change['new'] == 'Launch the script directly from the notebook':
+            self.run_script.disabled = False
+        else:
+            self.run_script.disabled = True
+
+        hdf5_file_name = os.path.abspath(self.hdf5_file_name)
+        if change['new'] == RunningModeOptions.go_to_step3:
+            self.instructions.value = f"Reload the HDF5 file ({hdf5_file_name}) in the notebook {STEP3_NOTEBOOK}"
+        elif change['new'] == RunningModeOptions.manual_launch:
+            self.instructions.value = f"Launch the following script from the command line: {self.sh_file_name}"
+        elif change['new'] == RunningModeOptions.run_on_hsnt:
+            self.instructions.value = f"TBD"
+            # f"1. Connect to hsnt\n" + \
+            # f"2. Copy the pre-processed data: > 'cp {self.parent.configuration.projections_pre_processing_folder} {self.hsnt_output_folder}'\n" + \
+            # f"3. Copy the config json file: > 'cp {self.config_file_name} {self.hsnt_output_json_folder}'\n" + \
+            # f"4. Copy the script to run: > 'cp {self.sh_hsnt_script_name} {self.hsnt_output_folder}'\n" + \
+            # f"5. Run the following script: > '{os.path.join(self.hsnt_output_folder,os.path.basename(self.sh_hsnt_script_name))}'"
+        else:
+            self.instructions.value = f"click the button below to run the script directly from the notebook"
+    
     def select_hdf5_output_folder(self) -> None:
         o_checkpoint = CheckpointHdf5(parent=self)
-        o_checkpoint.select_output_folder(step="step1")
+        o_checkpoint.select_output_folder(step="step2")
 
-    def export_raw_hdf5(self) -> None:
-        self.detector_name = "TimePix"
-        o_checkpoint = CheckpointHdf5(parent=self)
-        o_checkpoint.export()
+    # def export_raw_hdf5(self) -> None:
+    #     self.detector_name = "TimePix"
+    #     o_checkpoint = CheckpointHdf5(parent=self)
+    #     o_checkpoint.export()
 
     def select_hdf5_input_file(self) -> None:
         o_checkpoint = CheckpointHdf5(parent=self)

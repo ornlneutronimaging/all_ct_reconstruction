@@ -32,12 +32,15 @@ Author: CT Reconstruction Pipeline Team
 Created: Part of CLI-based CT reconstruction workflow
 """
 
+import json
+
 import numpy as np
 import os
 import glob
 import logging
 from typing import List, Dict, Any, Tuple, Optional
 import svmbir
+import h5py
 import tomopy
 from tomopy.prep import stripe
 from numpy.typing import NDArray
@@ -58,6 +61,7 @@ from __code.workflow_cli.merge_reconstructed_slices import merge_reconstructed_s
 from __code.utilities.configuration_file import ReconstructionAlgorithm
 from __code.workflow.remove_strips import RemoveStrips
 from __code.workflow_cli.stripes_removal import StripesRemovalHandler
+from __code.utilities import json
 
 
 class FbpCliHandler:
@@ -168,23 +172,32 @@ class FbpCliHandler:
         return reconstruction_array
     
     @staticmethod
-    def run_reconstruction_from_pre_data_mode(config_json_file):
+    def run_reconstruction_from_pre_data_mode(hdf5_file: str) -> None:
 
-        config = load_json_string(config_json_file)
+        with h5py.File(hdf5_file, "r") as f:
+            config_json = f["metadata/config"][()] if "metadata/config" in f else None
+        
+        config = json.loads(config_json) if config_json is not None else None
         logging.info(f"config = {config}")
 
         input_data_folder = config["projections_pre_processing_folder"]
         base_output_folder = config['output_folder']
         raw_data_base_folder = config['raw_data_base_folder']
 
-        list_tiff = glob.glob(os.path.join(input_data_folder, '*.tiff'))
-        list_tiff.sort()
-        print(f"loading {len(list_tiff)} images ... ", end="")
-        logging.info(f"loading {len(list_tiff)} images ... ")
-        #corrected_array_log = load_data_using_multithreading(list_tiff)
-        corrected_array_log = load_list_of_tif(list_tiff, dtype=np.float32)
+        print(f"loading pre-processed data ... ", end="")
+        logging.info(f"loading pre-processed data ... ")
+        with h5py.File(hdf5_file, "r") as f:
+            if "raw/normalized_images_log" in f:
+                corrected_array_log = f["raw/normalized_images_log"][()]
+            else:
+                corrected_array_log = None
+            if "raw/list_of_angles_deg" in f:
+                list_of_angles_deg = f["raw/list_of_angles_deg"][()]
+                list_of_angles_rad = np.deg2rad(list_of_angles_deg)
+            else:
+                list_of_angles_rad = None
+
         print(f"done!")
-        logging.info(f"loading {len(list_tiff)} images ... done")
         logging.info(f"when to remove stripes: {config['when_to_remove_stripes']}")
 
         # this is where we will apply the strip removal algorithms if requested
@@ -196,8 +209,6 @@ class FbpCliHandler:
                                                                       )
             logging.info("Strip removal done!")
             print(" done!")
-
-        list_of_angles_rad = np.array(config['list_of_angles'])
         
         list_of_slices_to_reconstruct = config['list_of_slices_to_reconstruct']
         top_slice = config['crop_region']['top']

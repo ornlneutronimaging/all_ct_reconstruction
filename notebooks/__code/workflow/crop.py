@@ -76,13 +76,21 @@ class Crop(Parent):
         """
 
         self.before_normalization = before_normalization
-    
+
         _data: NDArray[np.generic]
         if before_normalization:
             _data = self.parent.master_3d_data_array[DataType.sample]
+            if _data is None:
+                raise ValueError(
+                    "No sample data loaded. Please run load_from_hdf5() before calling this method."
+                )
         else:
            _data = self.parent.normalized_images
-           
+           if _data is None:
+               raise ValueError(
+                   "No normalized images available. Please run normalization before calling this method."
+               )
+
         # Downsample for visualization if size of image is large
         if _data.shape[1] > 1000 or _data.shape[2] > 1000:
             low_res_flag = True
@@ -273,8 +281,8 @@ class Crop(Parent):
                                                                         for image in self.parent.master_3d_data_array[DataType.ob]])
             
             # Crop DC images if available
-            if self.parent.master_3d_data_array[DataType.dc] is not None:
-                self.parent.master_3d_data_array[DataType.dc] = np.array([image[top: bottom+1, left: right+1] 
+            if self.parent.master_3d_data_array.get(DataType.dc) is not None:
+                self.parent.master_3d_data_array[DataType.dc] = np.array([image[top: bottom+1, left: right+1]
                                                                           for image in self.parent.master_3d_data_array[DataType.dc]])
 
             logging.info(f"\tshape after: {np.shape(self.parent.master_3d_data_array[DataType.sample])}")

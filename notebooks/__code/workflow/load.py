@@ -99,6 +99,7 @@ class Load(Parent):
 
     def select_folder(self, data_type: DataType = DataType.sample, 
                      multiple_flag: bool = False, 
+                     next_function: Optional[callable] = None,
                      output_flag: bool = False) -> None:
         """
         Interactive folder selection for CT data loading.
@@ -137,8 +138,8 @@ class Load(Parent):
         else:
             sample_folder = self.parent.working_dir[DataType.sample][0]
 
-        if data_type in [DataType.ob, DataType.dc]:
-            working_dir = os.path.dirname(sample_folder)
+        # if data_type in [DataType.ob, DataType.dc]:
+        #     working_dir = os.path.dirname(sample_folder)
 
         if DEBUG:
             
@@ -187,10 +188,14 @@ class Load(Parent):
             logging.info(f"{output_flag = }")
             if output_flag:
                 logging.info(f"Selecting output folder for data type {data_type} ...")
-                if data_type == DataType.normalized:
+                if (data_type == DataType.normalized):
                     self.o_file_browser = FileFolderBrowser(working_dir=working_dir,
                                                     ipts_folder=self.parent.working_dir[DataType.ipts],
                                                     next_function=self.close_file_browser)
+                elif (data_type == DataType.extra):
+                    self.o_file_browser = FileFolderBrowser(working_dir=working_dir,
+                                                    ipts_folder=self.parent.working_dir[DataType.ipts],
+                                                    next_function=next_function)
                 else:
                     self.o_file_browser = FileFolderBrowser(working_dir=working_dir,
                                                     ipts_folder=self.parent.working_dir[DataType.ipts],
@@ -416,7 +421,13 @@ class Load(Parent):
     def import_list_from_ascii_file(self):
         filters = {"Text files": "*.txt",
                    "All files": "*.*"}
-        o_file_browser = FileFolderBrowser(working_dir=os.path.dirname(self.parent.working_dir[DataType.sample]),
+        
+        if type(self.parent.working_dir[DataType.sample]) == str:
+            working_dir = os.path.dirname(self.parent.working_dir[DataType.sample])
+        else:
+            working_dir = os.path.dirname(self.parent.working_dir[DataType.sample][0])
+        
+        o_file_browser = FileFolderBrowser(working_dir=working_dir,
                                            next_function=self.ascii_file_selected)
         o_file_browser.select_file(instruction="Select ASCII file containing list of angles ...",
                                    filters=filters,
@@ -534,6 +545,7 @@ class Load(Parent):
         dict_angle_value_to_file = {}
         list_images.sort()
         for _file in list_images:
+            logging.info(f"\t\tProcessing file: {_file}")
             base_name = os.path.basename(_file)
             path = os.path.dirname(_file)
             name_without_extension, ext = os.path.splitext(base_name)
@@ -545,7 +557,9 @@ class Load(Parent):
                 dict_angle_value_to_file[_file] = [_file]
             else:
                 key = os.path.join(path, "_".join(splitted_name[:-1]) + ext)
-                dict_angle_value_to_file[key].append(_file)
+                logging.info(f"\t\t\tFound file with revision number: {_file}, key: {key}")
+                dict_angle_value_to_file.setdefault(key, []).append(_file)
+                # dict_angle_value_to_file[key].append(_file)
             
         # keep only the last file for each key in the dictionary
         list_images_to_keep = [] 
@@ -1115,7 +1129,7 @@ class Load(Parent):
         working_dir = os.path.dirname(self.parent.working_dir[DataType.sample][0])
         self.o_file_browser = FileFolderBrowser(working_dir=working_dir,
                                                 next_function=self.reload_normalized_images)
-        self.o_file_browser.select_input_folder(instruction=f"Select Top Folder of {DataType.normalized}",
+        self.o_file_browser.select_input_folder(instruction=f"Select Top Folder of {DataType.normalized.value}",
                                         multiple_flag=False)
                 
         self.out = widgets.Output()

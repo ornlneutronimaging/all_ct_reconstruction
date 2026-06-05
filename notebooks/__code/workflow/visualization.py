@@ -118,7 +118,7 @@ class Visualization(Parent):
         
         
         
-        display(HTML(f"<h2>How to visualize the {data_type} data?</h2>"))
+        display(HTML(f"<h2>How to visualize the {data_type.value if isinstance(data_type, DataType) else data_type} data?</h2>"))
         display(HTML(f"<b>Choose one of the following options and then execute the next cell to display:</b>"))
         
         self.what_to_visualize_ui = widgets.ToggleButtons(options=['All images', 
@@ -198,7 +198,7 @@ class Visualization(Parent):
             
         sample_data = master_3d_data_array[DataType.sample]
         ob_data = master_3d_data_array[DataType.ob]
-        dc_data = master_3d_data_array[DataType.dc]
+        dc_data = master_3d_data_array.get(DataType.dc)
         list_of_angles = self.parent.final_list_of_angles
         
         if ob_data is None:

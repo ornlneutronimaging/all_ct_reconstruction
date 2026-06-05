@@ -311,6 +311,7 @@ class TestReconstruction(Parent):
             if ListAlgorithmsForTest.mbirjax in list_algorithms_to_run:
                 # mbirjax
                 logging.info(f"\tusing mbirjax ...")
+                projections_normalized_images_log: NDArray[np.floating] = self.parent.normalized_images_log[:, _slice:_slice+1, :]
                 sinogram_shape: Tuple[int, ...] = projections_normalized_images_log.shape  # (nbr_angles, height, width)
                 logging.info(f"\t\t{sinogram_shape = }")
                 logging.info(f"\t\t{projections_normalized_images_log.shape = }")

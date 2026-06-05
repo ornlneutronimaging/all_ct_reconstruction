@@ -641,7 +641,11 @@ class RemoveStrips:
             title_text = None
             height, width = np.shape(normalized_images_after[0])
             if self.parent.MODE == OperatingMode.tof:
-                title_text = f"Run: {final_list_of_runs[image_index]}, Angle: {final_list_of_angles[image_index]}"
+                try:
+                    run_label = final_list_of_runs[image_index]
+                except (KeyError, IndexError):
+                    run_label = f"#{image_index}"
+                title_text = f"Run: {run_label}, Angle: {final_list_of_angles[image_index]}"
 
             fig_images = make_subplots(rows=1, cols=2, subplot_titles=("Projections before correction", "Projections after correction"))
             fig_images.add_trace(

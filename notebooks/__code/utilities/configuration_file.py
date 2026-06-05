@@ -48,6 +48,8 @@ Created: Configuration management for CT reconstruction pipeline
 
 from pydantic import BaseModel, Field
 from typing import List, Tuple, Optional, Union
+import h5py
+import json
 
 from __code.utilities.json import load_json_string
 from __code import CleaningAlgorithm, NormalizationSettings, OperatingMode, WhenToRemoveStripes, Instrument
@@ -327,6 +329,70 @@ class NormalizationRoi(BaseModel):
     right: int = 1
 
 
+class MbirjaxConfig(BaseModel):
+    """
+    Configuration for MBIRJAX (Model Based Iterative Reconstruction in JAX).
+    
+    Parameters for the MBIRJAX algorithm which provides GPU-accelerated
+    iterative reconstruction using JAX. Suitable for large datasets and
+    high-quality reconstructions with flexible regularization options.
+    
+    Attributes:
+        num_iterations: Maximum number of iterations (default: 100)
+        regularization_weight: Weight for regularization term (default: 0.1)
+        use_gpu: Whether to use GPU acceleration (default: True)
+        verbose: Enable verbose output logging (default: False)
+    """
+    positivity: bool = False
+    max_iterations: int = 100
+    verbose: bool = False
+    sharpness: float = 0
+    snr_db: float = 30.0
+    # delta_det_channel: float = 1.0
+    print_logs: bool = False
+    det_channel_offset: float = 0.0 # center offset in pixels (from center of the image, positive means shift to the right)
+
+
+class MinMaxRange(BaseModel):
+    """
+    Configuration for minimum and maximum value ranges.
+    
+    Defines the minimum and maximum values for various parameters in the
+    reconstruction pipeline, allowing for flexible range specifications.
+    
+    Attributes:
+        min: Minimum value (default: 0)
+        max: Maximum value (default: 1)
+    """
+    min: float = 0
+    max: float = 1
+    default: float = 0
+
+
+class MbirjaxConfigRanges(BaseModel):
+    """
+    Ranges for MBIRJAX configuration parameters for optimization.
+    
+    Defines the parameter ranges to explore when optimizing MBIRJAX
+    reconstruction parameters for best image quality and reconstruction
+    performance.
+    
+    Attributes:
+        sharpness: Range of sharpness values to test (default: [0, 0.5, 1.0])
+        snr_db: Range of SNR values in dB to test (default: [20, 30, 40])
+        positivity: Whether to enforce positivity constraint (default: True)
+        max_iterations: Range of maximum iterations to test (default: [50, 100, 200])
+        det_channel_offset: Range of detector channel offsets to test (default: [-5, 0, 5])
+    """
+    sharpness: MinMaxRange = Field(default=MinMaxRange(min=-1, max=3, default=0))
+    snr_db: MinMaxRange = Field(default=MinMaxRange(min=10, max=40, default=30))
+    positivity: bool = True
+    max_iterations: MinMaxRange = Field(default=MinMaxRange(min=10, max=200, default=20))
+    det_channel_offset: MinMaxRange = Field(default=MinMaxRange(min=-200, max=200, default=0))
+    row_scale: MinMaxRange = Field(default=MinMaxRange(min=0.5, max=2.0, default=1.0))
+    col_scale: MinMaxRange = Field(default=MinMaxRange(min=0.5, max=2.0, default=1.0))
+
+
 class SvmbirConfig(BaseModel):
     """
     Configuration for SVMBIR (Sparse View Model Based Iterative Reconstruction).
@@ -441,7 +507,7 @@ class Configuration(BaseModel):
     """
 
     instrument: str = Field(default=Instrument.mars, description="Instrument used for the reconstruction: mars, venus, snap.")
-    ipts_number: int = Field(default=27829, description="IPTS number for the experiment.")
+    ipts_number: Optional[int] = Field(default=None, description="IPTS number for the experiment.")
 
     raw_data_base_folder: str = Field(default="raw_data")
     reconstruction_algorithm: List[str] = Field(default=[ReconstructionAlgorithm.algotom_gridrec])
@@ -494,21 +560,22 @@ class Configuration(BaseModel):
     center_offset: float = Field(default=0)
     
     svmbir_config: SvmbirConfig = Field(default=SvmbirConfig())
+    mbirjax_config: MbirjaxConfig = Field(default=MbirjaxConfig())
     output_folder: str = Field(default="")
     reconstructed_output_folder: str = Field(default="")
     projections_pre_processing_folder: str = Field(default="")
 
 
-def loading_config_file_into_model(config_file_path: str) -> Configuration:
+def loading_hdf5_file_into_model(hdf5_file_path: str) -> Configuration:
     """
-    Load and validate a JSON configuration file into a Configuration model.
+    Load and validate an HDF5 configuration file into a Configuration model.
     
-    Reads a JSON configuration file from disk and parses it into a validated
+    Reads an HDF5 file from disk and parses it into a validated
     Configuration model instance. Provides type checking and validation of
     all configuration parameters according to the defined schema.
     
     Args:
-        config_file_path: Absolute path to the JSON configuration file
+        hdf5_file_path: Absolute path to the HDF5 configuration file
                          containing reconstruction parameters.
     
     Returns:
@@ -521,23 +588,23 @@ def loading_config_file_into_model(config_file_path: str) -> Configuration:
         JSONDecodeError: If the file contains invalid JSON syntax
     
     Example:
-        >>> config = loading_config_file_into_model("/path/to/config.json")
+        >>> config = loading_hdf5_file_into_model("/path/to/config.hdf5")
         >>> print(config.instrument)  # Access validated parameters
         'venus'
     """
-    config_dictionary = load_json_string(config_file_path)
-    my_model = Configuration.parse_obj(config_dictionary)
-    return my_model
+    config_json = None
+    with h5py.File(hdf5_file_path, "r") as f:
+        config_json = f["metadata/config"][()] if "metadata/config" in f else None
+
+    _config_dict = json.loads(config_json) if config_json is not None else None
+    configuration = Configuration.model_validate(_config_dict)        
+    return configuration
 
 
 def select_file(top_folder: Optional[str] = None, next_function: Optional[callable] = None) -> None:
     """
     Launch interactive file selection for configuration files.
-    
-    Opens a file browser interface allowing users to select JSON configuration
-    files for neutron CT reconstruction. Provides filtering to show only
-    JSON files and supports callback functions for processing selected files.
-    
+     
     Args:
         top_folder: Optional starting directory for file browser. If None,
                    uses current working directory as starting point.
@@ -559,5 +626,6 @@ def select_file(top_folder: Optional[str] = None, next_function: Optional[callab
     o_file = FileFolderBrowser(working_dir=top_folder,
                                next_function=next_function)
     o_file.select_file(instruction="Select configuration file ...",
-                       filters={"Json": "*.json"},
-                       default_filter="Json")
+                       filters={"Hdf5": "*_step2.hdf5"},
+                       default_filter="Hdf5")
+    

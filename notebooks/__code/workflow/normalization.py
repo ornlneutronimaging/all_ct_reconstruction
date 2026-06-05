@@ -267,7 +267,7 @@ class Normalization(Parent):
 
         ob_data_combined = np.squeeze(master_3d_data[DataType.ob])
         # dc_data_combined = None if (self.parent.list_of_images[DataType.dc] is None) else np.squeeze(master_3d_data[DataType.dc])
-        dc_data_combined = None if (master_3d_data[DataType.dc] is None) else np.squeeze(master_3d_data[DataType.dc])
+        dc_data_combined = None if (master_3d_data.get(DataType.dc) is None) else np.squeeze(master_3d_data[DataType.dc])
 
         for _index, sample_data in enumerate(master_3d_data[DataType.sample]):
           
@@ -317,6 +317,18 @@ class Normalization(Parent):
         self.parent.normalized_images = np.squeeze(np.asarray(normalized_data, dtype=np.float32))
         logging_3d_array_infos(message="normalized images", array=self.parent.normalized_images)
 
+
+
+
+
+
+
+
+
+
+
+
+
     def export_images(self):
         
         logging.info(f"Exporting the normalized images")
@@ -337,7 +349,7 @@ class Normalization(Parent):
         logging.info(f"\tsample base name: {sample_base_name}")
         logging.info(f"\tnormalized folder: {normalized_folder}")
         
-        master_base_folder_name = f"{os.path.abspath(sample_base_name)}_normalized"
+        master_base_folder_name = f"{os.path.basename(sample_base_name)}_normalized"
         logging.info(f"\tmaster base folder name for normalized data: {master_base_folder_name}")
         full_output_folder = os.path.join(normalized_folder, master_base_folder_name)
         logging.info(f"\tfull output folder for normalized data: {full_output_folder}")

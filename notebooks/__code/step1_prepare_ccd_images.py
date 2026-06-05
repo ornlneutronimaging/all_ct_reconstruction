@@ -7,6 +7,12 @@ import numpy as np
 from IPython.display import display, HTML
 import ipywidgets as widgets
 
+try:
+    import svmbir
+    HAS_SVMBIR = True
+except ImportError:
+    HAS_SVMBIR = False
+
 from __code import DataType, DetectorType, OperatingMode, DEFAULT_OPERATING_MODE
 from __code.utilities.logging import setup_logging
 from __code.utilities.configuration_file import Configuration
@@ -38,11 +44,14 @@ from __code.utilities.logging import logging_3d_array_infos
 from __code.utilities.exceptions import MetadataError
 from __code.workflow.exclusion import Exclusion
 from __code.workflow.export_hdf5 import ExportHdf5
+from __code.workflow.checkpoint_hdf5 import CheckpointHdf5
 
 LOG_BASENAME_FILENAME, _ = os.path.splitext(os.path.basename(__file__))
 
 
 class Step1PrepareCcdImages:
+
+    SVBMIR_MODE_FLAG = HAS_SVMBIR
 
     MODE = OperatingMode.white_beam
 
@@ -189,8 +198,7 @@ class Step1PrepareCcdImages:
         # o_init.configuration()
 
         self.top_sample_dir = system.System.get_working_dir()
-        self.instrument = system.System.get_instrument_selected()
-        self.ipts_number = system.System.get_ipts_number()
+        self.instrument = 'MARS'
 
         display(HTML("<span style='color:blue; font-size:16px'>Select detector type</span>"))
         self.detector_type_widget = widgets.Dropdown(
@@ -204,6 +212,10 @@ class Step1PrepareCcdImages:
 
         setup_logging(basename_of_log_file=LOG_BASENAME_FILENAME)        
 
+        # self.offline = system.System.offline
+        self.offline = False
+        logging.info(f"System offline mode: {self.offline}")
+        
     def update_all_paths(self):
         top_sample_dir = self.top_sample_dir
         detector_type = self.detector_type.lower()
@@ -211,14 +223,13 @@ class Step1PrepareCcdImages:
         self.working_dir[DataType.top] = os.path.join(top_sample_dir)
         self.working_dir[DataType.sample] = os.path.join(top_sample_dir, "images", detector_type, "raw", "ct")
         self.working_dir[DataType.ob] = os.path.join(top_sample_dir, "images",  detector_type, "ob")
-        self.working_dir[DataType.dc] = os.path.join(top_sample_dir, "images",  detector_type, "raw", "dc")
+        self.working_dir[DataType.dc] = os.path.join(top_sample_dir, "images",  detector_type, "dc")
         self.working_dir[DataType.nexus] = os.path.join(top_sample_dir, "nexus")
         self.working_dir[DataType.processed] = os.path.join(top_sample_dir, "shared", "processed_data")
         logging.info(f"working_dir:")
         for _key, _value in self.working_dir.items():
             logging.info(f"\t{_key}: {_value}")
         logging.info(f"instrument: {self.instrument}")
-        logging.info(f"ipts_number: {self.ipts_number}")
         if DEBUG:
             logging.info(f"WARNING!!!! we are running using DEBUG mode!")
         
@@ -487,8 +498,12 @@ class Step1PrepareCcdImages:
     # strips removal
     def select_range_of_data_to_test_stripes_removal(self):
         """updates: list_of_images[DataType.sample]"""
+        self.select_region_to_test_stripes_removal()
+
+    def select_region_to_test_stripes_removal(self):
+        """updates: list_of_images[DataType.sample]"""
         self.o_remove = RemoveStrips(parent=self)
-        self.o_remove.select_range_of_data_to_test_stripes_removal()
+        self.o_remove.select_region_to_test_stripes_removal()
 
     def select_remove_strips_algorithms(self):
         self.o_remove.select_algorithms()
@@ -721,7 +736,26 @@ class Step1PrepareCcdImages:
     def export_hdf5(self):
         o_export = ExportHdf5(parent=self)
         o_export.export()
-        
+
+    # HDF5 checkpoint (used between step 1 and step 2)
+
+    def select_hdf5_output_folder(self) -> None:
+        o_checkpoint = CheckpointHdf5(parent=self)
+        o_checkpoint.select_output_folder()
+
+    def export_raw_hdf5(self) -> None:
+        self.detector_name = "CCD"
+        o_checkpoint = CheckpointHdf5(parent=self)
+        o_checkpoint.export()
+
+    def select_hdf5_input_file(self) -> None:
+        o_checkpoint = CheckpointHdf5(parent=self)
+        o_checkpoint.select_input_file()
+
+    def load_from_hdf5(self) -> None:
+        o_checkpoint = CheckpointHdf5(parent=self)
+        o_checkpoint.load()
+
     @classmethod
     def legend(cls) -> None:
         display(HTML("<hr style='height:2px'/>"))
