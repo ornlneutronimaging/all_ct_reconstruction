@@ -61,7 +61,6 @@ from __code.workflow_cli.merge_reconstructed_slices import merge_reconstructed_s
 from __code.utilities.configuration_file import ReconstructionAlgorithm
 from __code.workflow.remove_strips import RemoveStrips
 from __code.workflow_cli.stripes_removal import StripesRemovalHandler
-from __code.utilities import json
 
 
 class FbpCliHandler:
@@ -191,8 +190,8 @@ class FbpCliHandler:
                 corrected_array_log = f["raw/normalized_images_log"][()]
             else:
                 corrected_array_log = None
-            if "raw/list_of_angles_deg" in f:
-                list_of_angles_deg = f["raw/list_of_angles_deg"][()]
+            if "angles/deg" in f:
+                list_of_angles_deg = f["angles/deg"][()]
                 list_of_angles_rad = np.deg2rad(list_of_angles_deg)
             else:
                 list_of_angles_rad = None
