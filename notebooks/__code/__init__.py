@@ -68,7 +68,7 @@ top_folder_of_this_project = os.path.dirname(os.path.dirname(os.path.dirname(pat
 if "development" in top_folder_of_this_project:
     _root_folder = "/SNS/VENUS/shared/software/git/all_ct_reconstruction_development/"
 else:
-    _root_folder = "/SNS/VENUS/shared/software/git/all_ct_reconstruction/"
+    _root_folder = os.path.dirname(os.path.dirname(os.path.dirname(path_of_this_file)))
 
 _notebook_folder = os.path.join(_root_folder, "notebooks")    
 # STEP4_SVMBIR_SCRIPTS = os.path.join(_notebook_folder, "step3_reconstruction_white_beam_mode_images_using_svmbir.py")
