@@ -236,6 +236,20 @@ def _(
     center_column = first_image.shape[1] / 2
     det_channel_offset = mbirjax_widgets.value.get("det_channel_offset", 0)
 
+    # subsample the displayed heatmap when the image is large so the preview
+    # stays responsive; pass original-coordinate x/y arrays so the axes keep
+    # showing the full array size and the overlays remain aligned
+    downsample = 10 if (n_rows > 1000 or n_cols > 1000) else 1
+
+    def _heatmap_data(img):
+        if downsample > 1:
+            return dict(
+                z=img[::downsample, ::downsample],
+                x=np.arange(0, n_cols, downsample),
+                y=np.arange(0, n_rows, downsample),
+            )
+        return dict(z=img)
+
     def _get_display_image(idx):
         raw_img = normalized_images_log[idx]
         return (
@@ -321,7 +335,7 @@ def _(
         avg_img = (_get_display_image(0) + _get_display_image(idx_180)) / 2.0
         fig = go.Figure(
             go.Heatmap(
-                z=avg_img,
+                **_heatmap_data(avg_img),
                 colorscale=mpl_colormap_to_plotly(colormap_selector.value),
                 zmin=vmin,
                 zmax=vmax,
@@ -338,7 +352,7 @@ def _(
         idx = selected_indices[0]
         fig = go.Figure(
             go.Heatmap(
-                z=_get_display_image(idx),
+                **_heatmap_data(_get_display_image(idx)),
                 colorscale=mpl_colormap_to_plotly(colormap_selector.value),
                 zmin=vmin,
                 zmax=vmax,

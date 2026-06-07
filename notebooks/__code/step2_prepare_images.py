@@ -781,8 +781,10 @@ class Step2PrepareImages:
             - Logs normalization progress and statistics
         """
         o_combine = CombineObDc(parent=self)
-        o_combine.run(ignore_dc=True)
-        self.o_norm.normalize(ignore_dc=True)
+        o_combine.run()
+        self.o_norm.normalize()
+        # o_combine.run(ignore_dc=True)
+        # self.o_norm.normalize(ignore_dc=True)
 
         # if we had duplicate angles and chose to combine them, we need to update the master_3d_data_array
         o_combine = CombineRunsWithSameAngle(parent=self)

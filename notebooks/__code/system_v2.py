@@ -32,8 +32,15 @@ from __code.utilities.folder import find_first_real_dir
 
 # Instrument configuration by facility
 list_instrument_per_facility: Dict[str, List[str]] = {
-    'HFIR': ['CG1D'],
-    'SNS': ['SNAP', 'VENUS']
+    'HFIR': ['MARS'],
+    'SNS': ['VENUS']
+}
+
+# On-disk data root for each instrument. The folder name can differ from the
+# instrument's generic name (e.g. MARS data lives under the CG1D beamline).
+instrument_start_path: Dict[str, str] = {
+    'MARS': '/HFIR/CG1D/',
+    'VENUS': '/SNS/VENUS/',
 }
 
 
@@ -102,10 +109,11 @@ class System:
         else:
             logging.info(f"Running in online mode. Hostname: {hostname}")
 
-        facility = 'SNS'
-        instrument = 'VENUS'
+        # Default instrument is MARS; the user can switch to VENUS via the widget below.
+        instrument = 'MARS'
+        facility = cls.get_facility_from_instrument(instrument=instrument)
         cls.instrument = instrument
-        
+
         setup_logging(basename_of_log_file="system")
         logging.info(f"*** Starting system ***")
 
@@ -142,8 +150,20 @@ class System:
                 cls.ipts_number = ipts_number
                 logging.info(f"{cls.ipts_number = }")
 
-        cls.start_path = f"/{facility}/{instrument}/"
+        cls.start_path = cls.get_start_path_for_instrument(instrument)
         logging.info(f"start_path: {cls.start_path}")
+
+        # Instrument selection (MARS or VENUS). Changing it refreshes the IPTS list.
+        full_list_instruments = cls.get_full_list_instrument()
+        full_list_instruments.sort()
+        select_instrument_ui = widgets.HBox([widgets.Label("Select Instrument",
+                                                           layout=widgets.Layout(width='20%')),
+                                            widgets.Select(options=full_list_instruments,
+                                                        value=instrument,
+                                                        layout=widgets.Layout(width='20%',
+                                                                            height='60px'))])
+        cls.instrument_ui = select_instrument_ui.children[1]
+        cls.instrument_ui.observe(cls.check_instrument_input, names='value')
 
         help_ui = widgets.Button(description="HELP",
                                     button_style='info')
@@ -172,7 +192,7 @@ class System:
                                             layout=widgets.Layout(height='300px')),
                                 ])
         cls.user_list_folders = user_list_folders
-        box = widgets.VBox([top_hbox, or_label, bottom_hbox, help_ui])
+        box = widgets.VBox([select_instrument_ui, top_hbox, or_label, bottom_hbox, help_ui])
         display(box)
 
         cls.working_dir_ui = bottom_hbox.children[1]
@@ -290,6 +310,27 @@ class System:
 
         return {'user_list_folders': user_list_folders,
                 'default_value': default_value}
+
+    @classmethod
+    def get_start_path_for_instrument(cls, instrument: str) -> str:
+        """
+        Resolve the on-disk data root for a given instrument.
+
+        MARS data lives under the CG1D beamline at HFIR, so the instrument's
+        generic name does not always match its folder. This method looks up the
+        explicit mapping first and falls back to a ``/facility/instrument/``
+        path if the instrument is not listed.
+
+        Args:
+            instrument: Instrument name (e.g. 'MARS', 'VENUS')
+
+        Returns:
+            Absolute path to the instrument's data root.
+        """
+        if instrument in instrument_start_path:
+            return instrument_start_path[instrument]
+        facility: str = cls.get_facility_from_instrument(instrument=instrument)
+        return "/{}/{}/".format(facility, instrument)
 
     @classmethod
     def get_facility_from_instrument(cls, instrument: str = 'CG1D') -> str:
@@ -486,8 +527,9 @@ class System:
             - Updates start path for new instrument
         """
         instrument: str = value_dict['new']
+        cls.instrument = instrument
 
-        start_path: str = cls.get_start_path(instrument=instrument)
+        start_path: str = cls.get_start_path_for_instrument(instrument)
         cls.start_path = start_path
         list_and_default_folders: Dict[str, Any] = cls.get_list_folders(start_path=start_path)
 
