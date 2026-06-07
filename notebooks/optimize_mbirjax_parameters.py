@@ -890,9 +890,28 @@ def _(
             )
             top_slice, bottom_slice, top_time, bottom_time = evaluation.evaluate()
 
+            # Store a subsampled copy for the preview rather than the full
+            # resolution slice. The slices are only ever shown as downsampled
+            # heatmaps, so keeping them full-size just exhausts marimo's memory
+            # after a few reconstructions (the 4th would fail to show up). The
+            # original shape is recorded so the preview axes still reflect the
+            # true array dimensions.
+            import numpy as _np
+            _preview_max_dim = 256
+
+            def _subsample_for_preview(_arr):
+                _arr = _np.asarray(_np.squeeze(_arr), dtype=_np.float32)
+                _r, _c = _arr.shape
+                _stride = max(1, int(_np.ceil(max(_r, _c) / _preview_max_dim)))
+                return {
+                    "data": _arr[::_stride, ::_stride],
+                    "shape": (_r, _c),
+                    "stride": _stride,
+                }
+
             new_entry = {
-                "top": top_slice,
-                "bottom": bottom_slice,
+                "top": _subsample_for_preview(top_slice),
+                "bottom": _subsample_for_preview(bottom_slice),
                 "reconstruction_parameters": snap_parameters,
                 "mbirjax_config": dict(snap_parameters["mbirjax_config"]),
                 "top_reconstruction_time": top_time,
@@ -927,21 +946,17 @@ def _(
         not _history,
     )
 
-    # downsample the displayed slice to keep each plotly figure small (plotly
-    # sends z as JSON text); the full-resolution array stays in the history
-    _max_display_dim = 256
-
-    def _central_slice_figure(reconstruction_slice, title):
-        # reconstruction slice is a 2D (rows, cols) array
-        reconstruction_slice = np.asarray(
-            np.squeeze(reconstruction_slice), dtype=np.float32
-        )
-        _n_rows, _n_cols = reconstruction_slice.shape
-        # stride keeps both axes at or below _max_display_dim samples
-        _stride = max(1, int(np.ceil(max(_n_rows, _n_cols) / _max_display_dim)))
+    def _central_slice_figure(slice_preview, title):
+        # slice_preview is the subsampled record built at storage time:
+        # {"data": downsampled 2D array, "shape": original (rows, cols),
+        #  "stride": subsampling factor}. The downsampling happens once, when
+        # the reconstruction is stored, so the history never holds full-size
+        # arrays. Axes still use the original shape so they show the true size.
+        _z_disp = np.asarray(slice_preview["data"], dtype=np.float32)
+        _n_rows, _n_cols = slice_preview["shape"]
+        _stride = slice_preview["stride"]
         _rows = np.arange(_n_rows)[::_stride]
         _cols = np.arange(_n_cols)[::_stride]
-        _z_disp = reconstruction_slice[::_stride, ::_stride]
         _zmin = float(np.percentile(_z_disp, 1))
         _zmax = float(np.percentile(_z_disp, 99))
         _fig = go.Figure(
@@ -978,8 +993,9 @@ def _(
         )
         _rp = entry.get("reconstruction_parameters", {})
         _tilt = _rp.get("tilt", 0.0)
-        _perform_tilt = _rp.get("perform_tilt", False)
-        _tilt_line = f"**tilt (°):** {_tilt}" + (" *(applied)*" if _perform_tilt else " *(not applied)*")
+        # the tilt is always applied before running the reduction, so there is
+        # no need to annotate whether it was applied
+        _tilt_line = f"**tilt (°):** {_tilt}"
         _time_lines = (
             "**reconstruction time:**<br>"
             f"**top:** {entry['top_reconstruction_time']:.2f} s<br>"
