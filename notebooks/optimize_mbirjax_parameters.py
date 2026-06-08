@@ -890,21 +890,31 @@ def _(
             )
             top_slice, bottom_slice, top_time, bottom_time = evaluation.evaluate()
 
-            # Store a subsampled copy for the preview rather than the full
+            # Store a presampled copy for the preview rather than the full
             # resolution slice. The slices are only ever shown as downsampled
-            # heatmaps, so keeping them full-size just exhausts marimo's memory
-            # after a few reconstructions (the 4th would fail to show up). The
-            # original shape is recorded so the preview axes still reflect the
-            # true array dimensions.
+            # heatmaps, and the reconstruction-history cell renders *every* row
+            # in a single output, so each added reconstruction enlarges that
+            # cell's serialized output until marimo rejects it as "too large".
+            # Presampling to a small grid (and rounding the values, which
+            # shortens the JSON text plotly emits for the z array) keeps each
+            # row tiny so many reconstructions fit. The original shape is
+            # recorded so the preview axes still reflect the true dimensions.
             import numpy as _np
-            _preview_max_dim = 256
+            _preview_max_dim = 100
 
             def _subsample_for_preview(_arr):
                 _arr = _np.asarray(_np.squeeze(_arr), dtype=_np.float32)
                 _r, _c = _arr.shape
                 _stride = max(1, int(_np.ceil(max(_r, _c) / _preview_max_dim)))
+                _small = _arr[::_stride, ::_stride]
+                # round to ~4 significant figures relative to the data range so
+                # the serialized heatmap stays compact without visible change
+                _scale = float(_np.nanmax(_np.abs(_small))) if _small.size else 0.0
+                if _scale > 0:
+                    _decimals = max(0, 4 - 1 - int(_np.floor(_np.log10(_scale))))
+                    _small = _np.round(_small, _decimals)
                 return {
-                    "data": _arr[::_stride, ::_stride],
+                    "data": _small,
                     "shape": (_r, _c),
                     "stride": _stride,
                 }

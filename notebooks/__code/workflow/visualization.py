@@ -44,6 +44,38 @@ from __code import DataType
 from __code.workflow.final_projections_review import FinalProjectionsReview
 from __code.config import clean_paras, GAMMA_DIFF, NUM_THREADS
 
+
+def downsample_for_display(image: NDArray, max_dim: int = 800) -> NDArray:
+    """
+    Decimate a 2D image so its largest axis is at most ``max_dim`` pixels.
+
+    Plotly's ``go.Heatmap`` serializes every z value to JSON and renders each
+    cell client-side, so handing it a multi-megapixel CCD frame is extremely
+    slow. For QC / statistics displays full resolution is unnecessary, so we
+    stride-decimate the array before plotting. Strided slicing preserves the
+    original pixel values, so any zmin/zmax computed from the full image stays
+    valid.
+
+    Parameters
+    ----------
+    image : NDArray
+        2D array to decimate.
+    max_dim : int, default=800
+        Maximum size (in pixels) of the largest axis after decimation.
+
+    Returns
+    -------
+    NDArray
+        Decimated view of the input (or the input unchanged if already small).
+    """
+    # ceiling division so the largest axis ends up <= max_dim (floor division
+    # would leave e.g. a 1536-px axis undecimated since 1536 // 800 == 1)
+    step = max(1, -(-max(image.shape) // max_dim))
+    if step == 1:
+        return image
+    return image[::step, ::step]
+
+
 class Visualization(Parent):
     """
     Visualization and analysis tools for CT reconstruction data.
@@ -267,7 +299,7 @@ class Visualization(Parent):
                                  horizontal_spacing=0.15,
                                  subplot_titles=tuple(row1_titles))
             for i, (data, zmin_val, zmax_val) in enumerate(zip(row1_data, row1_zmin, row1_zmax), start=1):
-                fig0.add_trace(go.Heatmap(z=data, colorscale='Viridis',
+                fig0.add_trace(go.Heatmap(z=downsample_for_display(data), colorscale='Viridis',
                                           zmin=zmin_val, zmax=zmax_val,
                                           coloraxis=f'coloraxis{i}'), row=1, col=i)
             fig0.update_yaxes(autorange='reversed')
@@ -286,10 +318,10 @@ class Visualization(Parent):
                              horizontal_spacing=0.15,
                              subplot_titles=(f"Sample at angle {list_of_angles[0]}",
                                              f"Sample at angle {list_of_angles[-1]}"))
-        fig1.add_trace(go.Heatmap(z=sample_proj_first, colorscale='Viridis',
+        fig1.add_trace(go.Heatmap(z=downsample_for_display(sample_proj_first), colorscale='Viridis',
                                   zmin=vmin, zmax=vmax,
                                   coloraxis='coloraxis1'), row=1, col=1)
-        fig1.add_trace(go.Heatmap(z=sample_proj_last, colorscale='Viridis',
+        fig1.add_trace(go.Heatmap(z=downsample_for_display(sample_proj_last), colorscale='Viridis',
                                   zmin=vmin, zmax=vmax,
                                   coloraxis='coloraxis2'), row=1, col=2)
         fig1.update_yaxes(autorange='reversed')
@@ -655,41 +687,41 @@ class Visualization(Parent):
         display(display_plot)
 
     def visualize_1_stack(self,
-                          data=None, 
-                          vmin=None, 
+                          data=None,
+                          vmin=None,
                           vmax=None,
                           title="normalized",
                           low_res=False):
-        
+
         self.vmin = vmin
         self.vmax = vmax
-        
-        low_res_data = copy.deepcopy(data)
 
-        # convert data into low resolution for faster visualization
-        if low_res: #consider low res only if really needed to avoid losing details
-            if low_res_data.shape[1] > 500 or low_res_data.shape[2] > 500:
-                coeff = 20
-                low_res_data = low_res_data[:, ::coeff, ::coeff]
+        # Decimate only the frame being displayed (not a full-stack copy) so the
+        # heatmap payload stays small and rendering is fast. downsample_for_display
+        # is a no-op for already-small images, so detail is preserved when possible.
+        is_downsampled = max(data.shape[1], data.shape[2]) > 800
 
         def plot_images(index=0):
-            
-            if self.vmin is None:
-                self.vmin = np.min(low_res_data[index])
-            if self.vmax is None:
-                self.vmax = np.max(low_res_data[index])
 
-            fig = go.Figure(go.Heatmap(z=low_res_data[index], colorscale='Viridis',
+            _data = downsample_for_display(data[index])
+
+            if self.vmin is None:
+                self.vmin = np.min(_data)
+            if self.vmax is None:
+                self.vmax = np.max(_data)
+
+            fig = go.Figure(go.Heatmap(z=_data, colorscale='Viridis',
                                        zmin=self.vmin, zmax=self.vmax))
             # add a title
+            res_note = " (low resolution!)" if is_downsampled else ""
             fig.update_yaxes(autorange='reversed')
-            fig.update_layout(title=f"{title} - image index: {index} (low resolution!)", height=500, width=500)
+            fig.update_layout(title=f"{title} - image index: {index}{res_note}", height=500, width=500)
             fig.show()
 
         _display_plot_images = interactive(plot_images,
                                 index=widgets.IntSlider(min=0,
                                                         layout=widgets.Layout(width='80%'),
-                                                        max=len(low_res_data)-1,
+                                                        max=len(data)-1,
                                                         continuous_update=False,
                                                         value=0),
         )
@@ -732,9 +764,9 @@ class Visualization(Parent):
         fig0 = make_subplots(rows=1, cols=2,
                              horizontal_spacing=0.15,
                              subplot_titles=("Sample (np.min)", "OB (np.min)"))
-        fig0.add_trace(go.Heatmap(z=sample_proj_min, colorscale='Viridis',
+        fig0.add_trace(go.Heatmap(z=downsample_for_display(sample_proj_min), colorscale='Viridis',
                                   coloraxis='coloraxis1'), row=1, col=1)
-        fig0.add_trace(go.Heatmap(z=ob_proj_min, colorscale='Viridis',
+        fig0.add_trace(go.Heatmap(z=downsample_for_display(ob_proj_min), colorscale='Viridis',
                                   coloraxis='coloraxis2'), row=1, col=2)
         fig0.update_yaxes(autorange='reversed')  # match imshow orientation
         fig0.update_layout(height=500, width=1000,
@@ -750,11 +782,11 @@ class Visualization(Parent):
                              subplot_titles=(f"Sample at angle {list_of_angles[0]}",
                                              f"Sample at angle {list_of_angles[-1]}",
                                              "Ratio last/first"))
-        fig1.add_trace(go.Heatmap(z=sample_proj_first, colorscale='Viridis',
+        fig1.add_trace(go.Heatmap(z=downsample_for_display(sample_proj_first), colorscale='Viridis',
                                   coloraxis='coloraxis1'), row=1, col=1)
-        fig1.add_trace(go.Heatmap(z=sample_proj_last, colorscale='Viridis',
+        fig1.add_trace(go.Heatmap(z=downsample_for_display(sample_proj_last), colorscale='Viridis',
                                   coloraxis='coloraxis2'), row=1, col=2)
-        fig1.add_trace(go.Heatmap(z=ratio_last_first, colorscale='Viridis',
+        fig1.add_trace(go.Heatmap(z=downsample_for_display(ratio_last_first), colorscale='Viridis',
                                   coloraxis='coloraxis3'), row=1, col=3)
         fig1.update_yaxes(autorange='reversed')
         fig1.update_layout(height=500, width=1000,
