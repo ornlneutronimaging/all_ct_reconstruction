@@ -652,6 +652,8 @@ class Step1PrepareCcdImages:
 
         o_vizu = Visualization(parent=self)
         o_vizu.visualize_1_stack(data=self.sinogram_normalized_images_log,
+                                 yaxis=self.final_list_of_angles,
+                                 yaxis_label="Angle (degrees)",
                                  title="Sinograms",
                                  low_res=False)
     # test reconstruction using gridrec (fast algorithm)

@@ -129,9 +129,9 @@ class ImagesCleaner(Parent):
         self.in_house_ui = widgets.Checkbox(value=False,
                                          description="In-house (histogram)")
         self.tomopy_ui = widgets.Checkbox(value=True,
-                                        description="Tomopy (remove_outlier)")
+                                        description="Tomopy (remove_outlier) - (Good, Fast)")
         self.scipy_ui = widgets.Checkbox(value=False,
-                                                 description="Scipy (median_filter)")
+                                                 description="Scipy (median_filter) - (Best, Slow)")
         v_box = widgets.VBox([self.in_house_ui, self.tomopy_ui, self.scipy_ui])
         display(v_box)
 

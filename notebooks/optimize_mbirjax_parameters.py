@@ -63,7 +63,7 @@ def _(accessible_ipts, mo):
         mo.md("**No accessible IPTS folders found in `/SNS/VENUS`.**"),
     )
 
-    _default_ipts = "IPTS-35712"  # debugging default
+    _default_ipts = "IPTS-36573"  # debugging default
     ipts_selector = mo.ui.dropdown(
         options=accessible_ipts,
         value=_default_ipts if _default_ipts in accessible_ipts else None,

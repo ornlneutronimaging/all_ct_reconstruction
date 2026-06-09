@@ -688,6 +688,8 @@ class Visualization(Parent):
 
     def visualize_1_stack(self,
                           data=None,
+                          yaxis=None,
+                          yaxis_label=None,
                           vmin=None,
                           vmax=None,
                           title="normalized",
@@ -696,25 +698,42 @@ class Visualization(Parent):
         self.vmin = vmin
         self.vmax = vmax
 
+        if yaxis is not None:
+            yaxis = np.asarray(yaxis)
+
         # Decimate only the frame being displayed (not a full-stack copy) so the
         # heatmap payload stays small and rendering is fast. downsample_for_display
         # is a no-op for already-small images, so detail is preserved when possible.
-        is_downsampled = max(data.shape[1], data.shape[2]) > 800
+        if low_res:
+            is_downsampled = max(data.shape[1], data.shape[2]) > 800
+        else:
+            is_downsampled = False
 
-        def plot_images(index=0):
+        def plot_images(index=0, low_res=False):
 
-            _data = downsample_for_display(data[index])
+            _yaxis = yaxis
+            if low_res:
+                _data = downsample_for_display(data[index])
+                if _yaxis is not None:
+                    # same stride downsample_for_display uses, so the row labels
+                    # stay aligned with the decimated image rows
+                    step = max(1, -(-max(data[index].shape) // 800))
+                    _yaxis = _yaxis[::step]
+            else:
+                _data = data[index]
 
             if self.vmin is None:
                 self.vmin = np.min(_data)
             if self.vmax is None:
                 self.vmax = np.max(_data)
 
-            fig = go.Figure(go.Heatmap(z=_data, colorscale='Viridis',
+            fig = go.Figure(go.Heatmap(z=_data, y=_yaxis, colorscale='Viridis',
                                        zmin=self.vmin, zmax=self.vmax))
             # add a title
             res_note = " (low resolution!)" if is_downsampled else ""
             fig.update_yaxes(autorange='reversed')
+            if yaxis_label is not None:
+                fig.update_yaxes(title_text=yaxis_label)
             fig.update_layout(title=f"{title} - image index: {index}{res_note}", height=500, width=500)
             fig.show()
 
@@ -724,6 +743,9 @@ class Visualization(Parent):
                                                         max=len(data)-1,
                                                         continuous_update=False,
                                                         value=0),
+                                low_res=widgets.RadioButtons(options=[('Low Resolution', True), ('Full Resolution', False)],
+                                                             value=is_downsampled,
+                                                             layout=widgets.Layout(width='50%')),
         )
         display(_display_plot_images)
 

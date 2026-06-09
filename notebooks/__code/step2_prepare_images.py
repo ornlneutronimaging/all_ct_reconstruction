@@ -60,6 +60,7 @@ import subprocess
 import ipywidgets as widgets
 from collections import OrderedDict
 from typing import Optional, Dict, List, Any, Union
+from matplotlib.axis import YAxis
 from matplotlib.pylab import f
 import numpy as np
 from numpy.typing import NDArray
@@ -1170,6 +1171,8 @@ class Step2PrepareImages:
 
         o_vizu = Visualization(parent=self)
         o_vizu.visualize_1_stack(data=self.sinogram_normalized_images_log,
+                                 yaxis=self.final_list_of_angles,
+                                 yaxis_label="Angle (degrees)",
                                  title="Sinograms",
                                  low_res=False)
 
