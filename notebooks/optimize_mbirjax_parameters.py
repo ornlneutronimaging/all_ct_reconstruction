@@ -34,6 +34,44 @@ def _():
 
 
 @app.cell
+def _():
+    import logging as _logging
+    import getpass as _getpass
+    import os as _os
+
+    # per-user session log for this notebook; use the shared log folder when it
+    # exists, otherwise fall back to ~/log
+    _log_dir = "/SNS/VENUS/shared/log"
+    if not _os.path.exists(_log_dir):
+        _log_dir = _os.path.join(_os.path.expanduser("~"), "log")
+        _os.makedirs(_log_dir, exist_ok=True)
+
+    _user_id = _getpass.getuser()
+    log_file_path = _os.path.join(
+        _log_dir, f"optimize_mbirjax_parameters_{_user_id}.log"
+    )
+
+    # a dedicated, non-propagating logger so it is independent of the root logger
+    # (which the reconstruction-evaluation module reconfigures on import and would
+    # otherwise redirect or duplicate these messages)
+    logger = _logging.getLogger("optimize_mbirjax_parameters")
+    logger.setLevel(_logging.INFO)
+    logger.propagate = False
+    # drop any handler left from a previous run of this cell to avoid duplicate
+    # log lines
+    for _handler in list(logger.handlers):
+        logger.removeHandler(_handler)
+        _handler.close()
+    _file_handler = _logging.FileHandler(log_file_path, mode="w")
+    _file_handler.setFormatter(
+        _logging.Formatter("[%(levelname)s] - %(asctime)s - %(message)s")
+    )
+    logger.addHandler(_file_handler)
+    logger.info("*** optimize_mbirjax_parameters session started ***")
+    return log_file_path, logger
+
+
+@app.cell
 def _(glob, os):
     def list_accessible_ipts(base_path="/SNS/VENUS"):
         """Return {ipts_name: full_path} for IPTS-* folders the user can read."""
@@ -479,7 +517,19 @@ def _(mo, normalized_images_log):
 
 
 @app.cell
-def _(config, mo, normalized_images_log):
+def _(mo):
+    # password gate for the Advanced parameters section; defined in its own cell
+    # so typing into it re-runs the rendering cell (but not this definition)
+    advanced_password = mo.ui.text(
+        kind="password",
+        placeholder="Enter password to unlock",
+        label="🔒 **Advanced** parameters password:",
+    )
+    return (advanced_password,)
+
+
+@app.cell
+def _(advanced_password, config, mo, normalized_images_log):
     mbirjax_params = dict((config or {}).get("mbirjax_config", {}))
 
     mo.stop(
@@ -487,24 +537,40 @@ def _(config, mo, normalized_images_log):
         mo.md("*No `mbirjax_config` parameters found in the config.*"),
     )
 
-    # scale factors default to 1 when absent from the loaded config
-    mbirjax_params.setdefault("row_scale", 1.0)
-    mbirjax_params.setdefault("col_scale", 1.0)
+    # row_scale and col_scale are exposed in the UI as a single "scale" slider
+    # that drives both factors; collapse them here, defaulting to 1 when absent.
+    # If the loaded config has differing values, row_scale is used as the seed.
+    _row_scale = mbirjax_params.pop("row_scale", 1.0)
+    mbirjax_params.pop("col_scale", None)
+    mbirjax_params["scale"] = _row_scale if _row_scale is not None else 1.0
 
-    from __code.utilities.configuration_file import MbirjaxConfigRanges
+    from __code.utilities.configuration_file import MbirjaxConfigRanges, MinMaxRange
 
     _ranges = MbirjaxConfigRanges()
     # parameters rendered as sliders, with (range, step, is_integer) from the config ranges
     slider_specs = {
-        "max_iterations": (_ranges.max_iterations, 1, True),
-        "sharpness": (_ranges.sharpness, 0.1, False),
-        "snr_db": (_ranges.snr_db, 1, False),
-        "row_scale": (_ranges.row_scale, 0.1, False),
-        "col_scale": (_ranges.col_scale, 0.1, False),
+        "max_iterations": (MinMaxRange(min=10, max=25, default=15), 1, True),
+        "sharpness": (MinMaxRange(min=-1, max=3, default=1), 0.1, False),
+        "snr_db": (MinMaxRange(min=25, max=35, default=30), 1, False),
+        "scale": (_ranges.row_scale, 0.1, False),
     }
 
-    # det_channel_offset is an offset from the image center, so its slider spans
-    # +/- half the image width (fall back to a sane default if no image is loaded)
+    # always start maximum iterations at its default, ignoring any (typically
+    # much larger) value stored in the loaded config
+    mbirjax_params["max_iterations"] = slider_specs["max_iterations"][0].default
+
+    # display labels overriding the raw parameter key for the widget label
+    mbirjax_param_labels = {
+        "max_iterations": "maximum iterations",
+        "det_channel_offset": "center of rotation offset from center",
+        "snr_db": "signal noise ratio",
+    }
+
+    def _display_label(name):
+        return mbirjax_param_labels.get(name, name)
+
+    # det_channel_offset is an offset from the image center, bounded to +/- half
+    # the image width (fall back to a sane default if no image is loaded)
     if normalized_images_log is not None and len(normalized_images_log):
         offset_limit = float(normalized_images_log[0].shape[1]) / 2
     else:
@@ -514,14 +580,12 @@ def _(config, mo, normalized_images_log):
         if name == "det_channel_offset":
             current = float(value) if value is not None else 0.0
             current = max(-offset_limit, min(offset_limit, current))
-            return mo.ui.slider(
+            return mo.ui.number(
                 start=-offset_limit,
                 stop=offset_limit,
-                step=0.5,
-                value=current,
-                label=name,
-                show_value=True,
-                full_width=True,
+                step=0.01,
+                value=round(current, 2),
+                label=_display_label(name),
             )
         if name in slider_specs:
             rng, step, is_int = slider_specs[name]
@@ -533,7 +597,7 @@ def _(config, mo, normalized_images_log):
                     stop=int(rng.max),
                     step=int(step),
                     value=int(round(current)),
-                    label=name,
+                    label=_display_label(name),
                     show_value=True,
                     full_width=True,
                 )
@@ -542,17 +606,17 @@ def _(config, mo, normalized_images_log):
                 stop=rng.max,
                 step=step,
                 value=current,
-                label=name,
+                label=_display_label(name),
                 show_value=True,
                 full_width=True,
             )
         if isinstance(value, bool):
-            return mo.ui.checkbox(value=value, label=name)
+            return mo.ui.checkbox(value=value, label=_display_label(name))
         if isinstance(value, int):
-            return mo.ui.number(value=value, step=1, label=name)
+            return mo.ui.number(value=value, step=1, label=_display_label(name))
         if isinstance(value, float):
-            return mo.ui.number(value=value, step=0.1, label=name)
-        return mo.ui.text(value=str(value), label=name)
+            return mo.ui.number(value=value, step=0.1, label=_display_label(name))
+        return mo.ui.text(value=str(value), label=_display_label(name))
 
     excluded_mbirjax_params = {"verbose", "print_logs"}
     mbirjax_widgets = mo.ui.dictionary(
@@ -588,13 +652,11 @@ def _(config, mo, normalized_images_log):
             "Offset of the center of rotation from the center of the detector "
             "image, in pixels. Positive values shift the center to the right."
         ),
-        "row_scale": (
-            "Scale factor applied to the reconstruction grid in the row "
-            "direction relative to the detector pixel pitch."
-        ),
-        "col_scale": (
-            "Scale factor applied to the reconstruction grid in the column "
-            "direction relative to the detector pixel pitch."
+        "scale": (
+            "Scale factor applied to the reconstruction grid (used for both the "
+            "row and column scale) relative to the detector pixel pitch. "
+            "Use a value above 1 when part of the object goes outside the field "
+            "of view."
         ),
     }
 
@@ -610,22 +672,57 @@ def _(config, mo, normalized_images_log):
         )
 
     # render each widget with an info icon to its left; det_channel_offset keeps
-    # an extra inline label spelling out the center-of-rotation offset
-    widget_rows = []
+    # an extra inline label spelling out the center-of-rotation offset. The
+    # parameters are split into a "General" section (scale) and an
+    # "Advanced" section (everything else)
+    general_param_names = {"scale"}
+    general_rows = []
+    advanced_rows = []
     for name, element in mbirjax_widgets.elements.items():
-        row_items = [_info_icon(name), element]
-        if name == "det_channel_offset":
-            row_items.append(
-                mo.md("(Center of rotation offset from center of image)")
-            )
-        widget_rows.append(
-            mo.hstack(
-                row_items,
-                justify="start",
-                align="center",
-                gap=0.5,
-            )
+        row = mo.hstack(
+            [_info_icon(name), element],
+            justify="start",
+            align="center",
+            gap=0.5,
         )
+        if name in general_param_names:
+            general_rows.append(row)
+        else:
+            advanced_rows.append(row)
+
+    # the Advanced section is hidden until the correct password is entered; the
+    # widgets themselves are always defined above, only their display is gated
+    _advanced_unlocked = advanced_password.value == "venus"
+
+    _general_section = mo.vstack(
+        [
+            mo.md("#### **General**"),
+            *general_rows,
+        ]
+    )
+
+    if _advanced_unlocked:
+        _advanced_body = mo.vstack(advanced_rows)
+    else:
+        _advanced_body = mo.md(
+            "🔒 *Enter the password above to unlock the advanced parameters.*"
+        )
+
+    _advanced_section = mo.vstack(
+        [
+            mo.md("#### **🔧 Advanced**"),
+            advanced_password,
+            _advanced_body,
+        ]
+    ).style(
+        {
+            "background-color": "#f7f0e6",
+            "padding": "1rem",
+            "border-radius": "8px",
+            "border": "1px solid #ddc9a3",
+            "margin-top": "1rem",
+        }
+    )
 
     mo.vstack(
         [
@@ -641,7 +738,8 @@ def _(config, mo, normalized_images_log):
                 justify="space-between",
                 align="center",
             ),
-            *widget_rows,
+            _general_section,
+            _advanced_section,
         ]
     ).style(
         {
@@ -685,7 +783,22 @@ def _(mo):
 
 
 @app.cell
-def _(first_image, get_is_reconstructing, mo, set_show_log):
+def _(mo):
+    # full reconstruction volumes (top/bottom) from the most recent run; reused
+    # as init_recon for the next run so each reconstruction builds on the last
+    get_last_full_reconstruction, set_last_full_reconstruction = mo.state(None)
+    return get_last_full_reconstruction, set_last_full_reconstruction
+
+
+@app.cell
+def _(
+    first_image,
+    get_is_reconstructing,
+    get_last_full_reconstruction,
+    mo,
+    set_last_full_reconstruction,
+    set_show_log,
+):
     mo.stop(first_image is None)
 
     # disabled while a reconstruction is running so a second one can't be
@@ -699,6 +812,24 @@ def _(first_image, get_is_reconstructing, mo, set_show_log):
         tooltip="Reconstruction in progress ..." if _reconstructing else None,
     )
 
+    # clears the stored reconstruction so the next run starts from scratch
+    # instead of warm-starting (init_recon) from the previous result; disabled
+    # when there is nothing stored or a reconstruction is in progress
+    _has_previous = get_last_full_reconstruction() is not None
+    reset_reconstruction_button = mo.ui.button(
+        label="♻️ reset",
+        kind="warn",
+        on_change=lambda _: set_last_full_reconstruction(None),
+        disabled=_reconstructing or not _has_previous,
+        tooltip=(
+            "Reconstruction in progress ..."
+            if _reconstructing
+            else "Forget the previous reconstruction so the next run starts fresh"
+            if _has_previous
+            else "No previous reconstruction to reset"
+        ),
+    )
+
     display_log_button = mo.ui.button(
         label="📖 display log",
         kind="neutral",
@@ -709,7 +840,12 @@ def _(first_image, get_is_reconstructing, mo, set_show_log):
         kind="neutral",
         on_change=lambda _: set_show_log(False),
     )
-    return display_log_button, evaluate_reconstruction_button, hide_log_button
+    return (
+        display_log_button,
+        evaluate_reconstruction_button,
+        hide_log_button,
+        reset_reconstruction_button,
+    )
 
 
 @app.cell
@@ -746,12 +882,14 @@ def _(
     get_show_log,
     hide_log_button,
     mo,
+    reset_reconstruction_button,
 ):
     _log_button = hide_log_button if get_show_log() else display_log_button
 
     mo.hstack(
         [
             evaluate_reconstruction_button,
+            reset_reconstruction_button.style({"width": "120px"}),
             _log_button.style({"width": "200px"}),
         ],
         justify="space-between",
@@ -841,6 +979,13 @@ def _(
         not evaluate_reconstruction_button.value,
     )
 
+    # the UI exposes a single "scale" slider; expand it back into the separate
+    # row_scale and col_scale arguments the reconstruction expects
+    _mbirjax_config = dict(mbirjax_widgets.value)
+    _scale = _mbirjax_config.pop("scale", 1.0)
+    _mbirjax_config["row_scale"] = _scale
+    _mbirjax_config["col_scale"] = _scale
+
     # parameters recovered from the widgets
     reconstruction_parameters = {
         "top_slice": top_line_slider.value,
@@ -848,7 +993,7 @@ def _(
         "z_range": z_range_slider.value,
         "tilt": tilt_slider.value,
         "perform_tilt": perform_tilt_switch.value,
-        "mbirjax_config": dict(mbirjax_widgets.value),
+        "mbirjax_config": _mbirjax_config,
     }
 
     # data recovered from the selected HDF5 file
@@ -904,12 +1049,15 @@ def _(
 @app.cell
 def _(
     evaluate_reconstruction_button,
+    get_last_full_reconstruction,
     mo,
     reconstruction_angles,
     reconstruction_data,
     reconstruction_parameters,
     set_is_reconstructing,
+    set_last_full_reconstruction,
     set_reconstruction_history,
+    logger,
 ):
     mo.stop(
         not evaluate_reconstruction_button.value,
@@ -925,16 +1073,40 @@ def _(
         snap_data=reconstruction_data,
         snap_angles=reconstruction_angles,
         snap_parameters=reconstruction_parameters,
+        snap_init_recon=get_last_full_reconstruction(),
     ):
+        
+        logger.info("Starting mbirjax reconstruction...")
+        logger.info(f"Data shape: {snap_data.shape if snap_data is not None else 'missing'}")
+        logger.info(f"Angles: {len(snap_angles) if snap_angles is not None else 'missing'}")
+        logger.info(f"Parameters: {snap_parameters}")
+        logger.info(f"Initial reconstruction: {snap_init_recon is not None}")
+        
         # runs on a mo.Thread; JAX releases the GIL during XLA compute, so the
         # rest of the app stays interactive while this runs
         try:
+            # seed this run with the previous reconstruction (if any); the
+            # evaluation ignores it when the recon grid no longer matches
             evaluation = MbirjaxReconstructionEvaluation(
                 data=snap_data,
                 list_angles_deg=snap_angles,
                 reconstruction_parameters=snap_parameters,
+                init_recon=snap_init_recon,
             )
             top_slice, bottom_slice, top_time, bottom_time = evaluation.evaluate()
+            logger.info(
+                f"Reconstruction finished | top_time={top_time:.2f}s, "
+                f"bottom_time={bottom_time:.2f}s"
+            )
+
+            # remember the full reconstruction volumes so the next run can reuse
+            # them as init_recon
+            set_last_full_reconstruction(
+                {
+                    "top": evaluation.top_full_reconstruction,
+                    "bottom": evaluation.bottom_full_reconstruction,
+                }
+            )
 
             # Store a presampled copy for the preview rather than the full
             # resolution slice. The slices are only ever shown as downsampled
@@ -979,6 +1151,9 @@ def _(
             set_reconstruction_history(
                 lambda prev, entry=new_entry: prev + [entry]
             )
+        except Exception:
+            logger.exception("Reconstruction failed")
+            raise
         finally:
             set_is_reconstructing(False)
 

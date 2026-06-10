@@ -22,6 +22,7 @@ from numpy.typing import NDArray
 from __code.parent import Parent
 from __code.config import svmbir_parameters
 from __code.config import NUM_THREADS, SVMBIR_LIB_PATH, SVMBIR_LIB_PATH_BACKUP
+from __code.config import MARIMO_TEST_RECONSTRUCTION_WIDTH
 from __code.utilities.folder import check_folder_write_permission
 
 
@@ -97,7 +98,25 @@ class TestReconstruction(Parent):
                 colorscale='Viridis',
                 showscale=True
             ))
-            
+
+            # the reconstruction works on a band of MARIMO_TEST_RECONSTRUCTION_WIDTH
+            # slices centered on each selected slice, so shade that region (clamped
+            # to the image) behind the slice line to show what is actually used
+            img_width = normalized_images_log[image_index].shape[1] - 1
+            half_band = MARIMO_TEST_RECONSTRUCTION_WIDTH // 2
+            for _center in (slice_1, slice_2):
+                fig.add_shape(
+                    type="rect",
+                    x0=0, x1=img_width,
+                    y0=max(0, _center - half_band),
+                    y1=min(height - 1, _center + half_band),
+                    fillcolor="red",
+                    opacity=0.2,
+                    line=dict(width=0),
+                    layer="above",
+                    xref="x", yref="y",
+                )
+
             # Add horizontal lines for slice positions
             fig.add_shape(
                 type="line",

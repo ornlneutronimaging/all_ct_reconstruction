@@ -15,9 +15,19 @@ setup_logging(basename_of_log_file=LOG_BASENAME_FILENAME)
 
 class MbirjaxReconstructionEvaluation:
     
-    def __init__(self, data, list_angles_deg, reconstruction_parameters):
+    def __init__(self, data, list_angles_deg, reconstruction_parameters, init_recon=None):
         self.list_angles_rad = np.deg2rad(list_angles_deg)
-        
+
+        # optional previous reconstruction reused as the starting point for this
+        # run; a dict {"top": <full recon volume>, "bottom": <full recon volume>}
+        # in mbirjax's native recon orientation, or None for a fresh start
+        self.init_recon = init_recon or {}
+
+        # full reconstruction volumes produced by evaluate(), kept so the next
+        # run can pass them back in as init_recon
+        self.top_full_reconstruction = None
+        self.bottom_full_reconstruction = None
+
         self.top_slice = reconstruction_parameters.get("top_slice", 0)
         self.bottom_slice = reconstruction_parameters.get("bottom_slice", data.shape[0])
 
@@ -62,46 +72,86 @@ class MbirjaxReconstructionEvaluation:
         if bottom_slice <= 0 or bottom_slice > n_slices:
             bottom_slice = n_slices - MARIMO_TEST_RECONSTRUCTION_WIDTH // 2
         
-        # reconstruction of top slices
-        top_reconstruction_slice, top_recond_dict, top_reconstruction_time = self._reconstruct_slices(from_slice=top_slice-MARIMO_TEST_RECONSTRUCTION_WIDTH//2, 
-                                                                             to_slice=top_slice+MARIMO_TEST_RECONSTRUCTION_WIDTH//2)
-        
-        # reconstruction of bottom slices
-        bottom_reconstruction_slice, bottom_recond_dict, bottom_reconstruction_time = self._reconstruct_slices(from_slice=bottom_slice-MARIMO_TEST_RECONSTRUCTION_WIDTH//2, 
-                                                                                   to_slice=bottom_slice+MARIMO_TEST_RECONSTRUCTION_WIDTH//2)
-        
+        # reconstruction of top slices, reusing the previous top reconstruction
+        # as the starting point when available
+        top_reconstruction_slice, top_full, top_recond_dict, top_reconstruction_time = self._reconstruct_slices(from_slice=top_slice-MARIMO_TEST_RECONSTRUCTION_WIDTH//2,
+                                                                             to_slice=top_slice+MARIMO_TEST_RECONSTRUCTION_WIDTH//2,
+                                                                             init_recon=self.init_recon.get("top"))
+
+        # reconstruction of bottom slices, reusing the previous bottom reconstruction
+        bottom_reconstruction_slice, bottom_full, bottom_recond_dict, bottom_reconstruction_time = self._reconstruct_slices(from_slice=bottom_slice-MARIMO_TEST_RECONSTRUCTION_WIDTH//2,
+                                                                                   to_slice=bottom_slice+MARIMO_TEST_RECONSTRUCTION_WIDTH//2,
+                                                                                   init_recon=self.init_recon.get("bottom"))
+
+        # keep the full volumes so the caller can feed them into the next run
+        self.top_full_reconstruction = top_full
+        self.bottom_full_reconstruction = bottom_full
+
         return top_reconstruction_slice, bottom_reconstruction_slice, top_reconstruction_time, bottom_reconstruction_time
            
-    def _reconstruct_slices(self, from_slice, to_slice):
-        
+    def _reconstruct_slices(self, from_slice, to_slice, init_recon=None):
+
         logging.info(f"Reconstructing slices from {from_slice} to {to_slice}...")
-        
+
         _sinogram = self.corrected_array_log[:, from_slice : to_slice, :]
         logging.info(f"\t{np.shape(_sinogram) = }")
-        
+
         sinogram_shape = _sinogram.shape
         logging.info(f"\t{sinogram_shape = }")
-        
+
         logging.info(f"\t{self.list_angles_rad = }")
-        
+
         top_ct_model = mj.ParallelBeamModel(sinogram_shape,
                                             self.list_angles_rad)
         top_ct_model.scale_recon_shape(row_scale=self.row_scale, col_scale=self.col_scale)
-        top_ct_model.set_params(sharpness=self.sharpness, 
-                                snr_db=self.snr_db, 
+        top_ct_model.set_params(sharpness=self.sharpness,
+                                snr_db=self.snr_db,
                                 det_channel_offset=self.det_channel_offset,
                                 positivity_flag=self.positivity)
+
+        # reuse a previous reconstruction as the starting point, but only when it
+        # matches the current reconstruction grid (the grid changes with the
+        # row/col scale), otherwise mbirjax would reject the init_recon
+        try:
+            expected_recon_shape = tuple(top_ct_model.get_params("recon_shape"))
+        except Exception:
+            expected_recon_shape = None
+        init_recon_arg = None
+        if init_recon is not None:
+            init_shape = tuple(np.shape(init_recon))
+            if expected_recon_shape is None or init_shape == expected_recon_shape:
+                init_recon_arg = init_recon
+                logging.info(f"\tUsing init_recon of shape {init_shape} as starting point")
+            else:
+                logging.info(f"\tIgnoring init_recon: shape {init_shape} != recon_shape {expected_recon_shape}")
+
+        # when warm-starting from a previous reconstruction, skip ahead to
+        # iteration 5 so we do not repeat the early iterations; start at 0 for a
+        # fresh reconstruction
+        first_iteration = 5 if init_recon_arg is not None else 0
+        logging.info(f"\t{first_iteration = }")
+        logging.info(f"\tinit_recon_arg.shape = {init_recon_arg.shape if init_recon_arg is not None else 'no init_recon'}")
+
         start_time = time.perf_counter()
-        reconstruction_array, recond_dict = top_ct_model.recon(_sinogram, max_iterations=self.max_iterations)
-        reconstruction_array = np.array(np.swapaxes(reconstruction_array, 0, 2), dtype=np.float32)  # convert JAX array to numpy
-        logging.info(f"\t{reconstruction_array.shape = }")
+        logging.info(f"\tStarting reconstruction ... ")
+        reconstruction_array, recond_dict = top_ct_model.recon(_sinogram,
+                                                               max_iterations=self.max_iterations,
+                                                               init_recon=init_recon_arg,
+                                                               first_iteration=first_iteration)
+        
+        # native recon orientation (recon_shape), kept for reuse as init_recon
+        logging.info(f"\tReconstruction done!")
+        full_reconstruction = np.array(reconstruction_array, dtype=np.float32)
+        reconstruction_array = np.array(np.swapaxes(full_reconstruction, 0, 2), dtype=np.float32)  # convert JAX array to numpy
+        logging.info(f"\treconstruction_array.shape = {reconstruction_array.shape}")
         elapsed_time = time.perf_counter() - start_time
         logging.info(f"\tReconstruction time: {elapsed_time:.2f} s")
-        
+
         middle_slice = MARIMO_TEST_RECONSTRUCTION_WIDTH // 2
         logging.info(f"\tReconstruction of middle slice {middle_slice} completed.")
         result_slice = reconstruction_array[middle_slice, :, :]
         logging.info(f"\t{result_slice.shape = }")
         logging.info(f"\t{type(result_slice) = }")
-        
-        return result_slice, recond_dict, elapsed_time
+        logging.info(f"************************************************************************")
+
+        return result_slice, full_reconstruction, recond_dict, elapsed_time
