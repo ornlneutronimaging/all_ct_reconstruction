@@ -289,74 +289,110 @@ class CenterOfRotationAndTilt(Parent):
         self.calculate_tilt_using_neutompy()
         
     def display_before_after_tilt_correction(self):
-                
-        height, width = np.shape(self.parent.normalized_images_log[0])
-        
-        vmin = np.min(self.parent.normalized_images_log)
-        vmax = np.max(self.parent.normalized_images_log)
-        
-        default_vmin = float(np.percentile(self.parent.normalized_images_log, 2))
-        default_vmax = float(np.percentile(self.parent.normalized_images_log, 98))
-        
-        def plot_before_after_tilt_correction(image_index, vertical_guide, vrange):
-            image_before = self.parent.normalized_images_log[image_index]
-            image_after = self.parent.temporary_normalized_images_log[image_index]
 
-            vmax = vrange[1]
-            vmin = vrange[0]
+        images_before = self.parent.normalized_images_log
+        images_after = self.parent.temporary_normalized_images_log
+
+        height, width = np.shape(images_before[0])
+
+        # Subsample the stack (at most ~10 projections) to compute the display
+        # range. Scanning/sorting the full stack with np.percentile is what made
+        # this step slow to start up.
+        step = max(1, len(images_before) // 10)
+        sample = np.asarray(images_before[::step])
+        vmin = float(np.min(sample))
+        vmax = float(np.max(sample))
+        default_vmin = float(np.percentile(sample, 2))
+        default_vmax = float(np.percentile(sample, 98))
+
+        # Downsample the images for display. A before/after preview doesn't need
+        # full resolution, and colormapping + PNG-encoding the full frame on
+        # every render is the main reason this was slow. We stride the images so
+        # the largest dimension is ~MAX_DISPLAY_SIZE px, then tell go.Image the
+        # original pixel spacing (dx/dy) so axes and the guide line stay in
+        # original coordinates.
+        MAX_DISPLAY_SIZE = 800
+        display_stride = max(1, int(np.ceil(max(height, width) / MAX_DISPLAY_SIZE)))
+
+        # Resolve the viridis colormap (registry API on recent matplotlib, with
+        # a fallback to the deprecated cm.get_cmap on older versions).
+        try:
+            from matplotlib import colormaps
+            cmap = colormaps['viridis']
+        except ImportError:
+            import matplotlib.cm as cm
+            cmap = cm.get_cmap('viridis')
+
+        def to_rgb(image, lo, hi):
+            """Downsample + apply the colormap to a 2D array -> uint8 RGB."""
+            if hi <= lo:
+                hi = lo + 1e-6
+            image = np.asarray(image)[::display_stride, ::display_stride]
+            norm = np.clip((image - lo) / (hi - lo), 0.0, 1.0)
+            return (cmap(norm)[..., :3] * 255).astype(np.uint8)
+
+        def plot_before_after_tilt_correction(image_index, vertical_guide, vrange):
+            zmin, zmax = vrange[0], vrange[1]
+
+            # go.Image renders each projection as a single bitmap instead of one
+            # cell per pixel, which is far faster than go.Heatmap at full
+            # resolution. The colormap/levels are applied here in numpy.
+            image_before = to_rgb(images_before[image_index], zmin, zmax)
+            image_after = to_rgb(images_after[image_index], zmin, zmax)
 
             fig = make_subplots(
                 rows=1, cols=2,
                 subplot_titles=("Before tilt correction", "After tilt correction")
             )
-            
+
+            # dx/dy map the downsampled bitmap back onto original pixel coords.
             fig.add_trace(
-                go.Heatmap(z=image_before, zmin=vmin, zmax=vmax, colorscale='Viridis'),
+                go.Image(z=image_before, dx=display_stride, dy=display_stride),
                 row=1, col=1
             )
             fig.add_trace(
-                go.Heatmap(z=image_after, zmin=vmin, zmax=vmax, colorscale='Viridis'),
+                go.Image(z=image_after, dx=display_stride, dy=display_stride),
                 row=1, col=2
             )
-            
-            # Add vertical lines
+
+            # Vertical guide lines (one per subplot).
             fig.add_shape(
                 type="line",
-                x0=vertical_guide, x1=vertical_guide,
-                y0=0, y1=height - 1,
+                x0=vertical_guide, x1=vertical_guide, y0=0, y1=height - 1,
                 line=dict(color="red", dash="dash"),
                 xref="x", yref="y"
             )
             fig.add_shape(
                 type="line",
-                x0=vertical_guide, x1=vertical_guide,
-                y0=0, y1=height - 1,
+                x0=vertical_guide, x1=vertical_guide, y0=0, y1=height - 1,
                 line=dict(color="red", dash="dash"),
                 xref="x2", yref="y2"
             )
-            
-            fig.update_yaxes(autorange='reversed', row=1, col=1)
-            fig.update_yaxes(autorange='reversed', row=1, col=2)
+
+            # go.Image already places row 0 at the top, so no axis reversal needed.
             fig.update_layout(width=1000, height=500)
             fig.show()
-        
+
         self.display_before_after_tilt_correction = interactive(plot_before_after_tilt_correction,
-                                                                image_index=widgets.IntSlider(min=0, 
-                                                                                              max=len(self.parent.normalized_images_log)-1, 
-                                                                                              value=0,
-                                                                                              style={'description_width': '150px'},
-                                                                                              layout=widgets.Layout(width="50%")),
-                                                                vertical_guide=widgets.IntSlider(min=0,
-                                                                                                 max=width-1,
-                                                                                                 value=int(width/2),
-                                                                                                 layout=widgets.Layout(width="50%"),
-                                                                                                 style={'description_width': '150px'},
-                                                                                                 ),
-                                                                vrange=widgets.FloatRangeSlider(min=vmin,
-                                                                                                max=vmax,
-                                                                                                value=[default_vmin, default_vmax],
-                                                                                                style={'description_width': '150px'},
-                                                                                                layout=widgets.Layout(width="50%")),
+                               image_index=widgets.IntSlider(min=0,
+                                                             max=len(images_before) - 1,
+                                                             value=0,
+                                                             continuous_update=False,
+                                                             style={'description_width': '150px'},
+                                                             layout=widgets.Layout(width="50%")),
+                               vertical_guide=widgets.IntSlider(min=0,
+                                                                max=width - 1,
+                                                                value=int(width / 2),
+                                                                continuous_update=False,
+                                                                layout=widgets.Layout(width="50%"),
+                                                                style={'description_width': '150px'},
+                                                                ),
+                               vrange=widgets.FloatRangeSlider(min=vmin,
+                                                               max=vmax,
+                                                               value=[default_vmin, default_vmax],
+                                                               continuous_update=False,
+                                                               style={'description_width': '150px'},
+                                                               layout=widgets.Layout(width="50%")),
         )
         display(self.display_before_after_tilt_correction)
         
@@ -389,11 +425,17 @@ class CenterOfRotationAndTilt(Parent):
         logging.info(f"\t{np.shape(self.image_180_degree) =}")
         logging.info(f"\t{rois =}")
 
-        temp_normalized_images = correction_COR(stagging_normalized_images,
-                       np.array(self.image_0_degree),
-                       np.array(self.image_180_degree),
-                       show_results=True,
-                       rois=rois)
+        _shift, tilt_angle = find_COR(self.image_0_degree, self.image_180_degree, ystep=5, show_results=True, rois=rois)
+
+        temp_normalized_images = []
+        for _image in stagging_normalized_images:
+            temp_normalized_images.append(rotate(_image, angle=tilt_angle, resize=False, preserve_range=True))
+
+        # temp_normalized_images = correction_COR(stagging_normalized_images,
+        #                np.array(self.image_0_degree),
+        #                np.array(self.image_180_degree),
+        #                show_results=True,
+        #                rois=rois)
         
         del stagging_normalized_images
         
@@ -542,30 +584,56 @@ class CenterOfRotationAndTilt(Parent):
         # self.axs[1].axhline(int(height/2), color='blue', linestyle='--')
 
         self.slice_value = int(height/2)
-        
+
         default_vmin = float(np.percentile(image_0_degree, 2))
         default_vmax = float(np.percentile(image_0_degree, 98))
         min_value = np.min([image_0_degree, image_180_degree])
         max_value = np.max([image_0_degree, image_180_degree])
-        
+
+        # Downsample for display so we colormap/encode ~MAX_DISPLAY_SIZE px
+        # instead of the full frame on every render; dx/dy keep the axes (and
+        # the slice guide line) in original pixel coordinates.
+        MAX_DISPLAY_SIZE = 800
+        display_stride = max(1, int(np.ceil(max(np.shape(image_0_degree)) / MAX_DISPLAY_SIZE)))
+
+        try:
+            from matplotlib import colormaps
+            cmap = colormaps['viridis']
+        except ImportError:
+            import matplotlib.cm as cm
+            cmap = cm.get_cmap('viridis')
+
+        def to_rgb(image, lo, hi):
+            """Downsample + apply the colormap to a 2D array -> uint8 RGB."""
+            if hi <= lo:
+                hi = lo + 1e-6
+            image = np.asarray(image)[::display_stride, ::display_stride]
+            norm = np.clip((image - lo) / (hi - lo), 0.0, 1.0)
+            return (cmap(norm)[..., :3] * 255).astype(np.uint8)
+
         def plot_images(slice_value=int(height/2), vmin_vmax: list = None):
 
             vmin, vmax = vmin_vmax
-            
+
+            # go.Image renders each frame as a single bitmap instead of one cell
+            # per pixel, which is far faster than go.Heatmap at full resolution.
+            rgb_0 = to_rgb(image_0_degree, vmin, vmax)
+            rgb_180 = to_rgb(image_180_degree, vmin, vmax)
+
             fig = make_subplots(
                 rows=1, cols=2,
                 subplot_titles=("0 / 0", f"{self.parent.final_list_of_angles[self.index_180_degree]} / 180")
             )
-            
+
             fig.add_trace(
-                go.Heatmap(z=image_0_degree, zmin=vmin, zmax=vmax, colorscale='Viridis'),
+                go.Image(z=rgb_0, dx=display_stride, dy=display_stride),
                 row=1, col=1
             )
             fig.add_trace(
-                go.Heatmap(z=image_180_degree, zmin=vmin, zmax=vmax, colorscale='Viridis'),
+                go.Image(z=rgb_180, dx=display_stride, dy=display_stride),
                 row=1, col=2
             )
-            
+
             # Add horizontal lines
             fig.add_shape(
                 type="line",
@@ -581,11 +649,10 @@ class CenterOfRotationAndTilt(Parent):
                 line=dict(color="blue", dash="dash"),
                 xref="x2", yref="y2"
             )
-            
-            fig.update_yaxes(autorange='reversed', row=1, col=1)
-            fig.update_yaxes(autorange='reversed', row=1, col=2)
-            fig.update_layout(yaxis=dict(scaleanchor="x", scaleratio=1, constrain='domain'), 
-                              yaxis2=dict(scaleanchor="x2", scaleratio=1, constrain='domain'), 
+
+            # go.Image already places row 0 at the top, so no axis reversal needed.
+            fig.update_layout(yaxis=dict(scaleanchor="x", scaleratio=1, constrain='domain'),
+                              yaxis2=dict(scaleanchor="x2", scaleratio=1, constrain='domain'),
                               width=1000, height=500)
 
             fig.show()
@@ -595,13 +662,15 @@ class CenterOfRotationAndTilt(Parent):
         display(widgets.HTML("Measured / Expected (angles in degrees)"))
 
         self.plot_slice_to_use = interactive(plot_images,
-                                             slice_value = widgets.IntSlider(min=0, 
-                                                                             max=height-1, 
+                                             slice_value = widgets.IntSlider(min=0,
+                                                                             max=height-1,
                                                                              value=int(height/2),
+                                                                             continuous_update=False,
                                                                              layout=widgets.Layout(width="50%")),
-                                            vmin_vmax=widgets.FloatRangeSlider(min=min_value, 
-                                                                      max=max_value, 
+                                            vmin_vmax=widgets.FloatRangeSlider(min=min_value,
+                                                                      max=max_value,
                                                                       value=[default_vmin, default_vmax],
+                                                                      continuous_update=False,
                                                                       layout=widgets.Layout(width="50%")),
         )
         display(self.plot_slice_to_use)
@@ -631,6 +700,10 @@ class CenterOfRotationAndTilt(Parent):
         sinogram_of_normalized_images_log = np.moveaxis(self.parent.normalized_images_log, 1, 0) # [slice, angle, width]
         logging.info(f"{np.shape(sinogram_of_normalized_images_log) = }")
 
+        # slice_value is the slider value, already in original full-resolution
+        # coordinates (the slider runs 0..height-1). The display is downsampled
+        # for speed but go.Image's dx/dy map its axes back to original pixels, so
+        # no scaling by the downsampling stride is needed here.
         slice_value = self.plot_slice_to_use.result
 
         # if self.cor_selection.value == "180 degree":

@@ -563,23 +563,69 @@ def _(config, mo, normalized_images_log):
         }
     )
 
-    # render each widget; det_channel_offset gets an explanatory label to its right
+    # short explanation of each mbirjax parameter, shown as a hover tooltip on
+    # the ℹ️ icon next to the corresponding widget
+    mbirjax_param_descriptions = {
+        "positivity": (
+            "Enforce a positivity constraint: all reconstructed voxel values are "
+            "forced to be greater than or equal to zero."
+        ),
+        "max_iterations": (
+            "Maximum number of iterations of the iterative reconstruction "
+            "algorithm. More iterations improve convergence but increase the "
+            "reconstruction time."
+        ),
+        "sharpness": (
+            "Controls the sharpness of the reconstruction. Larger (positive) "
+            "values produce sharper, more detailed images; smaller (negative) "
+            "values produce smoother images."
+        ),
+        "snr_db": (
+            "Assumed signal-to-noise ratio of the data, in decibels. Larger "
+            "values yield sharper reconstructions but can amplify noise."
+        ),
+        "det_channel_offset": (
+            "Offset of the center of rotation from the center of the detector "
+            "image, in pixels. Positive values shift the center to the right."
+        ),
+        "row_scale": (
+            "Scale factor applied to the reconstruction grid in the row "
+            "direction relative to the detector pixel pitch."
+        ),
+        "col_scale": (
+            "Scale factor applied to the reconstruction grid in the column "
+            "direction relative to the detector pixel pitch."
+        ),
+    }
+
+    def _info_icon(name):
+        # ℹ️ icon whose native browser tooltip (title attribute) shows the
+        # parameter's meaning on hover
+        description = mbirjax_param_descriptions.get(
+            name, "No description available."
+        )
+        return mo.Html(
+            f'<span title="{description}" '
+            'style="cursor: help; font-size: 1.1rem;">ℹ️</span>'
+        )
+
+    # render each widget with an info icon to its left; det_channel_offset keeps
+    # an extra inline label spelling out the center-of-rotation offset
     widget_rows = []
     for name, element in mbirjax_widgets.elements.items():
+        row_items = [_info_icon(name), element]
         if name == "det_channel_offset":
-            widget_rows.append(
-                mo.hstack(
-                    [
-                        element,
-                        mo.md("(Center of rotation offset from center of image)"),
-                    ],
-                    justify="start",
-                    align="center",
-                    gap=0.5,
-                )
+            row_items.append(
+                mo.md("(Center of rotation offset from center of image)")
             )
-        else:
-            widget_rows.append(element)
+        widget_rows.append(
+            mo.hstack(
+                row_items,
+                justify="start",
+                align="center",
+                gap=0.5,
+            )
+        )
 
     mo.vstack(
         [
