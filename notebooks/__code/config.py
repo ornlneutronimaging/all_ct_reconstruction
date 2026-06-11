@@ -32,8 +32,14 @@ list_of_analysis_machines: List[str] = ['bl10-analysis1.sns.gov',
 
 NUMBER_OF_SLICES_TO_OVERAP = 5
 
-# marimo notebook: number of slices around the slice of interest used to test reconstruction
+# marimo notebooks: number of slices around the slice of interest used to test
+# reconstruction. mbirjax and svmbir use different band widths.
+MARIMO_MBIRJAX_TEST_RECONSTRUCTION_WIDTH: int = 10
+MARIMO_SVMBIR_TEST_RECONSTRUCTION_WIDTH: int = 4
+
+# generic band width used by the legacy multi-algorithm test_reconstruction workflow
 MARIMO_TEST_RECONSTRUCTION_WIDTH: int = 10
+
 
 # Development folder paths for different users and instruments
 debugger_folder: List[str] = ['/Users/j35/HFIR/CG1D/',

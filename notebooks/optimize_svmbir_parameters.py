@@ -48,13 +48,13 @@ def _():
 
     _user_id = _getpass.getuser()
     log_file_path = _os.path.join(
-        _log_dir, f"optimize_mbirjax_parameters_{_user_id}.log"
+        _log_dir, f"optimize_svmbir_parameters_{_user_id}.log"
     )
 
     # a dedicated, non-propagating logger so it is independent of the root logger
     # (which the reconstruction-evaluation module reconfigures on import and would
     # otherwise redirect or duplicate these messages)
-    logger = _logging.getLogger("optimize_mbirjax_parameters")
+    logger = _logging.getLogger("optimize_svmbir_parameters")
     logger.setLevel(_logging.INFO)
     logger.propagate = False
     # drop any handler left from a previous run of this cell to avoid duplicate
@@ -67,7 +67,7 @@ def _():
         _logging.Formatter("[%(levelname)s] - %(asctime)s - %(message)s")
     )
     logger.addHandler(_file_handler)
-    logger.info("*** optimize_mbirjax_parameters session started ***")
+    logger.info("*** optimize_svmbir_parameters session started ***")
     return log_file_path, logger
 
 
@@ -166,7 +166,7 @@ def _(hdf5_selector, mo):
 def _(h5py, json, mo, selected_hdf5_file):
     with h5py.File(selected_hdf5_file, "r") as f:
         config_raw = f["metadata/config"][()] if "metadata/config" in f else None
-        config = json.loads(config_raw) if config_raw is not None else None        
+        config = json.loads(config_raw) if config_raw is not None else None
         normalized_images_log = (
             f["raw/normalized_images_log"][:]
             if "raw/normalized_images_log" in f
@@ -230,7 +230,7 @@ def _(
     bottom_line_slider,
     colormap_selector,
     go,
-    mbirjax_widgets,
+    svmbir_widgets,
     mo,
     mpl_colormap_to_plotly,
     normalized_images_log,
@@ -248,8 +248,8 @@ def _(
         mo.md("**No `raw/normalized_images_log` data to display.**"),
     )
 
-    from __code.config import MARIMO_MBIRJAX_TEST_RECONSTRUCTION_WIDTH
-    band_half = int(MARIMO_MBIRJAX_TEST_RECONSTRUCTION_WIDTH / 2)
+    from __code.config import MARIMO_SVMBIR_TEST_RECONSTRUCTION_WIDTH
+    band_half = int(MARIMO_SVMBIR_TEST_RECONSTRUCTION_WIDTH / 2)
 
     first_image = normalized_images_log[0]
 
@@ -272,7 +272,7 @@ def _(
     perform_tilt = perform_tilt_switch.value
     n_rows, n_cols = first_image.shape
     center_column = first_image.shape[1] / 2
-    det_channel_offset = mbirjax_widgets.value.get("det_channel_offset", 0)
+    center_offset = svmbir_widgets.value.get("center_offset", 0)
 
     # subsample the displayed heatmap when the image is large so the preview
     # stays responsive; pass original-coordinate x/y arrays so the axes keep
@@ -297,25 +297,29 @@ def _(
         )
 
     def _add_overlays(f):
+        # the reconstructed region is only MARIMO_SVMBIR_TEST_RECONSTRUCTION_WIDTH px
+        # tall, so on a full detector image it is a thin sliver; draw the band
+        # with a stronger fill plus solid edge lines at its top/bottom so the
+        # region used for reconstruction clearly stands out
         f.add_hrect(
             y0=top_line_slider.value - band_half,
             y1=top_line_slider.value + band_half,
             fillcolor="red",
-            opacity=0.25,
-            line_width=0,
+            opacity=0.45,
+            line=dict(color="red", width=1.5),
         )
-        f.add_hline(y=top_line_slider.value, line_color="red", line_width=1.0)
+        f.add_hline(y=top_line_slider.value, line_color="red", line_width=2.0)
         f.add_hrect(
             y0=bottom_line_slider.value - band_half,
             y1=bottom_line_slider.value + band_half,
             fillcolor="cyan",
-            opacity=0.25,
-            line_width=0,
+            opacity=0.45,
+            line=dict(color="cyan", width=1.5),
         )
-        f.add_hline(y=bottom_line_slider.value, line_color="cyan", line_width=1.0)
-        if det_channel_offset is not None:
+        f.add_hline(y=bottom_line_slider.value, line_color="cyan", line_width=2.0)
+        if center_offset is not None:
             f.add_vline(
-                x=center_column + det_channel_offset,
+                x=center_column + center_offset,
                 line_color="white",
                 line_dash="dash",
                 line_width=1.0,
@@ -530,54 +534,67 @@ def _(mo):
 
 @app.cell
 def _(advanced_password, config, mo, normalized_images_log):
-    mbirjax_params = dict((config or {}).get("mbirjax_config", {}))
+    svmbir_params = dict((config or {}).get("svmbir_config", {}))
 
     mo.stop(
-        not mbirjax_params,
-        mo.md("*No `mbirjax_config` parameters found in the config.*"),
+        not svmbir_params,
+        mo.md("*No `svmbir_config` parameters found in the config.*"),
     )
 
-    # row_scale and col_scale are exposed in the UI as a single "scale" slider
-    # that drives both factors; collapse them here, defaulting to 1 when absent.
-    # If the loaded config has differing values, row_scale is used as the seed.
-    _row_scale = mbirjax_params.pop("row_scale", 1.0)
-    mbirjax_params.pop("col_scale", None)
-    mbirjax_params["scale"] = _row_scale if _row_scale is not None else 1.0
+    # top_slice / bottom_slice are driven by the line sliders above, not by these
+    # parameter widgets; drop them so they are not rendered here
+    svmbir_params.pop("top_slice", None)
+    svmbir_params.pop("bottom_slice", None)
 
-    from __code.utilities.configuration_file import MbirjaxConfigRanges, MinMaxRange
+    # svmbir takes the center of rotation as a pixel offset from the detector
+    # center; it is not part of svmbir_config, so seed it from the top-level
+    # center_of_rotation when present, otherwise default to 0
+    if "center_offset" not in svmbir_params:
+        _center_of_rotation = (config or {}).get("center_of_rotation")
+        if (
+            _center_of_rotation is not None
+            and normalized_images_log is not None
+            and len(normalized_images_log)
+        ):
+            _width = normalized_images_log[0].shape[1]
+            svmbir_params["center_offset"] = float(-(_width // 2 - _center_of_rotation))
+        else:
+            svmbir_params["center_offset"] = 0.0
 
-    _ranges = MbirjaxConfigRanges()
-    # parameters rendered as sliders, with (range, step, is_integer) from the config ranges
+    from __code.utilities.configuration_file import MinMaxRange
+
+    # parameters rendered as sliders, with (range, step, is_integer)
     slider_specs = {
-        "max_iterations": (MinMaxRange(min=10, max=25, default=15), 1, True),
-        "sharpness": (MinMaxRange(min=-1, max=3, default=1), 0.1, False),
-        "snr_db": (MinMaxRange(min=25, max=35, default=30), 1, False),
-        "scale": (_ranges.row_scale, 0.1, False),
+        "max_iterations": (MinMaxRange(min=10, max=100, default=20), 1, True),
+        "sharpness": (MinMaxRange(min=-1, max=3, default=0), 0.1, False),
+        "snr_db": (MinMaxRange(min=25, max=40, default=30), 1, False),
+        "max_resolutions": (MinMaxRange(min=0, max=4, default=3), 1, True),
     }
 
     # always start maximum iterations at its default, ignoring any (typically
     # much larger) value stored in the loaded config
-    mbirjax_params["max_iterations"] = slider_specs["max_iterations"][0].default
+    svmbir_params["max_iterations"] = slider_specs["max_iterations"][0].default
 
     # display labels overriding the raw parameter key for the widget label
-    mbirjax_param_labels = {
+    svmbir_param_labels = {
         "max_iterations": "maximum iterations",
-        "det_channel_offset": "center of rotation offset from center",
+        "center_offset": "center of rotation offset from center",
         "snr_db": "signal noise ratio",
+        "max_resolutions": "maximum resolutions",
     }
 
     def _display_label(name):
-        return mbirjax_param_labels.get(name, name)
+        return svmbir_param_labels.get(name, name)
 
-    # det_channel_offset is an offset from the image center, bounded to +/- half
-    # the image width (fall back to a sane default if no image is loaded)
+    # center_offset is an offset from the image center, bounded to +/- half the
+    # image width (fall back to a sane default if no image is loaded)
     if normalized_images_log is not None and len(normalized_images_log):
         offset_limit = float(normalized_images_log[0].shape[1]) / 2
     else:
         offset_limit = 256.0
 
-    def make_mbirjax_widget(name, value):
-        if name == "det_channel_offset":
+    def make_svmbir_widget(name, value):
+        if name == "center_offset":
             current = float(value) if value is not None else 0.0
             current = max(-offset_limit, min(offset_limit, current))
             return mo.ui.number(
@@ -618,18 +635,18 @@ def _(advanced_password, config, mo, normalized_images_log):
             return mo.ui.number(value=value, step=0.1, label=_display_label(name))
         return mo.ui.text(value=str(value), label=_display_label(name))
 
-    excluded_mbirjax_params = {"verbose", "print_logs"}
-    mbirjax_widgets = mo.ui.dictionary(
+    excluded_svmbir_params = {"verbose", "print_logs"}
+    svmbir_widgets = mo.ui.dictionary(
         {
-            name: make_mbirjax_widget(name, value)
-            for name, value in mbirjax_params.items()
-            if name not in excluded_mbirjax_params
+            name: make_svmbir_widget(name, value)
+            for name, value in svmbir_params.items()
+            if name not in excluded_svmbir_params
         }
     )
 
-    # short explanation of each mbirjax parameter, shown as a hover tooltip on
+    # short explanation of each svmbir parameter, shown as a hover tooltip on
     # the ℹ️ icon next to the corresponding widget
-    mbirjax_param_descriptions = {
+    svmbir_param_descriptions = {
         "positivity": (
             "Enforce a positivity constraint: all reconstructed voxel values are "
             "forced to be greater than or equal to zero."
@@ -648,22 +665,21 @@ def _(advanced_password, config, mo, normalized_images_log):
             "Assumed signal-to-noise ratio of the data, in decibels. Larger "
             "values yield sharper reconstructions but can amplify noise."
         ),
-        "det_channel_offset": (
+        "max_resolutions": (
+            "Maximum number of multi-resolution levels used to accelerate "
+            "convergence. Higher values begin the reconstruction on a coarser "
+            "grid; 0 disables the multi-resolution scheme."
+        ),
+        "center_offset": (
             "Offset of the center of rotation from the center of the detector "
             "image, in pixels. Positive values shift the center to the right."
-        ),
-        "scale": (
-            "Scale factor applied to the reconstruction grid (used for both the "
-            "row and column scale) relative to the detector pixel pitch. "
-            "Use a value above 1 when part of the object goes outside the field "
-            "of view."
         ),
     }
 
     def _info_icon(name):
         # ℹ️ icon whose native browser tooltip (title attribute) shows the
         # parameter's meaning on hover
-        description = mbirjax_param_descriptions.get(
+        description = svmbir_param_descriptions.get(
             name, "No description available."
         )
         return mo.Html(
@@ -671,14 +687,14 @@ def _(advanced_password, config, mo, normalized_images_log):
             'style="cursor: help; font-size: 1.1rem;">ℹ️</span>'
         )
 
-    # render each widget with an info icon to its left; det_channel_offset keeps
-    # an extra inline label spelling out the center-of-rotation offset. The
-    # parameters are split into a "General" section (scale) and an
+    # render each widget with an info icon to its left; center_offset keeps an
+    # extra inline label spelling out the center-of-rotation offset. The
+    # parameters are split into a "General" section (sharpness) and an
     # "Advanced" section (everything else)
-    general_param_names = {"scale"}
+    general_param_names = {"sharpness"}
     general_rows = []
     advanced_rows = []
-    for name, element in mbirjax_widgets.elements.items():
+    for name, element in svmbir_widgets.elements.items():
         row = mo.hstack(
             [_info_icon(name), element],
             justify="start",
@@ -728,11 +744,11 @@ def _(advanced_password, config, mo, normalized_images_log):
         [
             mo.hstack(
                 [
-                    mo.md("### **⚙️ MBIRJAX parameters**"),
+                    mo.md("### **⚙️ SVMBIR parameters**"),
                     mo.md(
-                        '<a href="https://mbirjax.readthedocs.io/en/latest/'
-                        'usr_parameters.html#positivity-flag" target="_blank" '
-                        'title="MBIRJAX parameters documentation">🌐</a>'
+                        '<a href="https://svmbir.readthedocs.io/en/latest/'
+                        'parameters.html" target="_blank" '
+                        'title="SVMBIR parameters documentation">🌐</a>'
                     ),
                 ],
                 justify="space-between",
@@ -751,7 +767,7 @@ def _(advanced_password, config, mo, normalized_images_log):
             "margin-top": "2rem",
         }
     )
-    return (mbirjax_widgets,)
+    return (svmbir_widgets,)
 
 
 @app.cell
@@ -926,7 +942,7 @@ def _(get_show_log, mo, os):
 
     _user_id = getpass.getuser()
     _log_path = (
-        f"/SNS/VENUS/shared/log/mbirjax_reconstruction_evaluation_{_user_id}.log"
+        f"/SNS/VENUS/shared/log/svmbir_reconstruction_evaluation_{_user_id}.log"
     )
 
     if os.path.exists(_log_path):
@@ -967,7 +983,7 @@ def _(
     bottom_line_slider,
     config,
     evaluate_reconstruction_button,
-    mbirjax_widgets,
+    svmbir_widgets,
     mo,
     normalized_images_log,
     perform_tilt_switch,
@@ -979,21 +995,15 @@ def _(
         not evaluate_reconstruction_button.value,
     )
 
-    # the UI exposes a single "scale" slider; expand it back into the separate
-    # row_scale and col_scale arguments the reconstruction expects
-    _mbirjax_config = dict(mbirjax_widgets.value)
-    _scale = _mbirjax_config.pop("scale", 1.0)
-    _mbirjax_config["row_scale"] = _scale
-    _mbirjax_config["col_scale"] = _scale
-
     # parameters recovered from the widgets
+    _svmbir_config = dict(svmbir_widgets.value)
     reconstruction_parameters = {
         "top_slice": top_line_slider.value,
         "bottom_slice": bottom_line_slider.value,
         "z_range": z_range_slider.value,
         "tilt": tilt_slider.value,
         "perform_tilt": perform_tilt_switch.value,
-        "mbirjax_config": _mbirjax_config,
+        "svmbir_config": _svmbir_config,
     }
 
     # data recovered from the selected HDF5 file
@@ -1001,9 +1011,9 @@ def _(
     reconstruction_data = normalized_images_log  # 3D stack (n_angles, rows, cols)
     reconstruction_angles = angles_deg  # projection angles (deg)
 
-    mbirjax_lines = "\n".join(
+    svmbir_lines = "\n".join(
         f"- **{name}:** {value}"
-        for name, value in reconstruction_parameters["mbirjax_config"].items()
+        for name, value in reconstruction_parameters["svmbir_config"].items()
     )
 
     mo.vstack(
@@ -1021,7 +1031,7 @@ def _(
                 - **size of input data for reconstruction:** {reconstruction_data.shape if reconstruction_data is not None else "missing"}
                 """
                     ),
-                    mo.md("**mbirjax parameters:**\n" + mbirjax_lines),
+                    mo.md("**svmbir parameters:**\n" + svmbir_lines),
                 ],
                 widths="equal",
                 gap=2,
@@ -1037,7 +1047,7 @@ def _(
             "border": "1px solid #c5d0dd",
         }
     )
-    
+
     return (
         reconstruction_angles,
         reconstruction_config,
@@ -1063,7 +1073,7 @@ def _(
         not evaluate_reconstruction_button.value,
     )
 
-    from __code.marimo.mbirjax_reconstruction_evaluation import MbirjaxReconstructionEvaluation
+    from __code.marimo.svmbir_reconstruction_evaluation import SvmbirReconstructionEvaluation
 
     # Use default argument values to capture inputs immediately at definition
     # time. This avoids closure over _-prefixed cell-level variables, which
@@ -1075,19 +1085,19 @@ def _(
         snap_parameters=reconstruction_parameters,
         snap_init_recon=get_last_full_reconstruction(),
     ):
-        
-        logger.info("Starting mbirjax reconstruction...")
+
+        logger.info("Starting svmbir reconstruction...")
         logger.info(f"Data shape: {snap_data.shape if snap_data is not None else 'missing'}")
         logger.info(f"Angles: {len(snap_angles) if snap_angles is not None else 'missing'}")
         logger.info(f"Parameters: {snap_parameters}")
         logger.info(f"Initial reconstruction: {snap_init_recon is not None}")
-        
-        # runs on a mo.Thread; JAX releases the GIL during XLA compute, so the
-        # rest of the app stays interactive while this runs
+
+        # runs on a mo.Thread; svmbir's C extension releases the GIL during
+        # compute, so the rest of the app stays interactive while this runs
         try:
             # seed this run with the previous reconstruction (if any); the
             # evaluation ignores it when the recon grid no longer matches
-            evaluation = MbirjaxReconstructionEvaluation(
+            evaluation = SvmbirReconstructionEvaluation(
                 data=snap_data,
                 list_angles_deg=snap_angles,
                 reconstruction_parameters=snap_parameters,
@@ -1141,7 +1151,7 @@ def _(
                 "top": _subsample_for_preview(top_slice),
                 "bottom": _subsample_for_preview(bottom_slice),
                 "reconstruction_parameters": snap_parameters,
-                "mbirjax_config": dict(snap_parameters["mbirjax_config"]),
+                "svmbir_config": dict(snap_parameters["svmbir_config"]),
                 "top_reconstruction_time": top_time,
                 "bottom_reconstruction_time": bottom_time,
             }
@@ -1219,8 +1229,8 @@ def _(
         return _fig
 
     def _params_panel(entry, use_configuration_button):
-        _mbirjax_lines = "\n".join(
-            f"- **{name}:** {value}" for name, value in entry["mbirjax_config"].items()
+        _svmbir_lines = "\n".join(
+            f"- **{name}:** {value}" for name, value in entry["svmbir_config"].items()
         )
         _rp = entry.get("reconstruction_parameters", {})
         _tilt = _rp.get("tilt", 0.0)
@@ -1234,7 +1244,7 @@ def _(
         )
         return mo.vstack(
             [
-                mo.md("**mbirjax parameters used:**\n" + _mbirjax_lines),
+                mo.md("**svmbir parameters used:**\n" + _svmbir_lines),
                 mo.md(_tilt_line),
                 mo.md(_time_lines),
                 use_configuration_button,
@@ -1290,6 +1300,32 @@ def _(mo):
 
 
 @app.cell
+def _(normalized_images_log):
+    import copy as _copy_for_export
+
+    def build_export_configuration(selected_config):
+        # the notebook tunes the center of rotation as a pixel offset
+        # (center_offset) inside svmbir_config, but the production svmbir
+        # pipeline reads it from the top-level center_of_rotation. Convert it
+        # back here and drop the helper key so the exported svmbir_config holds
+        # only genuine svmbir parameters.
+        cfg = _copy_for_export.deepcopy(selected_config)
+        svmbir_config = dict(cfg.get("svmbir_config", {}))
+        center_offset = svmbir_config.pop("center_offset", None)
+        cfg["svmbir_config"] = svmbir_config
+        if (
+            center_offset is not None
+            and normalized_images_log is not None
+            and len(normalized_images_log)
+        ):
+            width = normalized_images_log[0].shape[1]
+            cfg["center_of_rotation"] = int(round(width // 2 + center_offset))
+        return cfg
+
+    return (build_export_configuration,)
+
+
+@app.cell
 def _(
     create_new_hdf5_button,
     get_reconstruction_history,
@@ -1304,9 +1340,9 @@ def _(
 
     _cfg = get_selected_config()
     if _cfg is not None:
-        _mbirjax_lines = "\n".join(
+        _svmbir_lines = "\n".join(
             f"- **{name}:** {value}"
-            for name, value in _cfg["mbirjax_config"].items()
+            for name, value in _cfg["svmbir_config"].items()
         )
         _selected_box = mo.vstack(
             [
@@ -1319,7 +1355,7 @@ def _(
                             f"- **tilt (°):** {_cfg['tilt']}\n"
                             f"- **perform tilt:** {_cfg['perform_tilt']}"
                         ),
-                        mo.md("**mbirjax parameters:**\n" + _mbirjax_lines),
+                        mo.md("**svmbir parameters:**\n" + _svmbir_lines),
                     ],
                     widths="equal",
                     gap=2,
@@ -1356,7 +1392,14 @@ def _(
 
 
 @app.cell
-def _(create_new_hdf5_button, get_selected_config, mo, os, selected_hdf5_file):
+def _(
+    build_export_configuration,
+    create_new_hdf5_button,
+    get_selected_config,
+    mo,
+    os,
+    selected_hdf5_file,
+):
     mo.stop(not create_new_hdf5_button.value)
 
     _cfg = get_selected_config()
@@ -1371,10 +1414,10 @@ def _(create_new_hdf5_button, get_selected_config, mo, os, selected_hdf5_file):
     from __code.marimo.export_new_configuration_to_hdf5 import ExportNewConfigurationToHDF5
 
     _base, _ext = os.path.splitext(selected_hdf5_file)
-    _new_hdf5_path = _base + "_new_mbirjax_config" + _ext
+    _new_hdf5_path = _base + "_new_svmbir_config" + _ext
 
     ExportNewConfigurationToHDF5(
-        new_configuration=_cfg,
+        new_configuration=build_export_configuration(_cfg),
         hdf5_file_path=_new_hdf5_path,
         source_hdf5_file_path=selected_hdf5_file,
         new_hdf5_flag=True,
@@ -1388,7 +1431,14 @@ def _(create_new_hdf5_button, get_selected_config, mo, os, selected_hdf5_file):
 
 
 @app.cell
-def _(get_selected_config, mo, overwrite_hdf5_button, selected_hdf5_file):
+def _(
+    build_export_configuration,
+    get_selected_config,
+    mo,
+    os,
+    overwrite_hdf5_button,
+    selected_hdf5_file,
+):
     mo.stop(not overwrite_hdf5_button.value)
 
     _cfg = get_selected_config()
@@ -1403,7 +1453,7 @@ def _(get_selected_config, mo, overwrite_hdf5_button, selected_hdf5_file):
     from __code.marimo.export_new_configuration_to_hdf5 import ExportNewConfigurationToHDF5 as _ExportNewConfigurationToHDF5
 
     _ExportNewConfigurationToHDF5(
-        new_configuration=_cfg,
+        new_configuration=build_export_configuration(_cfg),
         hdf5_file_path=selected_hdf5_file,
         new_hdf5_flag=False,
     ).export()

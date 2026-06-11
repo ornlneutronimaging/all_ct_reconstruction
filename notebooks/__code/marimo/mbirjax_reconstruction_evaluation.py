@@ -6,7 +6,7 @@ import logging
 import numpy as np
 from scipy.ndimage import rotate
 
-from __code.config import MARIMO_TEST_RECONSTRUCTION_WIDTH
+from __code.config import MARIMO_MBIRJAX_TEST_RECONSTRUCTION_WIDTH
 from __code.utilities.logging import setup_logging
 
 LOG_BASENAME_FILENAME, _ = os.path.splitext(os.path.basename(__file__))
@@ -66,21 +66,21 @@ class MbirjaxReconstructionEvaluation:
         
         top_slice = self.top_slice
         if top_slice < 0 or top_slice >= n_slices:
-            top_slice = MARIMO_TEST_RECONSTRUCTION_WIDTH // 2
+            top_slice = MARIMO_MBIRJAX_TEST_RECONSTRUCTION_WIDTH // 2
             
         bottom_slice = self.bottom_slice
         if bottom_slice <= 0 or bottom_slice > n_slices:
-            bottom_slice = n_slices - MARIMO_TEST_RECONSTRUCTION_WIDTH // 2
+            bottom_slice = n_slices - MARIMO_MBIRJAX_TEST_RECONSTRUCTION_WIDTH // 2
         
         # reconstruction of top slices, reusing the previous top reconstruction
         # as the starting point when available
-        top_reconstruction_slice, top_full, top_recond_dict, top_reconstruction_time = self._reconstruct_slices(from_slice=top_slice-MARIMO_TEST_RECONSTRUCTION_WIDTH//2,
-                                                                             to_slice=top_slice+MARIMO_TEST_RECONSTRUCTION_WIDTH//2,
+        top_reconstruction_slice, top_full, top_recond_dict, top_reconstruction_time = self._reconstruct_slices(from_slice=top_slice-MARIMO_MBIRJAX_TEST_RECONSTRUCTION_WIDTH//2,
+                                                                             to_slice=top_slice+MARIMO_MBIRJAX_TEST_RECONSTRUCTION_WIDTH//2,
                                                                              init_recon=self.init_recon.get("top"))
 
         # reconstruction of bottom slices, reusing the previous bottom reconstruction
-        bottom_reconstruction_slice, bottom_full, bottom_recond_dict, bottom_reconstruction_time = self._reconstruct_slices(from_slice=bottom_slice-MARIMO_TEST_RECONSTRUCTION_WIDTH//2,
-                                                                                   to_slice=bottom_slice+MARIMO_TEST_RECONSTRUCTION_WIDTH//2,
+        bottom_reconstruction_slice, bottom_full, bottom_recond_dict, bottom_reconstruction_time = self._reconstruct_slices(from_slice=bottom_slice-MARIMO_MBIRJAX_TEST_RECONSTRUCTION_WIDTH//2,
+                                                                                   to_slice=bottom_slice+MARIMO_MBIRJAX_TEST_RECONSTRUCTION_WIDTH//2,
                                                                                    init_recon=self.init_recon.get("bottom"))
 
         # keep the full volumes so the caller can feed them into the next run
@@ -147,7 +147,7 @@ class MbirjaxReconstructionEvaluation:
         elapsed_time = time.perf_counter() - start_time
         logging.info(f"\tReconstruction time: {elapsed_time:.2f} s")
 
-        middle_slice = MARIMO_TEST_RECONSTRUCTION_WIDTH // 2
+        middle_slice = MARIMO_MBIRJAX_TEST_RECONSTRUCTION_WIDTH // 2
         logging.info(f"\tReconstruction of middle slice {middle_slice} completed.")
         result_slice = reconstruction_array[middle_slice, :, :]
         logging.info(f"\t{result_slice.shape = }")

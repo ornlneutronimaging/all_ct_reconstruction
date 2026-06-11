@@ -38,10 +38,13 @@ class ExportNewConfigurationToHDF5:
 
         updated_config = copy.deepcopy(existing_config)
         for key, value in self.new_configuration.items():
-            if key == "mbirjax_config" and isinstance(value, dict):
-                if "mbirjax_config" not in updated_config:
-                    updated_config["mbirjax_config"] = {}
-                updated_config["mbirjax_config"].update(value)
+            # the reconstruction-specific config dicts are merged into the
+            # existing ones so untouched fields are preserved; everything else
+            # is replaced outright
+            if key in ("mbirjax_config", "svmbir_config") and isinstance(value, dict):
+                if key not in updated_config:
+                    updated_config[key] = {}
+                updated_config[key].update(value)
             else:
                 updated_config[key] = value
 

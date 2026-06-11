@@ -64,12 +64,13 @@ class System:
     ipts_number: ClassVar[str] = ''
 
     @classmethod
-    def select_working_dir(cls, 
+    def select_working_dir(cls,
                            debug: bool = False,
                            offline: bool = False,
-                          debugger_folder: str = '', 
+                          debugger_folder: str = '',
                           system_folder: str = '',
                           ipts: Optional[str] = None,
+                          instrument: str = 'MARS',
                           notebook: str = "N/A") -> None:
         """
         Display interface for selecting working directory and configuring system.
@@ -81,8 +82,10 @@ class System:
         Args:
             debugger_folder: Folder to use in debugging mode
             system_folder: System folder path
-            facility: Facility name ('SNS' or 'HFIR') 
-            instrument: Instrument name ('VENUS', 'SNAP', 'CG1D')
+            facility: Facility name ('SNS' or 'HFIR')
+            instrument: Instrument selected by default in the picker (e.g. 'MARS'
+                or 'VENUS'); falls back to 'MARS' if unknown. The user can still
+                switch instruments via the widget.
             ipts: IPTS number string
             instrument_to_exclude: List of instruments to exclude from selection
             notebook: Name of the calling notebook for reference
@@ -109,8 +112,12 @@ class System:
         else:
             logging.info(f"Running in online mode. Hostname: {hostname}")
 
-        # Default instrument is MARS; the user can switch to VENUS via the widget below.
-        instrument = 'MARS'
+        # Default instrument comes from the `instrument` argument (MARS unless the
+        # caller overrides it); the user can still switch via the widget below.
+        # Fall back to MARS if an unknown instrument is requested.
+        if instrument not in cls.get_full_list_instrument():
+            logging.warning(f"Unknown instrument '{instrument}', defaulting to 'MARS'")
+            instrument = 'MARS'
         facility = cls.get_facility_from_instrument(instrument=instrument)
         cls.instrument = instrument
 
