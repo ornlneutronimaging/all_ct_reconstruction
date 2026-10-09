@@ -5,6 +5,9 @@ name = "all_ct_reconstruction"
 platforms = ["linux-64"]
 version = "1.0.0"
 
+[system-requirements]
+cuda = "12"
+
 [tasks]
 lab = "jupyter lab --notebook-dir=notebooks"
 notebook = "jupyter notebook --notebook-dir=notebooks"
@@ -42,6 +45,8 @@ pip = ">=26.0.1,<27"
 neutronbraggedge = ">=2.0.6, <3"
 timepix-geometry-correction = { git = "https://github.com/ornlneutronimaging/timepix_geometry_correction.git", branch = "main" }
 mbirjax = "*"
+bm3dornl = ">=0.9, <1"
+neunorm = ">=1.6, <2"
 
 # ── Linux-only dependencies (CUDA, MKL) ──────────────────────────
 [target.linux-64.dependencies]

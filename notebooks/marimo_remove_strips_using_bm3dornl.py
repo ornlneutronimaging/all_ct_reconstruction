@@ -296,21 +296,21 @@ def _(
 
     slice_index = slice_slider.value
     sinogram = normalized_images_log[:, slice_index, :]
-    n_angles, n_cols = sinogram.shape
+    _n_angles, _n_cols = sinogram.shape
     vmin, vmax = z_range_slider.value
 
     # subsample the displayed heatmap when the sinogram is wide so the preview
     # stays responsive; pass original-coordinate x/y arrays so the axes keep
     # showing the full sinogram size
-    downsample = 10 if n_cols > 1000 else 1
+    downsample = 10 if _n_cols > 1000 else 1
     if downsample > 1:
         _heatmap = dict(
             z=sinogram[:, ::downsample],
-            x=np.arange(0, n_cols, downsample),
-            y=np.arange(n_angles),
+            x=np.arange(0, _n_cols, downsample),
+            y=np.arange(_n_angles),
         )
     else:
-        _heatmap = dict(z=sinogram, x=np.arange(n_cols), y=np.arange(n_angles))
+        _heatmap = dict(z=sinogram, x=np.arange(_n_cols), y=np.arange(_n_angles))
 
     _angle_range = (
         f" ({float(angles_deg[0]):.1f}° → {float(angles_deg[-1]):.1f}°)"
@@ -332,8 +332,8 @@ def _(
         height=600,
         margin=dict(l=60, r=20, t=50, b=50),
     )
-    _fig.update_xaxes(title_text="detector channel (column)", range=[-0.5, n_cols - 0.5])
-    _fig.update_yaxes(title_text="projection (angle index)", range=[n_angles - 0.5, -0.5])
+    _fig.update_xaxes(title_text="detector channel (column)", range=[-0.5, _n_cols - 0.5])
+    _fig.update_yaxes(title_text="projection (angle index)", range=[_n_angles - 0.5, -0.5])
 
     mo.vstack(
         [
@@ -351,6 +351,145 @@ def _(
                 gap=1,
             ),
         ]
+    )
+    return
+
+
+@app.cell
+def _(mo):
+    # the only parameter we expose: which bm3dornl algorithm/mode to run.
+    #   - "streak"  / "generic"      -> bm3d_ring_artifact_removal(mode=...)
+    #   - "fourier_svd_removal"      -> fourier_svd_removal() (separate, faster)
+    mode_selector = mo.ui.dropdown(
+        options=["streak", "generic", "fourier_svd_removal"],
+        value="streak",
+        label="bm3dornl mode:",
+    )
+    # defined in its own cell so picking a mode / arming the run does not force
+    # this cell to re-run (see notebook convention: define vs. layout cells)
+    run_bm3dornl_button = mo.ui.run_button(label="Apply to current slice")
+    return mode_selector, run_bm3dornl_button
+
+
+@app.cell
+def _(mo, mode_selector, run_bm3dornl_button):
+    mo.vstack(
+        [
+            mo.md("### Streak removal &mdash; bm3dornl"),
+            mo.md(
+                "Pick a mode and apply it to the sinogram of the slice selected "
+                "above. `fourier_svd_removal` is the fast Fourier&ndash;SVD "
+                "alternative; `streak`/`generic` use BM3D."
+            ),
+            mo.hstack(
+                [mode_selector, run_bm3dornl_button],
+                justify="start",
+                align="center",
+                gap=1,
+            ),
+        ]
+    )
+    return
+
+
+@app.cell
+def _(logger, mo, mode_selector, np, run_bm3dornl_button, sinogram, slice_index):
+    mo.stop(
+        not run_bm3dornl_button.value,
+        mo.md("👉 Pick a **mode** and click **Apply to current slice**."),
+    )
+
+    _mode = mode_selector.value
+    # bm3dornl expects a 2D float sinogram (n_angles, n_det_channels)
+    _sino = np.asarray(sinogram, dtype=np.float32)
+    logger.info(
+        f"bm3dornl: mode='{_mode}', slice={slice_index}, sinogram shape={_sino.shape}"
+    )
+
+    if _mode == "fourier_svd_removal":
+        from bm3dornl.fourier_svd import fourier_svd_removal
+
+        cleaned_sinogram = fourier_svd_removal(_sino)
+    else:
+        from bm3dornl.bm3d import bm3d_ring_artifact_removal
+
+        cleaned_sinogram = bm3d_ring_artifact_removal(_sino, mode=_mode)
+
+    logger.info("bm3dornl: done")
+    return (cleaned_sinogram,)
+
+
+@app.cell
+def _(
+    cleaned_sinogram,
+    colormap_selector,
+    go,
+    mo,
+    mode_selector,
+    mpl_colormap_to_plotly,
+    np,
+    sinogram,
+    slice_index,
+    z_range_slider,
+):
+    _cmap = mpl_colormap_to_plotly(colormap_selector.value)
+    _vmin, _vmax = z_range_slider.value
+    _n_cols = sinogram.shape[1]
+    _downsample = 10 if _n_cols > 1000 else 1
+
+    def _heatmap(_z):
+        if _downsample > 1:
+            return dict(
+                z=_z[:, ::_downsample],
+                x=np.arange(0, _n_cols, _downsample),
+                y=np.arange(_z.shape[0]),
+            )
+        return dict(z=_z, x=np.arange(_n_cols), y=np.arange(_z.shape[0]))
+
+    def _figure(_z, _title, _colorscale=None, _zmin=None, _zmax=None, _cbar="intensity"):
+        _fig = go.Figure(
+            go.Heatmap(
+                **_heatmap(_z),
+                colorscale=_colorscale if _colorscale is not None else _cmap,
+                zmin=_vmin if _zmin is None else _zmin,
+                zmax=_vmax if _zmax is None else _zmax,
+                colorbar=dict(title=_cbar),
+            )
+        )
+        _fig.update_layout(
+            title=_title,
+            height=600,
+            margin=dict(l=60, r=20, t=50, b=50),
+        )
+        _fig.update_xaxes(title_text="detector channel (column)", range=[-0.5, _n_cols - 0.5])
+        _fig.update_yaxes(
+            title_text="projection (angle index)", range=[_z.shape[0] - 0.5, -0.5]
+        )
+        return _fig
+
+    # what bm3dornl removed; diverging colormap on a symmetric range centered at
+    # zero so positive/negative changes read at a glance. use a robust percentile
+    # so a few outliers do not flatten the contrast.
+    _difference = np.asarray(sinogram, dtype=np.float32) - np.asarray(
+        cleaned_sinogram, dtype=np.float32
+    )
+    _lim = float(np.percentile(np.abs(_difference), 99)) or 1.0
+
+    mo.hstack(
+        [
+            _figure(sinogram, f"Original &mdash; slice {slice_index}"),
+            _figure(cleaned_sinogram, f"Cleaned ({mode_selector.value})"),
+            _figure(
+                _difference,
+                "Difference (original &minus; cleaned)",
+                _colorscale="RdBu",
+                _zmin=-_lim,
+                _zmax=_lim,
+                _cbar="removed",
+            ),
+        ],
+        widths="equal",
+        gap=1,
     )
     return
 

@@ -64,6 +64,7 @@ from __code.workflow.load import Load
 from __code.workflow.export import Export
 from __code.utilities.files import make_or_reset_folder
 from __code.utilities.images import replace_pixels
+from __code.utilities.images import median_filter_3d
 from __code.utilities.logging import logging_3d_array_infos
 from __code.workflow.data_handler import remove_negative_values
 
@@ -290,23 +291,23 @@ class ImagesCleaner(Parent):
 
         # sample
         logging_3d_array_infos(message="before scipy cleaning of sample", array=self.parent.master_3d_data_array[DataType.sample])
-        self.parent.master_3d_data_array[DataType.sample] = np.array(median_filter(self.parent.master_3d_data_array[DataType.sample], size=_size))
+        self.parent.master_3d_data_array[DataType.sample] = median_filter_3d(self.parent.master_3d_data_array[DataType.sample], size=_size)
         logging_3d_array_infos(message="after scipy cleaning of sample", array=self.parent.master_3d_data_array[DataType.sample])
         
         # ob
         if not ignore_ob:
             if self.parent.list_of_images[DataType.ob]:
-                logging_3d_array_infos(message="before scipy cleaning of ob", array=self.parent.master_3d_data_array[DataType.ob])       
-                self.parent.master_3d_data_array[DataType.ob] = np.array(median_filter(self.parent.master_3d_data_array[DataType.ob], size=_size))
-                logging_3d_array_infos(message="after scipy cleaning of ob", array=self.parent.master_3d_data_array[DataType.ob])       
+                logging_3d_array_infos(message="before scipy cleaning of ob", array=self.parent.master_3d_data_array[DataType.ob])
+                self.parent.master_3d_data_array[DataType.ob] = median_filter_3d(self.parent.master_3d_data_array[DataType.ob], size=_size)
+                logging_3d_array_infos(message="after scipy cleaning of ob", array=self.parent.master_3d_data_array[DataType.ob])
         else:
             logging.info(f"ignoring ob cleaning, no ob data available")
 
         if not ignore_dc:
             if self.parent.list_of_images[DataType.dc]:
-                logging_3d_array_infos(message="before scipy cleaning of dc", array=self.parent.master_3d_data_array[DataType.dc])       
-                self.parent.master_3d_data_array[DataType.dc] = np.array(median_filter(self.parent.master_3d_data_array[DataType.dc], size=_size))
-                logging_3d_array_infos(message="after scipy cleaning of dc", array=self.parent.master_3d_data_array[DataType.dc])       
+                logging_3d_array_infos(message="before scipy cleaning of dc", array=self.parent.master_3d_data_array[DataType.dc])
+                self.parent.master_3d_data_array[DataType.dc] = median_filter_3d(self.parent.master_3d_data_array[DataType.dc], size=_size)
+                logging_3d_array_infos(message="after scipy cleaning of dc", array=self.parent.master_3d_data_array[DataType.dc])
             else:
                 logging.info(f"ignoring dc cleaning, no dc data available")
         

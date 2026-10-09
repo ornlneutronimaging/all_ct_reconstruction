@@ -8,6 +8,7 @@ data preparation.
 
 Functions:
     replace_pixels: Replace outlier pixels using median filtering
+    median_filter_3d: Parallel per-image median filter (multithreaded CPU / GPU)
 
 Dependencies:
     - numpy: Numerical computations
@@ -17,11 +18,134 @@ Author: CT Reconstruction Development Team
 """
 
 import os
+import logging
+from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
 import tomopy
 from scipy.ndimage import median_filter
 from numpy.typing import NDArray
+
+
+# ---------------------------------------------------------------------------
+# Accelerated median filter for a stack of images
+# ---------------------------------------------------------------------------
+# A per-image 2D median filter (size[0] == 1) is embarrassingly parallel along
+# axis 0: each image is filtered independently. scipy's median_filter is
+# single-threaded, so on a multi-core box the fastest path is simply to split
+# the stack into contiguous chunks and run scipy on each chunk in parallel
+# threads -- scipy releases the GIL during its C loop, so threads scale nearly
+# linearly with no pickling and no extra dependency.
+#
+# On a machine with few CPU cores, a GPU (via JAX, an optional dependency) can
+# win instead. We therefore default to the CPU-multithreaded path and only fall
+# back to the GPU when cores are scarce (or when explicitly requested).
+#
+# All three paths are numerically identical to
+# ``scipy.ndimage.median_filter(data, size=size)`` -- including scipy's default
+# ``mode='reflect'`` boundary handling.
+
+# Below this core count the GPU is preferred (when available) over CPU threads.
+_CPU_CORE_THRESHOLD = 8
+
+_JAX_GPU = None  # None = not probed yet, otherwise True/False
+
+
+def _jax_gpu_available() -> bool:
+    """Return True if JAX is importable and at least one GPU device is visible."""
+    global _JAX_GPU
+    if _JAX_GPU is None:
+        try:
+            import jax
+            _JAX_GPU = any(d.platform == "gpu" for d in jax.devices())
+        except Exception as e:  # JAX missing, no CUDA, driver mismatch, ...
+            logging.info(f"GPU median filter unavailable ({e})")
+            _JAX_GPU = False
+    return _JAX_GPU
+
+
+def _median_filter_cpu_mt(data: NDArray, size: tuple, workers: int) -> NDArray:
+    """scipy median_filter over contiguous axis-0 chunks, one per thread."""
+    idx = [c for c in np.array_split(np.arange(data.shape[0]), workers) if len(c)]
+    with ThreadPoolExecutor(max_workers=len(idx)) as ex:
+        parts = list(ex.map(
+            lambda c: median_filter(data[c[0]:c[-1] + 1], size=size), idx))
+    return np.concatenate(parts, axis=0)
+
+
+def _median_filter_gpu(data: NDArray, size: tuple, chunk: int) -> NDArray:
+    """JAX/GPU median filter over contiguous axis-0 chunks (bounds GPU memory)."""
+    import jax
+    import jax.numpy as jnp
+
+    ky, kx = int(size[1]), int(size[2])
+    py, px = ky // 2, kx // 2
+
+    @jax.jit
+    def _filt(x):
+        xp = jnp.pad(x, ((0, 0), (py, py), (px, px)), mode="symmetric")
+        h, w = x.shape[1], x.shape[2]
+        nb = [xp[:, i:i + h, j:j + w] for i in range(ky) for j in range(kx)]
+        return jnp.median(jnp.stack(nb, axis=0), axis=0)
+
+    out = np.empty_like(data)
+    for start in range(0, data.shape[0], chunk):
+        end = min(start + chunk, data.shape[0])
+        out[start:end] = np.asarray(_filt(jnp.asarray(data[start:end])))
+    return out
+
+
+def median_filter_3d(data: NDArray[np.floating],
+                     size: tuple = (1, 3, 3),
+                     backend: str = "auto",
+                     workers: int = None,
+                     chunk: int = 64) -> NDArray:
+    """
+    Apply a per-image 2D median filter to a stack of images, in parallel.
+
+    Drop-in, numerically identical replacement for
+    ``scipy.ndimage.median_filter(data, size=size)`` for the common CT case
+    where ``size[0] == 1`` (each image along axis 0 filtered independently).
+
+    Args:
+        data: 3D array (n_images, height, width).
+        size: Filter window; first element must be 1 for the parallel paths.
+        backend: ``"cpu"`` (multithreaded scipy), ``"gpu"`` (JAX), ``"scipy"``
+            (single-threaded reference), or ``"auto"`` (default): use CPU
+            threads when enough cores are available, otherwise GPU if present,
+            otherwise single-threaded scipy.
+        workers: Thread count for the CPU path (defaults to ``os.cpu_count()``).
+        chunk: Images processed per GPU batch (GPU path only).
+
+    Returns:
+        Filtered array, same shape and dtype as ``data``.
+    """
+    data = np.asarray(data)
+    workers = workers or os.cpu_count() or 1
+
+    # The parallel paths only apply to a stack filtered image-by-image.
+    parallelizable = data.ndim == 3 and size[0] == 1
+
+    # Resolve "auto" to a concrete backend.
+    if backend == "auto":
+        if not parallelizable or data.shape[0] < 2:
+            backend = "scipy"
+        elif workers >= _CPU_CORE_THRESHOLD:
+            backend = "cpu"
+        elif _jax_gpu_available():
+            backend = "gpu"
+        else:
+            backend = "cpu"  # few cores, no GPU: threads still beat 1 thread
+
+    try:
+        if backend == "cpu" and parallelizable:
+            return _median_filter_cpu_mt(data, size, workers)
+        if backend == "gpu" and parallelizable and _jax_gpu_available():
+            return _median_filter_gpu(data, size, chunk)
+    except Exception as e:  # OOM, thread error, ... -> safe single-threaded path
+        logging.warning(f"{backend} median filter failed ({e}); using scipy")
+
+    return np.asarray(median_filter(data, size=size))
 
 
 def replace_pixels(im: NDArray[np.floating], 

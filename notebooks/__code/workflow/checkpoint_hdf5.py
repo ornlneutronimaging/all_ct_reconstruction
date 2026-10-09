@@ -135,22 +135,27 @@ class CheckpointHdf5(Parent):
         if sample_array is None:
             logging.warning("No sample array provided for HDF5 export.")
         else:
+            sample_array = np.array(sample_array, dtype=np.float32)
             logging.info(f"{sample_array.shape =}")
         
         if normalized_images_log is None:
             logging.warning("No normalized_images_log provided for HDF5 export.")
         else:
+            normalized_images_log = np.array(normalized_images_log, dtype=np.float32)
             logging.info(f"{normalized_images_log.shape =}")
         
         if ob_array is None:
             logging.warning("No ob_array provided for HDF5 export.")
         else:
+            ob_array = np.array(ob_array, dtype=np.float32)
             logging.info(f"{ob_array.shape =}")
         
         if dc_array is None:
             logging.warning("No dc_array provided for HDF5 export.")
         else:
+            dc_array = np.array(dc_array, dtype=np.float32)
             logging.info(f"{dc_array.shape =}")
+
         logging.info(f"Detector: {detector_name}")
         logging.info(f"Config: {config}")
         logging.info(f"Working dir: {working_dir}")
@@ -216,7 +221,7 @@ class CheckpointHdf5(Parent):
 
         with self.output:
             self.output.clear_output()
-            display(widgets.HTML(f"<b>Loading checkpoint from HDF5...</b><br/>"))
+            display(widgets.HTML(f"<b>Loading checkpoint from HDF5... PLEASE WAIT!</b><br/>"))
         logging.info(f"Loading raw-data checkpoint from: {file_path}")
         
         self.parent.hdf5_input_file = file_path
@@ -330,6 +335,8 @@ class CheckpointHdf5(Parent):
         logging.info(f"Exporting HDF5 checkpoint at the end of {step} ...")
         self.data_type = DataType.extra
         
+        display(widgets.HTML(f"<b>Exporting HDF5 checkpoint at the end of {step}...</b><br/>"))
+        
         normalized_images_log: NDArray[np.floating] = self.parent.normalized_images_log
         list_of_angles_deg: NDArray[np.floating] = np.array(self.parent.final_list_of_angles)
 
@@ -354,6 +361,10 @@ class CheckpointHdf5(Parent):
             config=config_dict,
         )
         logging.info(f"Done exporting HDF5 checkpoint ({hdf5_file_name}) at the end of {step}. in folder {output_folder}")
+        
+        display(widgets.HTML(
+            f"<b>Checkpoint exported to:</b><br/><code>{hdf5_full_path}</code>"
+        ))
         
         return hdf5_full_path
     
